@@ -1,0 +1,25 @@
+@layer base {
+  :root {
+    --color-border-default: var(--border);
+    --color-border-teal: var(--zentro-teal);
+    --color-border-mint: var(--zentro-mint);
+  }
+}
+
+@layer components {
+  .border-zentro {
+    border-color: var(--color-border-default);
+  }
+
+  .border-teal {
+    border-color: var(--color-border-teal);
+  }
+
+  .border-mint {
+    border-color: var(--color-border-mint);
+  }
+
+  .border-sidebar {
+    border-color: var(--sidebar-border);
+  }
+}

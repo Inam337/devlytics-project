@@ -1,0 +1,31 @@
+@layer base {
+  :root {
+    --color-text-primary: #428475;
+    --color-text-success: #428475;
+    --color-text-warning: #b8860b;
+    --color-text-danger: #c45c4a;
+    --color-text-muted: #6b7f78;
+  }
+}
+
+@layer components {
+  .text-primary {
+    color: var(--color-text-primary);
+  }
+
+  .text-success {
+    color: var(--color-text-success);
+  }
+
+  .text-warning {
+    color: var(--color-text-warning);
+  }
+
+  .text-danger {
+    color: var(--color-text-danger);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+}

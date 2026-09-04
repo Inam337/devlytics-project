@@ -1,0 +1,304 @@
+{
+  "app": {
+    "title": "زینٹرو",
+    "description": "زینٹرو شاپ مینجمنٹ سسٹم",
+    "version": "ورژن 1.0.0"
+  },
+  "i18n": {
+    "language": "زبان"
+  },
+  "menu": {
+    "dashboard": "ڈیش بورڈ",
+    "profile": "پروفائل",
+    "catalog": "کیٹلاگ",
+    "products": "مصنوعات",
+    "categories": "زمرے",
+    "cart": "ٹوکری",
+    "orders": "آرڈرز",
+    "ordersList": "آرڈر کی فہرست",
+    "checkout": "چیک آؤٹ",
+    "account": "اکاؤنٹ",
+    "logout": "لاگ آؤٹ",
+    "admin": "ایڈمن",
+    "adminCategories": "زمرے منظم کریں",
+    "adminProducts": "مصنوعات منظم کریں",
+    "adminStock": "اسٹاک",
+    "adminSuppliers": "سپلائرز",
+    "adminPurchases": "خریداری",
+    "adminSales": "فروخت (POS)",
+    "adminCustomers": "گاہک",
+    "adminUsers": "صارفین"
+  },
+  "sidebar": {
+    "collapse": "سمیٹیں",
+    "expand": "سائڈبار کھولیں",
+    "open": "مینو کھولیں",
+    "close": "مینو بند کریں",
+    "closeOverlay": "مینو اوورلے بند کریں"
+  },
+  "header": {
+    "profile": {
+      "role": "کردار",
+      "changePassword": "پاس ورڈ تبدیل کریں"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "welcome": "خوش آمدید۔ نیویگیشن کے لیے سائڈبار استعمال کریں۔"
+    }
+  },
+  "commerce": {
+    "loading": "لوڈ ہو رہا ہے...",
+    "retry": "دوبارہ کوشش کریں",
+    "empty": "ابھی دکھانے کے لیے کچھ نہیں۔",
+    "cart": "ٹوکری",
+    "checkout": "چیک آؤٹ",
+    "productDetail": "مصنوعات کی تفصیل",
+    "orderDetail": "آرڈر کی تفصیل",
+    "browseProducts": "مصنوعات دیکھیں",
+    "continueShopping": "خریداری جاری رکھیں",
+    "each": "فی عدد",
+    "remove": "ہٹائیں",
+    "subtotal": "ذیلی کل",
+    "orderSummary": "آرڈر کا خلاصہ",
+    "pricesFromServer": "چیک آؤٹ پر قیمتیں سرور سے لوڈ ہوتی ہیں۔",
+    "clearCart": "ٹوکری خالی کریں",
+    "reviewOrder": "اپنا آرڈر دیکھیں",
+    "estimatedTotal": "تخمینی کل",
+    "placeOrder": "آرڈر دیں",
+    "backToCart": "ٹوکری پر واپس",
+    "backToOrders": "آرڈرز پر واپس",
+    "viewOrder": "دیکھیں",
+    "orderNumber": "آرڈر #{id}",
+    "items": "اشیاء",
+    "paid": "ادا شدہ",
+    "lineItems": "اشیاء",
+    "product": "مصنوعات",
+    "payment": "ادائیگی",
+    "method": "طریقہ",
+    "status": "حالت",
+    "amount": "رقم",
+    "selectPaymentMethod": "ادائیگی کا طریقہ",
+    "payNow": "ابھی ادا کریں",
+    "paymentCreated": "ادائیگی بن گئی۔ حالت: {status}",
+    "allCategories": "سب",
+    "addToCart": "ٹوکری میں شامل کریں",
+    "goToCart": "ٹوکری پر جائیں",
+    "quantity": "مقدار",
+    "unit": "یونٹ",
+    "type": "قسم",
+    "stock": "اسٹاک",
+    "backToProducts": "مصنوعات پر واپس",
+    "inStock": "اسٹاک میں",
+    "outOfStock": "اسٹاک ختم",
+    "products.empty": "کوئی مصنوعات نہیں ملی۔",
+    "categories.empty": "کوئی زمرے نہیں۔",
+    "cart.empty": "آپ کی ٹوکری خالی ہے۔ شروع کرنے کے لیے مصنوعات دیکھیں۔",
+    "checkout.emptyCart": "چیک آؤٹ سے پہلے ٹوکری میں اشیاء شامل کریں۔",
+    "orders.empty": "ابھی کوئی آرڈر نہیں۔ ٹوکری سے چیک آؤٹ کریں۔",
+    "dashboard": {
+      "welcome": "زینٹرو شاپ میں خوش آمدید",
+      "productsHint": "کیٹلاگ دیکھیں اور ٹوکری میں شامل کریں۔",
+      "cartHint": "مقدار دیکھیں اور چیک آؤٹ پر جائیں۔",
+      "ordersHint": "آرڈر کی حالت اور ادائیگی مکمل کریں۔"
+    }
+  },
+  "admin": {
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ",
+    "edit": "ترمیم",
+    "delete": "حذف",
+    "deactivate": "غیر فعال",
+    "activate": "فعال",
+    "inactive": "غیر فعال",
+    "active": "فعال",
+    "email": "ای میل",
+    "phone": "فون",
+    "password": "پاس ورڈ",
+    "newPasswordOptional": "نیا پاس ورڈ (اختیاری)",
+    "passwordRequired": "نئے صارف کے لیے پاس ورڈ ضروری ہے",
+    "customerFormRequired": "نام، ای میل اور فون ضروری ہیں",
+    "userFormRequired": "نام اور ای میل ضروری ہیں",
+    "addCustomer": "گاہک شامل کریں",
+    "editCustomer": "گاہک میں ترمیم",
+    "newCustomer": "نیا گاہک",
+    "addUser": "صارف شامل کریں",
+    "editUser": "صارف میں ترمیم",
+    "newUser": "نیا صارف",
+    "name": "نام",
+    "description": "تفصیل",
+    "price": "قیمت",
+    "unit": "یونٹ",
+    "type": "قسم",
+    "category": "زمرہ",
+    "noCategory": "کوئی نہیں",
+    "reorderLevel": "دوبارہ آرڈر کی سطح",
+    "product": "مصنوعات",
+    "quantity": "مقدار",
+    "unitPrice": "فی یونٹ قیمت",
+    "location": "مقام",
+    "supplier": "سپلائر",
+    "contact": "رابطہ",
+    "address": "پتہ",
+    "lineItems": "لائن آئٹمز",
+    "addLine": "لائن شامل کریں",
+    "removeLine": "لائن ہٹائیں",
+    "noProductsForLines": "لائن آئٹمز سے پہلے کیٹلاگ میں مصنوعات شامل کریں۔",
+    "nameRequired": "نام ضروری ہے",
+    "productFormRequired": "نام، قیمت اور یونٹ ضروری ہیں",
+    "stockFormRequired": "مصنوعات اور مقام ضروری ہیں",
+    "purchaseFormRequired": "سپلائر اور کم از کم ایک لائن آئٹم ضروری ہے",
+    "saleFormRequired": "کم از کم ایک لائن آئٹم ضروری ہے",
+    "confirmDelete": "یہ آئٹم حذف کریں؟",
+    "confirmDeactivateProduct": "یہ مصنوعات غیر فعال کریں؟ شاپ کیٹلاگ سے چھپ جائے گی۔",
+    "addCategory": "زمرہ شامل کریں",
+    "editCategory": "زمرے میں ترمیم",
+    "newCategory": "نیا زمرہ",
+    "addProduct": "مصنوعات شامل کریں",
+    "editProduct": "مصنوعات میں ترمیم",
+    "newProduct": "نئی مصنوعات",
+    "addSupplier": "سپلائر شامل کریں",
+    "editSupplier": "سپلائر میں ترمیم",
+    "newSupplier": "نیا سپلائر",
+    "addStock": "اسٹاک شامل کریں",
+    "editStock": "اسٹاک میں ترمیم",
+    "newStock": "نیا اسٹاک اندراج",
+    "addPurchase": "خریداری ریکارڈ کریں",
+    "newPurchase": "نئی خریداری",
+    "purchaseNumber": "خریداری #{id}",
+    "addSale": "فروخت ریکارڈ کریں",
+    "newSale": "نئی فروخت",
+    "saleNumber": "فروخت #{id}",
+    "categories": {
+      "empty": "ابھی کوئی زمرے نہیں۔ مصنوعات منظم کرنے کے لیے ایک بنائیں۔",
+      "hint": "مصنوعات بناتے وقت استعمال ہونے والے زمرے منظم کریں۔"
+    },
+    "products": {
+      "empty": "کوئی فعال مصنوعات نہیں۔ کیٹلاگ کے لیے ایک بنائیں۔",
+      "hint": "مصنوعات بنائیں اور ترمیم کریں۔ حذف نرم غیر فعال کرتا ہے (شاپ سے چھپ جاتا ہے)۔"
+    },
+    "suppliers": {
+      "empty": "ابھی کوئی سپلائر نہیں۔",
+      "hint": "خریداری ریکارڈ کرتے وقت سپلائرز منسلک ہوتے ہیں۔"
+    },
+    "stock": {
+      "empty": "ابھی کوئی اسٹاک اندراج نہیں۔",
+      "hint": "مصنوعات اور گودام کے مقام کے مطابق مقدار ٹریک کریں۔"
+    },
+    "purchases": {
+      "empty": "ابھی کوئی خریداری ریکارڈ نہیں۔",
+      "hint": "نیسٹڈ آئٹمز کے ساتھ خریداری بنائیں؛ کل سرور پر حساب ہوتا ہے۔"
+    },
+    "sales": {
+      "empty": "ابھی کوئی POS فروخت ریکارڈ نہیں۔",
+      "hint": "اسٹور فروخت لائن آئٹمز کے ساتھ ریکارڈ کریں؛ کل سرور پر حساب ہوتا ہے۔"
+    },
+    "customers": {
+      "empty": "ابھی کوئی B2B گاہک نہیں۔",
+      "hint": "B2B گاہک ریکارڈز (نام، ای میل، فون، پتہ) برقرار رکھیں۔"
+    },
+    "users": {
+      "empty": "ابھی کوئی ایپ صارف فہرست میں نہیں۔",
+      "hint": "لاگ ان اکاؤنٹس منظم کریں۔ کردار بیک اینڈ سے تفویض ہوتے ہیں (ڈیفالٹ user)۔"
+    },
+    "dashboard": {
+      "title": "ایڈمن ٹولز",
+      "productsHint": "کیٹلاگ مصنوعات بنائیں اور ترمیم کریں۔",
+      "stockHint": "مقام کے مطابق گودام مقدار۔",
+      "purchasesHint": "سپلائر خریداری ریکارڈ کریں۔"
+    }
+  },
+  "auth": {
+    "common": {
+      "submit": "جمع کرائیں",
+      "backToLogin": "لاگ ان پر واپس",
+      "noAccount": "اکاؤنٹ نہیں ہے؟",
+      "hasAccount": "پہلے سے اکاؤنٹ ہے؟",
+      "registerLink": "اکاؤنٹ بنائیں",
+      "loginLink": "سائن ان"
+    },
+    "login": {
+      "title": "سائن ان",
+      "subtitle": "زینٹرو میں خوش آمدید",
+      "emailLabel": "ای میل",
+      "emailPlaceholder": "اپنی ای میل درج کریں",
+      "passwordLabel": "پاس ورڈ",
+      "passwordPlaceholder": "اپنا پاس ورڈ درج کریں",
+      "submit": "سائن ان",
+      "forgotPasswordLink": "پاس ورڈ بھول گئے؟",
+      "errors": {
+        "emailRequired": "ای میل ضروری ہے",
+        "passwordRequired": "پاس ورڈ ضروری ہے",
+        "invalidFormat": "درست ای میل درج کریں",
+        "invalidCredentials": "غلط ای میل یا پاس ورڈ",
+        "inactiveAccount": "آپ کا اکاؤنٹ غیر فعال ہے۔ ایڈمن سے رابطہ کریں۔"
+      }
+    },
+    "register": {
+      "title": "اکاؤنٹ بنائیں",
+      "subtitle": "خریداری اور آرڈر کے لیے زینٹرو میں شامل ہوں",
+      "nameLabel": "مکمل نام",
+      "namePlaceholder": "اپنا نام درج کریں",
+      "emailLabel": "ای میل",
+      "emailPlaceholder": "اپنی ای میل درج کریں",
+      "passwordLabel": "پاس ورڈ",
+      "passwordPlaceholder": "پاس ورڈ بنائیں",
+      "confirmPasswordLabel": "پاس ورڈ کی تصدیق",
+      "confirmPasswordPlaceholder": "پاس ورڈ دوبارہ درج کریں",
+      "submit": "رجسٹر",
+      "success": "اکاؤنٹ بن گیا۔ آپ سائن ان ہیں۔",
+      "errors": {
+        "nameRequired": "نام ضروری ہے",
+        "nameMinLength": "نام کم از کم 2 حروف کا ہونا چاہیے",
+        "emailRequired": "ای میل ضروری ہے",
+        "invalidEmail": "درست ای میل درج کریں",
+        "passwordRequired": "پاس ورڈ ضروری ہے",
+        "passwordMinLength": "پاس ورڈ کم از کم {min} حروف کا ہونا چاہیے",
+        "confirmPasswordRequired": "پاس ورڈ کی تصدیق کریں",
+        "passwordMismatch": "پاس ورڈ مماثل نہیں",
+        "emailExists": "یہ ای میل پہلے سے رجسٹر ہے",
+        "generic": "رجسٹریشن ناکام۔ دوبارہ کوشش کریں۔"
+      }
+    },
+    "forgotPassword": {
+      "title": "پاس ورڈ بھول گئے",
+      "subtitle": "اپنی ای میل درج کریں، ہم رسائی بحال کرنے میں مدد کریں گے",
+      "emailLabel": "ای میل",
+      "emailPlaceholder": "رجسٹرڈ ای میل درج کریں",
+      "submit": "ری سیٹ لنک بھیجیں",
+      "infoTitle": "پاس ورڈ ری سیٹ",
+      "infoMessage": "ای میل سے پاس ورڈ ری سیٹ ابھی دستیاب نہیں۔ ایڈمن سے رابطہ کریں یا اگر اکاؤنٹ ہے تو سائن ان کریں۔",
+      "errors": {
+        "emailRequired": "ای میل ضروری ہے",
+        "invalidEmail": "درست ای میل درج کریں"
+      }
+    },
+    "profile": {
+      "title": "پروفائل",
+      "backToDashboard": "ڈیش بورڈ پر واپس",
+      "changePassword": {
+        "title": "پاس ورڈ تبدیل کریں",
+        "subtitle": "سائن ان رہتے ہوئے پاس ورڈ اپ ڈیٹ کریں۔",
+        "currentPasswordLabel": "موجودہ پاس ورڈ",
+        "currentPasswordPlaceholder": "موجودہ پاس ورڈ درج کریں",
+        "newPasswordLabel": "نیا پاس ورڈ",
+        "newPasswordPlaceholder": "نیا پاس ورڈ درج کریں",
+        "confirmPasswordLabel": "نئے پاس ورڈ کی تصدیق",
+        "confirmPasswordPlaceholder": "نیا پاس ورڈ دوبارہ درج کریں",
+        "submit": "پاس ورڈ اپ ڈیٹ کریں",
+        "success": "پاس ورڈ کامیابی سے تبدیل ہو گیا۔"
+      },
+      "errors": {
+        "currentPasswordRequired": "موجودہ پاس ورڈ ضروری ہے",
+        "newPasswordRequired": "نیا پاس ورڈ ضروری ہے",
+        "newPasswordMinLength": "نیا پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے",
+        "confirmNewPasswordRequired": "نئے پاس ورڈ کی تصدیق کریں",
+        "passwordMismatch": "نئے پاس ورڈ مماثل نہیں",
+        "sameAsCurrent": "نیا پاس ورڈ موجودہ سے مختلف ہونا چاہیے",
+        "incorrectCurrentPassword": "موجودہ پاس ورڈ غلط ہے",
+        "generic": "پاس ورڈ تبدیل نہیں ہو سکا۔ دوبارہ کوشش کریں۔"
+      }
+    },
+    "loading": "لوڈ ہو رہا ہے..."
+  }
+}

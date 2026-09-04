@@ -1,0 +1,45 @@
+@layer base {
+  :root {
+    --color-bg-body: #FFF4E1;
+    --color-bg-primary: #428475;
+    --color-bg-sidebar: #1A312C;
+    --color-bg-light-green: #e8f5ef;
+    --color-bg-card: #ffffff;
+    --color-bg-light: #f8faf9;
+    --color-bg-dark: #1A312C;
+  }
+}
+
+@layer components {
+  .bg-body {
+    background: var(--gradient-page);
+  }
+
+  .bg-card {
+    background-color: var(--color-bg-card);
+  }
+
+  .bg-primary {
+    background-color: var(--color-bg-primary);
+  }
+
+  .bg-green-light {
+    background-color: var(--color-bg-light-green);
+  }
+
+  .bg-light {
+    background-color: var(--color-bg-light);
+  }
+
+  .bg-dark {
+    background-color: var(--color-bg-dark);
+  }
+
+  .bg-sidebar {
+    background: linear-gradient(180deg, #1A312C 0%, #152822 100%);
+  }
+
+  .bg-sidebar-active {
+    background: var(--gradient-sidebar-active);
+  }
+}

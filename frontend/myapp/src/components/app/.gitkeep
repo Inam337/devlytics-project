@@ -1,0 +1,4 @@
+Add your application's global reusable components here, for example; Floating Button To Add Post, Select List of Users, Radio Button of Gender etc.
+
+Make sure to create a globaly accessible state for these components and do not manage any business logic with in component file, otherwise it will
+become a mess to share the state with in app. The ideal way is to use Zustand store.

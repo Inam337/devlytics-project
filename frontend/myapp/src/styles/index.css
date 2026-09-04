@@ -1,0 +1,251 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./backgrounds.css";
+@import "./buttons.css";
+@import "./border.css";
+@import "./text.css";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --color-zentro-black-teal: #1A312C;
+  --color-zentro-teal: #428475;
+  --color-zentro-mint: #89D7B7;
+  --color-zentro-beige: #FFF4E1;
+  --color-primary: #428475;
+  --color-sidebar: #1A312C;
+}
+
+:root {
+  --zentro-black-teal: #1A312C;
+  --zentro-teal: #428475;
+  --zentro-mint: #89D7B7;
+  --zentro-beige: #FFF4E1;
+  --gradient-page: linear-gradient(180deg, #FFF4E1 0%, #f7f3ea 45%, #eef5f2 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #f8faf9 100%);
+  --gradient-primary: linear-gradient(90deg, #428475 0%, #89D7B7 100%);
+  --gradient-primary-hover: linear-gradient(90deg, #1A312C 0%, #428475 100%);
+  --gradient-sidebar-active: linear-gradient(90deg, rgba(66, 132, 117, 0.35) 0%, rgba(137, 215, 183, 0.2) 100%);
+  --radius: 0.625rem;
+  --font-noto-arabic: "Noto Sans Arabic", sans-serif;
+  --background: var(--zentro-beige);
+  --foreground: var(--zentro-black-teal);
+  --card: #ffffff;
+  --card-foreground: var(--zentro-black-teal);
+  --popover: #ffffff;
+  --popover-foreground: var(--zentro-black-teal);
+  --primary: var(--zentro-teal);
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: var(--zentro-teal);
+  --muted: #f0f5f3;
+  --muted-foreground: #5a6e68;
+  --accent: #e8f5ef;
+  --accent-foreground: var(--zentro-black-teal);
+  --destructive: #c45c4a;
+  --field-error-border: #F23030;
+  --field-error-text: #E57373;
+  --field-error-bg: #FFF0F0;
+  --border: #d4e4de;
+  --input: #d4e4de;
+  --ring: var(--zentro-mint);
+  --chart-1: var(--zentro-teal);
+  --chart-2: var(--zentro-mint);
+  --chart-3: var(--zentro-black-teal);
+  --chart-4: #6ba896;
+  --chart-5: var(--zentro-beige);
+  --sidebar: var(--zentro-black-teal);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--zentro-teal);
+  --sidebar-primary-foreground: var(--zentro-mint);
+  --sidebar-accent: var(--zentro-teal);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(137, 215, 183, 0.2);
+  --sidebar-ring: var(--zentro-mint);
+  --color-primary: var(--zentro-teal);
+}
+
+.dark {
+  --background: #0f1f1b;
+  --foreground: #f0f5f3;
+  --card: #1A312C;
+  --card-foreground: #f0f5f3;
+  --popover: #1A312C;
+  --popover-foreground: #f0f5f3;
+  --primary: var(--zentro-mint);
+  --primary-foreground: var(--zentro-black-teal);
+  --secondary: #243d36;
+  --secondary-foreground: #f0f5f3;
+  --muted: #243d36;
+  --muted-foreground: #89D7B7;
+  --accent: #2d4a42;
+  --accent-foreground: #f0f5f3;
+  --destructive: #e07a6a;
+  --border: rgba(137, 215, 183, 0.15);
+  --input: rgba(137, 215, 183, 0.15);
+  --ring: var(--zentro-teal);
+  --sidebar: #0f1f1b;
+  --sidebar-foreground: #f0f5f3;
+  --sidebar-primary: var(--zentro-mint);
+  --sidebar-primary-foreground: var(--zentro-black-teal);
+  --sidebar-accent: #2d4a42;
+  --sidebar-accent-foreground: #f0f5f3;
+  --sidebar-border: rgba(137, 215, 183, 0.1);
+  --sidebar-ring: var(--zentro-teal);
+  --yellow-dark: #d97706;
+  --yellow-light: #fffbeb;
+}
+
+.font-urdu {
+  font-family: var(--font-noto-arabic);
+  font-size: 16px;
+  line-height: 30px;
+}
+
+body[data-scroll-locked] {
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  position: relative !important;
+  padding-left: 0;
+  padding-top: 0;
+  padding-right: 0;
+  margin-left: 0;
+  margin-top: 0;
+  margin-right: 0 !important;
+}
+
+.rdrDayToday .rdrDayNumber span:after {
+  content: "";
+  background: var(--zentro-teal);
+}
+
+.border {
+  border-color: var(--border);
+}
+
+.hide-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--zentro-mint) #e8ece9;
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.thin-scroll::-webkit-scrollbar-track {
+  background: #e8ece9;
+  border-radius: 3px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--zentro-mint);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--zentro-teal);
+}
+
+.thin-scroll::-webkit-scrollbar-corner {
+  background: #e8ece9;
+}
+
+body {
+  font-family: var(--font-sans) !important;
+  color: var(--foreground);
+  background: var(--gradient-page);
+  min-height: 100vh;
+}
+
+.bg-page-gradient {
+  background: var(--gradient-page);
+}
+
+.bg-card-gradient {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(26, 49, 44, 0.06), 0 1px 2px rgba(26, 49, 44, 0.04);
+}
+
+.bg-sidebar-gradient {
+  background: linear-gradient(180deg, var(--zentro-black-teal) 0%, #152822 100%);
+}
+
+.text-zentro-black-teal {
+  color: var(--zentro-black-teal);
+}
+
+.text-zentro-teal {
+  color: var(--zentro-teal);
+}
+
+.text-zentro-mint {
+  color: var(--zentro-mint);
+}
+
+@keyframes border-rotate {
+  0% { background-position: 0% 50%, 0% 50%; }
+  25% { background-position: 100% 50%, 0% 50%; }
+  50% { background-position: 100% 50%, 100% 50%; }
+  75% { background-position: 0% 50%, 100% 50%; }
+  100% { background-position: 0% 50%, 0% 50%; }
+}
+
+.animate-border-rotate {
+  position: relative;
+  padding: 6px;
+  border-radius: 1rem;
+  background:
+    linear-gradient(90deg, var(--zentro-teal), var(--zentro-mint), var(--zentro-teal)),
+    linear-gradient(0deg, var(--zentro-mint), var(--zentro-teal), var(--zentro-mint));
+  background-size: 200% 100%, 100% 200%;
+  background-position: 0% 50%, 50% 0%;
+  animation: border-rotate 4s ease-in-out infinite;
+}
+
+.animate-border-rotate::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  background: white;
+  border-radius: calc(1rem - 6px);
+  z-index: 0;
+}
+
+.animate-border-rotate > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes background-button {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-background-button {
+  background: var(--gradient-primary);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  animation: background-button 3s ease infinite;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.animate-background-button:hover {
+  background: var(--gradient-primary-hover);
+  animation: none;
+}

@@ -1,0 +1,68 @@
+@layer base {
+  :root {
+    --color-btn-primary: #428475;
+    --color-btn-secondary: #9ca3af;
+    --color-btn-success: #428475;
+    --color-btn-warning: #e8a838;
+    --color-btn-danger: #c45c4a;
+    --color-btn-flat: #6b7f78;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-3 py-1.5 rounded-md text-white font-medium transition cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.98] transform duration-100;
+  }
+
+  .btn-primary {
+    background: var(--gradient-primary) !important;
+    @apply hover:opacity-95 shadow-sm;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--gradient-primary-hover) !important;
+  }
+
+  .btn-gradient-primary {
+    background: var(--gradient-primary);
+    color: #ffffff;
+    @apply px-4 py-2 rounded-md font-medium shadow-sm transition-all;
+  }
+
+  .btn-gradient-primary:hover:not(:disabled) {
+    background: var(--gradient-primary-hover);
+  }
+
+  .btn-gradient-primary:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply disabled:bg-gray-400 hover:bg-gray-500 text-white;
+    background-color: var(--color-btn-secondary);
+  }
+
+  .btn-success {
+    background-color: var(--color-btn-success);
+    @apply hover:opacity-90;
+  }
+
+  .btn-warning {
+    @apply disabled:bg-orange-400 hover:bg-orange-500;
+    background-color: var(--color-btn-warning);
+  }
+
+  .btn-danger {
+    @apply disabled:bg-red-400 hover:opacity-90;
+    background-color: var(--color-btn-danger);
+  }
+
+  .btn-flat {
+    color: var(--color-btn-flat);
+    background-color: transparent;
+  }
+
+  .btn-flat:hover:not(:disabled) {
+    color: var(--zentro-black-teal);
+  }
+}
