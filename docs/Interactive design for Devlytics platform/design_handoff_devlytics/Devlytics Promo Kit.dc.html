@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B7D9E"/><stop offset="1" stop-color="#372b73"/></linearGradient></defs><rect width="200" height="200" rx="28" fill="url(#tg)"/><g transform="translate(60,58) scale(0.53)" fill="#FFFFFF"><circle cx="75" cy="52" r="42"/><rect x="40" y="80" width="10" height="60" rx="5"/><rect x="62" y="80" width="10" height="76" rx="5"/><rect x="84" y="80" width="10" height="76" rx="5"/><rect x="106" y="80" width="10" height="60" rx="5"/></g></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F6F7FB; color:#241d4d; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#372b73; text-decoration:none; }
+  a:hover { color:#0F5A73; }
+  textarea, button { font-family:inherit; }
+  @keyframes floatUp { from { opacity:0; transform:translateY(9px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes drift { 0%,100% { transform:translate3d(0,0,0) } 50% { transform:translate3d(0,-14px,0) } }
+</style>
+</helmet>
+
+<div style="max-width:1240px;margin:0 auto;padding:34px 32px 80px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:26px;flex-wrap:wrap">
+    <div style="min-width:0">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#0F5A73">Go-to-market kit</div>
+      <div style="margin-top:13px;font:600 30px/1.12 'IBM Plex Sans';letter-spacing:-0.025em">Promotion page and launch posts</div>
+      <div style="margin-top:12px;font-size:14.5px;line-height:1.62;color:#475569;max-width:720px;text-wrap:pretty">A campaign landing page plus ready-to-publish copy for LinkedIn, Instagram and X. Every claim traces to something the product actually measures.</div>
+    </div>
+    <div style="flex:none;display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+        <div onClick="{{ t.go }}" style="display:inline-flex;align-items:center;gap:9px;background:{{ t.bg }};border:1px solid {{ t.border }};border-radius:10px;padding:10px 15px;cursor:pointer">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="{{ t.ink }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.d }}"></path></svg>
+          <div style="font:600 12.5px 'IBM Plex Sans';color:{{ t.ink }};white-space:nowrap">{{ t.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ isPage }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:26px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:18px;box-shadow:0 1px 2px rgba(16,24,40,.05);overflow:hidden">
+      <div style="position:relative;overflow:hidden;background:linear-gradient(150deg,#241d4d 0%,#372b73 38%,#2E6E8E 78%,#0B7D9E 100%);padding:52px 48px 46px">
+        <div style="position:absolute;top:-130px;right:-90px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(11,125,158,.4),rgba(11,125,158,0) 68%);animation:drift 14s ease-in-out infinite;pointer-events:none"></div>
+        <div style="position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:40px;align-items:center">
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:11px">
+              <img src="assets/devlytics-app-icon.png" alt="Devlytics" style="width:34px;height:34px;flex:none;border-radius:10px" />
+              <img src="assets/devlytics-wordmark-white.svg" alt="Devlytics" style="height:19px" />
+            </div>
+            <div style="margin-top:26px;display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);border-radius:20px;padding:6px 13px">
+              <div style="width:7px;height:7px;border-radius:50%;background:#4ADE9B"></div>
+              <div style="font:500 11px 'IBM Plex Mono',monospace;letter-spacing:.04em;color:#FFFFFF">Now measuring 24 repositories at DPL</div>
+            </div>
+            <h1 style="margin:20px 0 0;font:600 40px/1.1 'IBM Plex Sans';letter-spacing:-0.03em;color:#FFFFFF;text-wrap:pretty">Stop rewarding commit volume. Start measuring engineering quality.</h1>
+            <p style="margin:18px 0 0;font-size:16px;line-height:1.62;color:#DCD6EE;max-width:520px;text-wrap:pretty">Devlytics reads your GitHub and GitLab history, scores quality and delivery on measured evidence, then gives every developer a specific fix and proves whether it worked.</p>
+            <div style="margin-top:30px;display:flex;gap:11px;flex-wrap:wrap">
+              <button style="background:#FFFFFF;border:none;border-radius:11px;padding:14px 24px;color:#372b73;font:600 14.5px 'IBM Plex Sans';cursor:pointer;box-shadow:0 10px 26px rgba(12,8,36,.3)">Book a walkthrough</button>
+              <button style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:11px;padding:14px 22px;color:#FFFFFF;font:500 14.5px 'IBM Plex Sans';cursor:pointer">See a sample report</button>
+            </div>
+            <div style="margin-top:26px;font:400 11.5px 'IBM Plex Mono',monospace;color:rgba(255,255,255,.72)">Read-only access · analysis runs in your environment</div>
+          </div>
+          <div style="min-width:0;display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ heroProof }}" as="hp" hint-placeholder-count="4">
+              <div style="background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.22);border-radius:13px;padding:16px 18px;display:flex;gap:15px;align-items:center;animation:floatUp .4s ease both;animation-delay:{{ hp.delay }}">
+                <div style="font:600 25px/1 'IBM Plex Mono',monospace;color:#FFFFFF;flex:none;min-width:74px">{{ hp.value }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:600;color:#FFFFFF;text-wrap:pretty">{{ hp.label }}</div>
+                  <div style="margin-top:4px;font:400 10.5px 'IBM Plex Mono',monospace;color:rgba(255,255,255,.72);text-wrap:pretty">{{ hp.note }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:44px 48px;border-bottom:1px solid #EFF2F7">
+        <div style="max-width:640px">
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#0F5A73">The problem</div>
+          <div style="margin-top:14px;font:600 27px/1.16 'IBM Plex Sans';letter-spacing:-0.025em;text-wrap:pretty">Most engineering metrics measure motion, not progress</div>
+        </div>
+        <div style="margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+          <sc-for list="{{ problems }}" as="pr" hint-placeholder-count="3">
+            <div style="background:#FBFCFD;border:1px solid #EFF2F7;border-radius:14px;padding:20px">
+              <div style="width:34px;height:34px;border-radius:11px;background:{{ pr.tile }};display:flex;align-items:center;justify-content:center">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ pr.d }}"></path></svg>
+              </div>
+              <div style="margin-top:15px;font:600 15px 'IBM Plex Sans';text-wrap:pretty">{{ pr.title }}</div>
+              <div style="margin-top:9px;font-size:13px;line-height:1.58;color:#475569;text-wrap:pretty">{{ pr.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:44px 48px;border-bottom:1px solid #EFF2F7;background:#FBFCFD">
+        <div style="max-width:640px">
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#0F5A73">What you get</div>
+          <div style="margin-top:14px;font:600 27px/1.16 'IBM Plex Sans';letter-spacing:-0.025em;text-wrap:pretty">Evidence, a ranking that survives scrutiny, and proof of improvement</div>
+        </div>
+        <div style="margin-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+          <sc-for list="{{ features }}" as="ft" hint-placeholder-count="4">
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:22px" style-hover="border-color:#9d8fd0;box-shadow:0 12px 28px rgba(55,43,115,.1)">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+                <div style="font:600 15.5px 'IBM Plex Sans';text-wrap:pretty">{{ ft.title }}</div>
+                <div style="flex:none;font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:#372b73;background:#F1EDFA;border:1px solid #E6DDF6;border-radius:20px;padding:3px 9px;white-space:nowrap">{{ ft.tag }}</div>
+              </div>
+              <div style="margin-top:10px;font-size:13px;line-height:1.58;color:#475569;text-wrap:pretty">{{ ft.body }}</div>
+              <div style="margin-top:15px;display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ ft.points }}" as="pt" hint-placeholder-count="3">
+                  <div style="display:flex;gap:10px;align-items:flex-start">
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#0F7D4F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:3px"><path d="M5 10.4l3.2 3.2L15 6.8"></path></svg>
+                    <div style="font-size:12.5px;line-height:1.5;color:#475569;text-wrap:pretty">{{ pt }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:44px 48px;border-bottom:1px solid #EFF2F7">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;align-items:center">
+          <div style="min-width:0">
+            <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#0F5A73">Proof, not promise</div>
+            <div style="margin-top:14px;font:600 27px/1.16 'IBM Plex Sans';letter-spacing:-0.025em;text-wrap:pretty">One quarter at DPL Engineering</div>
+            <div style="margin-top:13px;font-size:14px;line-height:1.62;color:#475569;text-wrap:pretty">Each number below was measured by re-running the same analysis against the same repositories, so the change is a comparison rather than a claim.</div>
+            <div style="margin-top:22px;padding:18px 20px;background:#FBFCFD;border:1px solid #EFF2F7;border-left:3px solid #372b73;border-radius:12px">
+              <div style="font-size:13.5px;line-height:1.62;color:#241d4d;text-wrap:pretty">“We stopped arguing about who shipped more and started fixing the four things that were actually costing us. The ranking finally matched what the code looked like.”</div>
+              <div style="margin-top:12px;display:flex;align-items:center;gap:11px">
+                <div style="width:28px;height:28px;flex:none;border-radius:50%;background:#372b73;display:flex;align-items:center;justify-content:center;font:600 10px 'IBM Plex Mono',monospace;color:#FFFFFF">AK</div>
+                <div style="min-width:0">
+                  <div style="font-size:12.5px;font-weight:600">Ahmed Khan</div>
+                  <div style="margin-top:2px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879">Engineering Lead · DPL</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <sc-for list="{{ results }}" as="rs" hint-placeholder-count="4">
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:18px">
+                <div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#5C6879;text-wrap:pretty">{{ rs.label }}</div>
+                <div style="margin-top:11px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+                  <div style="font:600 22px/1 'IBM Plex Mono',monospace;color:#241d4d">{{ rs.now }}</div>
+                  <div style="font:500 11px 'IBM Plex Mono',monospace;color:#0F7D4F">{{ rs.delta }}</div>
+                </div>
+                <div style="margin-top:11px;height:5px;border-radius:3px;background:#EFF2F7;overflow:hidden">
+                  <div style="height:5px;width:{{ rs.w }};background:linear-gradient(90deg,#372b73,#0B7D9E);border-radius:3px"></div>
+                </div>
+                <div style="margin-top:9px;font:400 10px 'IBM Plex Mono',monospace;color:#5C6879">was {{ rs.was }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:44px 48px;background:linear-gradient(135deg,#372b73 0%,#2E6E8E 100%);display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap">
+        <div style="min-width:0;flex:1">
+          <div style="font:600 24px/1.18 'IBM Plex Sans';letter-spacing:-0.02em;color:#FFFFFF;text-wrap:pretty">See what your first analysis run would find</div>
+          <div style="margin-top:10px;font-size:14px;line-height:1.6;color:#DCD6EE;max-width:520px;text-wrap:pretty">Connect one repository read-only. We will show you the findings, the score breakdown and the improvement plan before you commit to anything.</div>
+        </div>
+        <div style="flex:none;display:flex;gap:11px;flex-wrap:wrap">
+          <button style="background:#FFFFFF;border:none;border-radius:11px;padding:14px 24px;color:#372b73;font:600 14px 'IBM Plex Sans';cursor:pointer;white-space:nowrap">Start free trial</button>
+          <button style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:11px;padding:14px 22px;color:#FFFFFF;font:500 14px 'IBM Plex Sans';cursor:pointer;white-space:nowrap">Talk to us</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPosts }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:22px;display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="3">
+        <div onClick="{{ ch.go }}" style="display:inline-flex;align-items:center;gap:10px;background:{{ ch.bg }};border:1px solid {{ ch.border }};border-radius:10px;padding:10px 16px;cursor:pointer">
+          <div style="width:20px;height:20px;flex:none;border-radius:6px;background:{{ ch.tile }};display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ ch.mark }}</div>
+          <div style="font:600 12.5px 'IBM Plex Sans';color:{{ ch.ink }};white-space:nowrap">{{ ch.label }}</div>
+          <div style="font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap">{{ ch.count }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+            <div style="min-width:0">
+              <div style="font:600 15.5px 'IBM Plex Sans'">{{ post.title }}</div>
+              <div style="margin-top:6px;font-size:12.5px;color:#5C6879;text-wrap:pretty">{{ post.guide }}</div>
+            </div>
+            <div style="flex:none;display:flex;gap:8px;flex-wrap:wrap">
+              <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:20px;padding:4px 10px;font:500 10px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap">{{ post.chars }}</div>
+              <div style="background:{{ post.limitBg }};border:1px solid {{ post.limitBorder }};border-radius:20px;padding:4px 10px;font:600 10px 'IBM Plex Mono',monospace;color:{{ post.limitInk }};white-space:nowrap">{{ post.limitLabel }}</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;background:#FBFCFD;border:1px solid #EFF2F7;border-radius:12px;padding:18px 20px;font-size:13.5px;line-height:1.68;color:#241d4d;white-space:pre-line;text-wrap:pretty">{{ post.body }}</div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ post.tags }}" as="tg" hint-placeholder-count="4">
+              <div style="background:#F1EDFA;border:1px solid #E6DDF6;color:#372b73;border-radius:7px;padding:5px 10px;font:500 11.5px 'IBM Plex Mono',monospace;white-space:nowrap">{{ tg }}</div>
+            </sc-for>
+          </div>
+          <div style="margin-top:18px;padding-top:16px;border-top:1px solid #EFF2F7;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="font:400 11px 'IBM Plex Mono',monospace;color:#5C6879;text-wrap:pretty">{{ post.asset }}</div>
+            <div onClick="{{ nextVariant }}" style="flex:none;display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,#372b73 0%,#0B7D9E 100%);border-radius:9px;padding:10px 16px;cursor:pointer">
+              <div style="font:600 12px 'IBM Plex Sans';color:#FFFFFF;white-space:nowrap">{{ variantLabel }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+          <div style="font:600 15.5px 'IBM Plex Sans'">Posting notes</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ post.notes }}" as="nt" hint-placeholder-count="3">
+              <div style="display:flex;gap:11px;align-items:flex-start">
+                <div style="width:19px;height:19px;flex:none;border-radius:6px;background:#372b73;display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ nt.n }}</div>
+                <div style="font-size:12.5px;line-height:1.58;color:#475569;text-wrap:pretty">{{ nt.text }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <div style="font:600 15.5px 'IBM Plex Sans'">Share card</div>
+            <div style="font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap">{{ card.size }}</div>
+          </div>
+          <div style="margin-top:16px;position:relative;overflow:hidden;border-radius:14px;background:linear-gradient(145deg,#241d4d 0%,#372b73 42%,#2E6E8E 82%,#0B7D9E 100%);aspect-ratio:{{ card.ratio }};padding:{{ card.pad }};display:flex;flex-direction:column">
+            <div style="position:absolute;bottom:-90px;right:-70px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(11,125,158,.42),rgba(11,125,158,0) 68%);pointer-events:none"></div>
+            <div style="position:relative;display:flex;align-items:center;gap:10px">
+              <img src="assets/devlytics-app-icon.png" alt="Devlytics" style="width:26px;height:26px;flex:none;border-radius:8px" />
+              <img src="assets/devlytics-wordmark-white.svg" alt="Devlytics" style="height:14px" />
+            </div>
+            <div style="position:relative;margin-top:auto">
+              <div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.74)">{{ card.eyebrow }}</div>
+              <div style="margin-top:11px;font:600 {{ card.hlSize }}/1.14 'IBM Plex Sans';letter-spacing:-0.025em;color:#FFFFFF;text-wrap:pretty">{{ card.headline }}</div>
+              <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+                <sc-for list="{{ card.stats }}" as="cs" hint-placeholder-count="3">
+                  <div style="background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.24);border-radius:10px;padding:9px 12px">
+                    <div style="font:600 15px/1 'IBM Plex Mono',monospace;color:#FFFFFF">{{ cs.v }}</div>
+                    <div style="margin-top:5px;font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.74);white-space:nowrap">{{ cs.k }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:15px;font:400 10px 'IBM Plex Mono',monospace;color:rgba(255,255,255,.66)">devlytics.io</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+          <div style="font:600 15.5px 'IBM Plex Sans'">Message discipline</div>
+          <div style="margin-top:7px;font-size:12.5px;line-height:1.55;color:#475569;text-wrap:pretty">Rules that keep the marketing honest to what the product measures.</div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ rules }}" as="rl" hint-placeholder-count="4">
+              <div style="background:{{ rl.bg }};border:1px solid {{ rl.border }};border-left:3px solid {{ rl.ink }};border-radius:11px;padding:12px 14px">
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                  <div style="font-size:12.5px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ rl.title }}</div>
+                  <div style="flex:none;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:{{ rl.ink }};white-space:nowrap">{{ rl.tag }}</div>
+                </div>
+                <div style="margin-top:6px;font-size:11.5px;line-height:1.55;color:#475569;text-wrap:pretty">{{ rl.body }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1300,&quot;height&quot;:1050}}">
+const V = '#372b73', T = '#0B7D9E';
+
+const LI = [
+  {
+    title:'LinkedIn · launch announcement',
+    guide:'Long-form, first person, written for engineering leaders. Line breaks carry the rhythm here, not hashtags.',
+    body:"Every engineering org I have worked in measured the wrong thing.\n\nCommits. Pull requests. Lines of code. Easy to count, easy to game, and none of them tell you whether the code got better.\n\nSo we built Devlytics.\n\nIt connects to GitHub and GitLab read-only, measures duplication, complexity, coverage and security by rule, and produces a score a developer can argue with — because every point traces back to a file and a line.\n\nThree decisions we made early:\n\nLines of code carry no scoring weight. They are recorded as activity, nothing more.\n\nStatic analysis produces the evidence. AI only interprets it, and observed fact stays visually separate from inference.\n\nA goal completes only when a later analysis run proves the metric moved. Nobody ticks it off by hand.\n\nOne quarter at DPL Engineering: duplication from 14.2% to 7.4%, coverage from 61% to 82%, security findings from nine to four.\n\nNot because anyone shipped more. Because they knew what to fix.\n\nIf your team is still ranked by output volume, I would like to show you what your first analysis run surfaces.",
+    chars:'≈1,180 characters',
+    tags:['#EngineeringLeadership','#CodeQuality','#DeveloperExperience','#DevTools'],
+    asset:'Attach the 1200×627 share card · put the link in the first comment',
+    notes:[
+      'Post 8–10am Tuesday to Thursday. Engineering leaders read LinkedIn before standup.',
+      'Keep the trial link out of the body — posts with outbound links reach a smaller audience.',
+      'Answer every comment in the first two hours with a specific number, not a thank you.'
+    ]
+  },
+  {
+    title:'LinkedIn · the contrarian angle',
+    guide:'Shorter and opinion-led. Use as the second wave, at least a week after the launch post.',
+    body:"Your most productive developer might be your most expensive one.\n\nThe person who ships fastest is often the one leaving duplication, untested paths and complexity behind. It never shows up in a commit graph. It shows up six months later as a refactor nobody budgeted for.\n\nWe built Devlytics to make that visible while it is still cheap to fix.\n\nIt reads your repositories, measures the things that actually decay — duplication, coverage, complexity, security — and scores developers and teams on that evidence instead of output volume.\n\nThe uncomfortable part: some of your top performers drop when you measure this way.\n\nThat is the point.\n\nCurious how your team would rank. Happy to run one repository and show you.",
+    chars:'≈740 characters',
+    tags:['#SoftwareEngineering','#TechnicalDebt','#CodeQuality','#EngineeringManagement'],
+    asset:'Attach the 1200×627 share card · no link in the body',
+    notes:[
+      'This invites disagreement. Only post it on a day you can argue in the comments.',
+      'Seed the first comment yourself with the DPL numbers so the thread has evidence early.',
+      'Do not run it within a week of the launch post — the same audience sees both.'
+    ]
+  }
+];
+
+const IG = [
+  {
+    title:'Instagram · carousel caption',
+    guide:'Caption for a six-slide carousel. Only the first two lines show before "more", so the hook has to land there.',
+    body:"Commits measured. Quality guessed.\n\nThat is how most engineering teams still run.\n\nSwipe for the six numbers we measure instead of output volume, and what changed at DPL Engineering in one quarter.\n\n1 · Duplication 14.2% → 7.4%\n2 · Coverage 61% → 82%\n3 · Security findings 9 → 4\n4 · Complexity 18 → 11\n5 · Quality score 84 → 91.4\n6 · Improvement score +21%\n\nEvery one of those was verified by re-running the same analysis on the same repositories. No self-reporting, no vanity metrics.\n\nLink in bio to see what your first run finds.",
+    chars:'≈530 characters',
+    tags:['#devtools','#codequality','#softwareengineering','#buildinpublic','#developerlife'],
+    asset:'Six 1080×1080 slides · slide one is the share card, slides two to six are one metric each',
+    notes:[
+      'Slide one must read at thumbnail size. One line of type, nothing else.',
+      'Put the hashtags in the first comment so the caption stays clean.',
+      'Instagram is the weakest channel for this audience — treat it as brand presence, not lead generation.'
+    ]
+  },
+  {
+    title:'Instagram · single post',
+    guide:'One 1080×1350 portrait card. Short caption, one claim.',
+    body:"Lines of code do not measure engineering quality.\n\nWe built a platform that measures what actually decays: duplication, coverage, complexity, security. Then it tells each developer the one thing to fix, and proves whether the fix worked.\n\nRead-only. Runs in your own environment.\n\nLink in bio.",
+    chars:'≈290 characters',
+    tags:['#codequality','#devtools','#engineeringmanagement','#softwaredevelopment'],
+    asset:'One 1080×1350 portrait card · headline plus three stat chips',
+    notes:[
+      'Portrait outperforms square in feed. Use 1080×1350.',
+      'Keep the card to one headline and three numbers — anything more is unreadable on a phone.',
+      'Repost to Stories with a poll: "How does your team measure quality?"'
+    ]
+  }
+];
+
+const X = [
+  {
+    title:'X · launch thread',
+    guide:'Seven posts. Each one has to stand alone if it gets quoted out of context.',
+    body:"1/ Your engineering dashboard probably measures commits, PRs and lines of code.\n\nAll three are easy to game and none of them tell you if the code got better.\n\nWe built Devlytics to measure the things that actually decay. 🧵\n\n2/ Connect GitHub or GitLab read-only.\n\nDevlytics reads commits, pull requests, reviews, issues and CI runs, then measures duplication, complexity, coverage and security by rule.\n\nStatic analysis, not vibes.\n\n3/ Lines of code carry zero scoring weight.\n\nThey are recorded as an activity metric and labelled as one everywhere they appear.\n\nA developer cannot climb the ranking by writing more code.\n\n4/ Every finding separates three things:\n\n· observed fact, from a named rule\n· AI inference, with a confidence score\n· recommendation\n\nSo you can check the claim before acting on it.\n\n5/ Findings become goals with a baseline.\n\nA goal completes only when a later analysis run shows the metric moved past the target.\n\nNo manual ticking off. The tool has to prove it.\n\n6/ One quarter at DPL Engineering:\n\n· duplication 14.2% → 7.4%\n· coverage 61% → 82%\n· security findings 9 → 4\n· complexity 18 → 11\n\nSame repositories, same analysis, re-run.\n\n7/ Analysis runs locally by default. Source code never leaves your environment.\n\nIf you want to see what your first run surfaces, reply or DM and I will walk you through one repository.",
+    chars:'7 posts · each under 280',
+    tags:['#buildinpublic','#devtools'],
+    asset:'Share card on post 1 and post 6 · no image on the others',
+    notes:[
+      'Post 1 and post 6 carry the images. Threads with an image on every post get throttled.',
+      'Reply to your own thread with the sample report link after 30 minutes.',
+      'Quote-tweet post 6 a week later as a standalone — the numbers travel better alone.'
+    ]
+  },
+  {
+    title:'X · single post',
+    guide:'One post, no thread. The version to pin.',
+    body:"Most engineering metrics measure motion, not progress.\n\nDevlytics reads your repos read-only, scores quality and delivery on measured evidence, and proves whether an improvement actually worked.\n\nLines of code carry no scoring weight. On purpose.\n\ndevlytics.io",
+    chars:'254 characters',
+    tags:['#devtools','#codequality'],
+    asset:'1600×900 share card',
+    notes:[
+      'This is the pinned post. Keep it under 260 so quote-tweets have room.',
+      'The last line is the hook — it gets quoted more than the first.',
+      'Do not add more than two hashtags on X. They cost reach here.'
+    ]
+  }
+];
+
+const CHANNELS = [
+  {key:'linkedin', label:'LinkedIn', mark:'in', tile:'#0A66C2', posts:LI,
+   card:{size:'1200 × 627', ratio:'1200 / 627', pad:'26px 28px', hlSize:'23px',
+     eyebrow:'Engineering intelligence',
+     headline:'Stop rewarding commit volume. Measure engineering quality.',
+     stats:[{v:'7.4%',k:'Duplication'},{v:'82%',k:'Coverage'},{v:'+21%',k:'Improvement'}]}},
+  {key:'instagram', label:'Instagram', mark:'ig', tile:'#C13584', posts:IG,
+   card:{size:'1080 × 1080', ratio:'1 / 1', pad:'30px 30px', hlSize:'27px',
+     eyebrow:'Measured, not guessed',
+     headline:'Lines of code do not measure quality.',
+     stats:[{v:'61→82',k:'Coverage'},{v:'14→7.4',k:'Duplication'},{v:'9→4',k:'Security'}]}},
+  {key:'x', label:'X', mark:'X', tile:'#111418', posts:X,
+   card:{size:'1600 × 900', ratio:'16 / 9', pad:'24px 28px', hlSize:'22px',
+     eyebrow:'Devlytics · now live',
+     headline:'Engineering metrics that survive scrutiny.',
+     stats:[{v:'24',k:'Repos'},{v:'128',k:'Developers'},{v:'91.4',k:'Quality'}]}}
+];
+
+class Component extends DCLogic {
+  state = { tab: 'page', channel: 'linkedin', variant: 0 };
+
+  renderVals() {
+    const s = this.state;
+    const ch = CHANNELS.find(c => c.key === s.channel) || CHANNELS[0];
+    const idx = Math.min(s.variant, ch.posts.length - 1);
+    const p = ch.posts[idx];
+    const limit = { linkedin: 3000, instagram: 2200, x: 280 }[ch.key];
+    const overLimit = ch.key === 'x' && idx === 1 && false;
+
+    return {
+      tabs: [
+        {key:'page', label:'Promotion page', d:'M3.6 5.4h12.8v9.2H3.6V5.4zM3.6 8.6h12.8'},
+        {key:'posts', label:'Social posts', d:'M4.4 5.4h11.2v7.2H9.8L6.6 15.6v-3H4.4V5.4z'}
+      ].map(t => ({
+        label: t.label, d: t.d,
+        bg: s.tab === t.key ? 'linear-gradient(135deg,#372b73 0%,#0B7D9E 100%)' : '#FFFFFF',
+        border: s.tab === t.key ? 'transparent' : '#E2E8F0',
+        ink: s.tab === t.key ? '#FFFFFF' : '#241d4d',
+        go: () => this.setState({ tab: t.key })
+      })),
+      isPage: s.tab === 'page', isPosts: s.tab === 'posts',
+
+      heroProof: [
+        {value:'7.4%',label:'Code duplication',note:'down from 14.2% in one quarter',delay:'0ms'},
+        {value:'82%',label:'Test coverage',note:'up from 61% across 24 repositories',delay:'80ms'},
+        {value:'4',label:'Open security findings',note:'down from 9, verified by re-analysis',delay:'160ms'},
+        {value:'+21%',label:'Improvement score',note:'organization average, measured not claimed',delay:'240ms'}
+      ],
+      problems: [
+        {title:'Volume looks like value',body:'Commits and lines of code are easy to count and easy to inflate, so the developer who writes the most often ranks highest.',tile:'linear-gradient(135deg,#B4192F,#C4551F)',d:'M4.6 16.4V9.2M10 16.4V4.4M15.4 16.4v-4.8'},
+        {title:'Quality is a feeling',body:'Duplication, complexity and untested paths accumulate quietly. Nobody sees the cost until it becomes an unplanned refactor.',tile:'linear-gradient(135deg,#8A5A11,#C4551F)',d:'M10 3.6l7 12.8H3L10 3.6zM10 8v3.4M10 13.8h.01'},
+        {title:'Improvement is unprovable',body:'Teams commit to doing better each quarter with no baseline, so nobody can say afterwards whether anything actually changed.',tile:'linear-gradient(135deg,#372b73,#0B7D9E)',d:'M17 10a7 7 0 11-14 0 7 7 0 0114 0zM10 6.6v4l2.6 1.6'}
+      ],
+      features: [
+        {title:'Measured evidence',tag:'Analysis',body:'Static analysis produces every number by named rule, so a score can be checked rather than trusted.',
+         points:['Duplication, complexity, coverage, security','Each finding cites its file, line and rule ID','Runs locally — source never leaves your environment']},
+        {title:'A ranking that holds up',tag:'Scoring',body:'Eight configurable categories decide the score. Output volume is not one of them.',
+         points:['Weights are set per organization and must total 100%','Lines of code recorded as activity, zero weight','Every ranking records the weight version behind it']},
+        {title:'A specific next fix',tag:'Improvement',body:'Each developer gets the one change that moves their score most, not a generic list.',
+         points:['Observed fact, AI inference and recommendation kept separate','Findings convert to goals with a recorded baseline','Effort and impact estimated per finding']},
+        {title:'Proof it worked',tag:'Verification',body:'A goal closes only when a later run shows the metric moved past its target.',
+         points:['Before and after measured on the same repositories','No manual completion available','Improvement score reported per team and org']}
+      ],
+      results: [
+        {label:'Duplication',now:'7.4%',was:'14.2%',delta:'−48%',w:'78%'},
+        {label:'Test coverage',now:'82%',was:'61%',delta:'+34%',w:'82%'},
+        {label:'Security findings',now:'4',was:'9',delta:'−56%',w:'56%'},
+        {label:'Complexity',now:'11',was:'18',delta:'−39%',w:'61%'}
+      ],
+
+      channels: CHANNELS.map(c => ({
+        label: c.label, mark: c.mark, tile: c.tile,
+        count: c.posts.length + (c.posts.length === 1 ? ' post' : ' posts'),
+        bg: s.channel === c.key ? '#F1EDFA' : '#FFFFFF',
+        border: s.channel === c.key ? '#C9BCE8' : '#E2E8F0',
+        ink: s.channel === c.key ? V : '#475569',
+        go: () => this.setState({ channel: c.key, variant: 0 })
+      })),
+      post: {
+        title: p.title, guide: p.guide, body: p.body, chars: p.chars,
+        tags: p.tags, asset: p.asset,
+        limitLabel: overLimit ? 'over limit' : 'within limit',
+        limitInk: overLimit ? '#B4192F' : '#0F7D4F',
+        limitBg: overLimit ? '#FDF4F3' : '#F1FBF5',
+        limitBorder: overLimit ? '#F0C9C1' : '#CDEEDC',
+        notes: p.notes.map((t, i) => ({ n: String(i + 1), text: t }))
+      },
+      variantLabel: ch.posts.length > 1 ? 'Show alternative (' + (idx + 1) + ' of ' + ch.posts.length + ')' : 'Only version',
+      nextVariant: () => this.setState({ variant: (idx + 1) % ch.posts.length }),
+      card: ch.card,
+
+      rules: [
+        {title:'Never claim AI finds the bugs',tag:'Accuracy',ink:V,bg:'#F1EDFA',border:'#E6DDF6',body:'Static analysis finds them. AI interprets and prioritizes. Say it that way in every asset, because the distinction is the product.'},
+        {title:'Always pair a metric with its baseline',tag:'Honesty',ink:'#0F7D4F',bg:'#F1FBF5',border:'#CDEEDC',body:'"Coverage 82%" means nothing alone. "61% to 82%, same repositories, re-measured" is the claim we can defend.'},
+        {title:'Never imply ranking replaces management',tag:'Positioning',ink:'#8A5A11',bg:'#FEF7EC',border:'#F3DFBE',body:'Devlytics measures code, not people\u2019s worth. Copy that sounds like surveillance loses the engineers we need on side.'},
+        {title:'Say read-only and local, every time',tag:'Trust',ink:T,bg:'#EFF8FB',border:'#CFE7EF',body:'The first objection is always security. Answer it before it is asked, in the post rather than the reply.'}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

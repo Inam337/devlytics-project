@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B7D9E"/><stop offset="1" stop-color="#372b73"/></linearGradient></defs><rect width="200" height="200" rx="28" fill="url(#tg)"/><g transform="translate(60,58) scale(0.53)" fill="#FFFFFF"><circle cx="75" cy="52" r="42"/><rect x="40" y="80" width="10" height="60" rx="5"/><rect x="62" y="80" width="10" height="76" rx="5"/><rect x="84" y="80" width="10" height="76" rx="5"/><rect x="106" y="80" width="10" height="60" rx="5"/></g></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F6F7FB; color:#241d4d; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#372b73; text-decoration:none; }
+  a:hover { color:#0F5A73; }
+  input, button { font-family:inherit; }
+  @keyframes sweep { from { left:-42% } to { left:100% } }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  @keyframes floatUp { from { opacity:0; transform:translateY(9px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes pulseDot { 0%,100% { opacity:.4; transform:scale(.85) } 50% { opacity:1; transform:scale(1.15) } }
+  @keyframes flowDash { to { stroke-dashoffset:-28 } }
+</style>
+</helmet>
+
+<div style="max-width:1240px;margin:0 auto;padding:34px 32px 80px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:26px;flex-wrap:wrap">
+    <div style="min-width:0">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#0F5A73">How the platform behaves</div>
+      <div style="margin-top:13px;font:600 30px/1.12 'IBM Plex Sans';letter-spacing:-0.025em">From connected repository to live ranking</div>
+      <div style="margin-top:12px;font-size:14.5px;line-height:1.62;color:#475569;max-width:720px;text-wrap:pretty">What happens after GitHub or GitLab is connected: which events arrive, how they are attributed to a developer and a team, what recalculates, and when each dashboard surface changes.</div>
+    </div>
+    <div style="flex:none;display:flex;gap:9px;flex-wrap:wrap">
+      <div onClick="{{ togglePlay }}" style="display:inline-flex;align-items:center;gap:9px;background:{{ playBg }};border:1px solid {{ playBorder }};border-radius:10px;padding:10px 15px;cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="{{ playInk }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ playIcon }}"></path></svg>
+        <div style="font:600 12.5px 'IBM Plex Sans';color:{{ playInk }};white-space:nowrap">{{ playLabel }}</div>
+      </div>
+      <div onClick="{{ resetFlow }}" style="display:inline-flex;align-items:center;gap:9px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 15px;cursor:pointer">
+        <div style="font:500 12.5px 'IBM Plex Sans';color:#241d4d;white-space:nowrap">Restart</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:26px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:24px 26px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap">
+      <div style="font:600 16px 'IBM Plex Sans'">Pipeline</div>
+      <div style="font:400 11.5px 'IBM Plex Mono',monospace;color:#5C6879">Stage {{ stageNo }} of 6 · {{ stageClock }}</div>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">
+      <sc-for list="{{ stages }}" as="st" hint-placeholder-count="6">
+        <div onClick="{{ st.go }}" style="flex:1;min-width:150px;cursor:pointer">
+          <div style="height:4px;border-radius:3px;background:{{ st.bar }};position:relative;overflow:hidden">
+            <sc-if value="{{ st.live }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:0;height:4px;width:42%;border-radius:3px;background:linear-gradient(90deg,#372b73,#0B7D9E);animation:sweep 1.1s ease-in-out infinite"></div>
+            </sc-if>
+          </div>
+          <div style="margin-top:11px;display:flex;align-items:center;gap:9px">
+            <div style="width:20px;height:20px;flex:none;border-radius:50%;background:{{ st.dotBg }};border:1px solid {{ st.dotBorder }};display:flex;align-items:center;justify-content:center;font:600 9.5px 'IBM Plex Mono',monospace;color:{{ st.dotInk }}">{{ st.mark }}</div>
+            <div style="min-width:0;font-size:12.5px;font-weight:{{ st.weight }};color:{{ st.ink }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.label }}</div>
+          </div>
+          <div style="margin-top:6px;padding-left:29px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.meta }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;align-items:stretch">
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="min-width:0">
+          <div style="font:600 15.5px 'IBM Plex Sans'">{{ panel.title }}</div>
+          <div style="margin-top:7px;font-size:12.5px;line-height:1.55;color:#475569;text-wrap:pretty">{{ panel.desc }}</div>
+        </div>
+        <div style="flex:none;background:{{ panel.tagBg }};border:1px solid {{ panel.tagBorder }};color:{{ panel.tagInk }};border-radius:20px;padding:4px 10px;font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap">{{ panel.tag }}</div>
+      </div>
+
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ panel.events }}" as="ev" hint-placeholder-count="4">
+          <div style="display:flex;gap:12px;align-items:flex-start;background:{{ ev.bg }};border:1px solid {{ ev.border }};border-radius:11px;padding:12px 14px;animation:floatUp .3s ease both;animation-delay:{{ ev.delay }}">
+            <div style="width:22px;height:22px;flex:none;border-radius:7px;background:{{ ev.tile }};display:flex;align-items:center;justify-content:center">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="{{ ev.glyph }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ev.d }}"></path></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:500;color:#241d4d;text-wrap:pretty">{{ ev.title }}</div>
+              <div style="margin-top:4px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;text-wrap:pretty">{{ ev.meta }}</div>
+            </div>
+            <div style="flex:none;font:500 10px 'IBM Plex Mono',monospace;color:{{ ev.stateInk }};white-space:nowrap">{{ ev.state }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:1"></div>
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid #EFF2F7">
+        <div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#5C6879">What the user sees</div>
+        <div style="margin-top:9px;font-size:12.5px;line-height:1.6;color:#475569;text-wrap:pretty">{{ panel.ux }}</div>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);overflow:hidden;display:flex;flex-direction:column">
+      <div style="padding:13px 16px;border-bottom:1px solid #EFF2F7;background:#FBFCFD;display:flex;align-items:center;gap:10px">
+        <div style="display:flex;gap:5px;flex:none">
+          <div style="width:8px;height:8px;border-radius:50%;background:#CBD5E1"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#CBD5E1"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#CBD5E1"></div>
+        </div>
+        <div style="flex:1;text-align:center;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">app.devlytics.io/{{ panel.slug }}</div>
+        <div style="flex:none;display:flex;align-items:center;gap:7px">
+          <div style="width:7px;height:7px;border-radius:50%;background:{{ panel.liveDot }};animation:pulseDot 1.6s ease-in-out infinite"></div>
+          <div style="font:500 9.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap">{{ panel.liveLabel }}</div>
+        </div>
+      </div>
+
+      <div style="flex:1;display:flex;min-height:392px">
+        <div style="width:128px;flex:none;background:linear-gradient(180deg,#0B7D9E 0%,#2E6E8E 34%,#372b73 100%);padding:13px 8px;display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center;gap:8px;padding:3px 4px 13px">
+            <img src="assets/devlytics-app-icon.png" alt="Devlytics" style="width:20px;height:20px;flex:none;border-radius:6px" />
+            <img src="assets/devlytics-wordmark-white.svg" alt="Devlytics" style="height:11px" />
+          </div>
+          <sc-for list="{{ mockNav }}" as="mn" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:{{ mn.bg }};box-shadow:{{ mn.bar }}">
+              <div style="width:11px;height:11px;flex:none;border-radius:3px;background:{{ mn.dot }}"></div>
+              <div style="min-width:0;font-size:9.5px;font-weight:{{ mn.weight }};color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mn.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="flex:1;min-width:0;padding:16px;display:flex;flex-direction:column">
+          <div style="font:600 13px 'IBM Plex Sans';color:#241d4d">{{ mock.heading }}</div>
+          <div style="margin-top:5px;font-size:10.5px;color:#5C6879;text-wrap:pretty">{{ mock.sub }}</div>
+
+          <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <sc-for list="{{ mock.tiles }}" as="tl" hint-placeholder-count="4">
+              <div style="background:#FBFCFD;border:1px solid #EFF2F7;border-radius:9px;padding:11px">
+                <div style="font:500 8px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#5C6879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ tl.label }}</div>
+                <sc-if value="{{ tl.pending }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-top:9px;width:52px;height:13px;border-radius:4px;background:#EFF2F7;position:relative;overflow:hidden">
+                    <div style="position:absolute;top:0;height:13px;width:44%;background:linear-gradient(90deg,rgba(55,43,115,0),rgba(55,43,115,.18),rgba(55,43,115,0));animation:sweep 1.1s ease-in-out infinite"></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ tl.ready }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:8px;font:600 17px/1 'IBM Plex Mono',monospace;color:#241d4d">{{ tl.value }}</div>
+                  <div style="margin-top:6px;font:500 9px 'IBM Plex Mono',monospace;color:{{ tl.ink }}">{{ tl.delta }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:12px;flex:1;background:#FBFCFD;border:1px solid #EFF2F7;border-radius:9px;padding:12px;display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+              <div style="font:600 10.5px 'IBM Plex Sans';color:#241d4d">{{ mock.listTitle }}</div>
+              <div style="font:400 8.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap">{{ mock.listMeta }}</div>
+            </div>
+            <div style="margin-top:9px;display:flex;flex-direction:column">
+              <sc-for list="{{ mock.rows }}" as="rw" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:24px 1fr 40px 34px;gap:7px;align-items:center;padding:7px 0;border-top:1px solid #EFF2F7">
+                  <div style="font:600 9px 'IBM Plex Mono',monospace;color:{{ rw.rankInk }}">{{ rw.rank }}</div>
+                  <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                    <div style="width:17px;height:17px;flex:none;border-radius:50%;background:{{ rw.tc }};display:flex;align-items:center;justify-content:center;font:600 7px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ rw.ini }}</div>
+                    <div style="min-width:0;font-size:9.5px;color:#241d4d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ rw.name }}</div>
+                  </div>
+                  <sc-if value="{{ rw.pending }}" hint-placeholder-val="{{ false }}">
+                    <div style="height:8px;border-radius:3px;background:#EFF2F7;animation:sweep 1.2s ease-in-out infinite"></div>
+                  </sc-if>
+                  <sc-if value="{{ rw.ready }}" hint-placeholder-val="{{ true }}">
+                    <div style="font:600 9.5px 'IBM Plex Mono',monospace;color:#241d4d;text-align:right">{{ rw.score }}</div>
+                  </sc-if>
+                  <div style="font:500 8.5px 'IBM Plex Mono',monospace;color:{{ rw.trendInk }};text-align:right;white-space:nowrap">{{ rw.trend }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="flex:1"></div>
+            <sc-if value="{{ mock.hasBanner }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:10px;display:flex;gap:9px;align-items:flex-start;background:{{ mock.bannerBg }};border:1px solid {{ mock.bannerBorder }};border-left:3px solid {{ mock.bannerInk }};border-radius:8px;padding:9px 11px">
+                <div style="flex:1;min-width:0;font-size:9.5px;line-height:1.5;color:#475569;text-wrap:pretty">{{ mock.banner }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start">
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+      <div style="font:600 15.5px 'IBM Plex Sans'">Attribution</div>
+      <div style="margin-top:7px;font-size:12.5px;line-height:1.55;color:#475569;text-wrap:pretty">One commit reaches an individual score, a team score and a project score by different routes. Nothing is double counted.</div>
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ attribution }}" as="at" hint-placeholder-count="5">
+          <div style="display:flex;gap:13px;align-items:flex-start">
+            <div style="display:flex;flex-direction:column;align-items:center;flex:none;width:22px">
+              <div style="width:22px;height:22px;border-radius:7px;background:{{ at.tile }};display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ at.n }}</div>
+              <sc-if value="{{ at.hasLine }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;width:2px;background:#EFF2F7;min-height:22px"></div>
+              </sc-if>
+            </div>
+            <div style="flex:1;min-width:0;padding-bottom:15px">
+              <div style="font-size:12.5px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ at.title }}</div>
+              <div style="margin-top:5px;font-size:11.5px;line-height:1.55;color:#475569;text-wrap:pretty">{{ at.body }}</div>
+              <sc-if value="{{ at.hasCode }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:8px;background:#FBFCFD;border:1px solid #EFF2F7;border-radius:7px;padding:8px 10px;font:400 10px/1.65 'IBM Plex Mono',monospace;color:#5C6879;white-space:pre-line">{{ at.code }}</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+      <div style="font:600 15.5px 'IBM Plex Sans'">Refresh cadence</div>
+      <div style="margin-top:7px;font-size:12.5px;line-height:1.55;color:#475569;text-wrap:pretty">Not everything is live. Each surface states its own freshness so a stale number is never mistaken for a current one.</div>
+      <div style="margin-top:18px;display:flex;flex-direction:column">
+        <sc-for list="{{ cadence }}" as="cd" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #EFF2F7">
+            <div style="min-width:0">
+              <div style="font-size:12.5px;color:#241d4d;text-wrap:pretty">{{ cd.surface }}</div>
+              <div style="margin-top:4px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;text-wrap:pretty">{{ cd.trigger }}</div>
+            </div>
+            <div style="flex:none;background:{{ cd.bg }};border:1px solid {{ cd.border }};color:{{ cd.ink }};border-radius:20px;padding:4px 10px;font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">{{ cd.speed }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+      <div style="font:600 15.5px 'IBM Plex Sans'">Failure behaviour</div>
+      <div style="margin-top:7px;font-size:12.5px;line-height:1.55;color:#475569;text-wrap:pretty">When collection breaks, metrics freeze rather than drift. The dashboard says which number is stale and why.</div>
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ failures }}" as="fl" hint-placeholder-count="4">
+          <div style="background:{{ fl.bg }};border:1px solid {{ fl.border }};border-left:3px solid {{ fl.ink }};border-radius:11px;padding:12px 14px">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+              <div style="font-size:12.5px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ fl.title }}</div>
+              <div style="flex:none;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:{{ fl.ink }};white-space:nowrap">{{ fl.tag }}</div>
+            </div>
+            <div style="margin-top:6px;font-size:11.5px;line-height:1.55;color:#475569;text-wrap:pretty">{{ fl.body }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1300,&quot;height&quot;:1100}}">
+const V = '#372b73', T = '#0B7D9E', L = '#5b3f9e', P = '#2E6E8E';
+const GRAD = 'linear-gradient(135deg,#372b73 0%,#0B7D9E 100%)';
+const GREEN = '#0F7D4F', RED = '#B4192F', AMBER = '#8A5A11', MUTED = '#5C6879';
+
+const D = {
+  commit:'M10 4.6a2.6 2.6 0 110 5.2 2.6 2.6 0 010-5.2zM10 9.8v5.6M10 4.6V2.8',
+  pr:'M6 5.4a1.7 1.7 0 110 3.4 1.7 1.7 0 010-3.4zM6 8.8v5.8M14 11.2a1.7 1.7 0 110 3.4 1.7 1.7 0 010-3.4zM14 11.2V8.2c0-1.4-1.2-2.4-2.6-2.4H8.4',
+  review:'M12.4 9a3.4 3.4 0 11-6.8 0 3.4 3.4 0 016.8 0zM11.6 11.6l4 4',
+  ci:'M17 10a7 7 0 11-14 0 7 7 0 0114 0zM6.9 10.2l2.2 2.2 4-4.1',
+  test:'M8 3.4h4v4.2l3 6.2a2 2 0 01-1.8 2.8H6.8A2 2 0 015 13.8l3-6.2V3.4z',
+  issue:'M10 3.4a6.6 6.6 0 016.6 6.6 6.6 6.6 0 01-6.6 6.6 6.6 6.6 0 01-6.6-6.6A6.6 6.6 0 0110 3.4zM10 6.8v4.4M10 13.6h.01',
+  hook:'M4.6 10a5.4 5.4 0 015.4-5.4h5.4M15.4 4.6l-2.4-2.4M15.4 4.6l-2.4 2.4M15.4 10a5.4 5.4 0 01-5.4 5.4H4.6',
+  score:'M4.6 16.4V9.2M10 16.4V4.4M15.4 16.4v-4.8',
+  rank:'M10 3.6l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6L10 3.6z'
+};
+
+const STAGES = [
+  {
+    key:'connect', label:'Connect provider', meta:'OAuth · read-only', slug:'integrations/github',
+    tag:'Manual', tagInk:V, tagBg:'#F1EDFA', tagBorder:'#E6DDF6',
+    title:'GitHub and GitLab are authorized',
+    desc:'An organization admin authorizes read-only access. Devlytics never writes to a repository and never opens pull requests.',
+    ux:'The Integrations screen shows each provider with a connection dot, repository count and last sync time. Nothing else in the product has data yet.',
+    liveLabel:'not synced', liveDot:'#CBD5E1',
+    events:[
+      {title:'GitHub organization dpl-engineering authorized',meta:'scopes repo:read · org:read · actions:read',state:'Granted',ink:GREEN,d:D.hook},
+      {title:'GitLab group dpl-platform authorized',meta:'scopes read_api · read_repository',state:'Granted',ink:GREEN,d:D.hook},
+      {title:'Webhook endpoint registered',meta:'push · pull_request · pipeline · issues',state:'Active',ink:GREEN,d:D.hook},
+      {title:'18 GitHub and 6 GitLab repositories discovered',meta:'awaiting selection',state:'Pending',ink:AMBER,d:D.commit}
+    ],
+    heading:'Integrations', sub:'Two providers connected · no metrics collected yet',
+    listTitle:'Repositories discovered', listMeta:'24 found',
+    tiles:[['Repositories','—','',0],['Developers','—','',0],['Commits','—','',0],['Quality','—','',0]],
+    rows:[['—','payment-api','PA',V,'','',0],['—','customer-web','CW',P,'','',0],['—','mobile-app','MA',L,'','',0],['—','data-etl','DE',T,'','',0]],
+    banner:'Select repositories to begin the first sync. Metrics, quality and rankings appear only after analysis completes.',
+    bannerInk:AMBER, bannerBg:'#FEF7EC', bannerBorder:'#F3DFBE',
+    navIdx:5
+  },
+  {
+    key:'import', label:'Import history', meta:'Backfill · one hour', slug:'integrations/github/sync',
+    tag:'Backfill', tagInk:AMBER, tagBg:'#FEF7EC', tagBorder:'#F3DFBE',
+    title:'Twelve months of history is pulled',
+    desc:'The initial sync walks commits, pull requests, reviews, issues and CI runs for every selected repository, oldest first, so trends have a baseline.',
+    ux:'A progress bar per repository. KPI tiles stay as skeletons rather than showing zero, because zero would read as a real measurement.',
+    liveLabel:'syncing', liveDot:AMBER,
+    events:[
+      {title:'payment-api · 1,284 commits, 212 pull requests',meta:'12 months · complete',state:'Done',ink:GREEN,d:D.commit},
+      {title:'customer-web · 1,642 commits, 284 pull requests',meta:'12 months · complete',state:'Done',ink:GREEN,d:D.commit},
+      {title:'mobile-app · fetching reviews',meta:'874 of 874 commits · 96 of 141 reviews',state:'62%',ink:AMBER,d:D.review},
+      {title:'data-etl · queued',meta:'GitLab rate limit · retry in 40s',state:'Queued',ink:MUTED,d:D.issue}
+    ],
+    heading:'Initial sync', sub:'3 of 4 repositories complete · 41 minutes elapsed',
+    listTitle:'Sync progress', listMeta:'62% overall',
+    tiles:[['Repositories','24','+24 imported',1],['Commits','4,312','partial',1],['Developers','—','',0],['Quality','—','',0]],
+    rows:[['✓','payment-api','PA',V,'100%','',1],['✓','customer-web','CW',P,'100%','',1],['◔','mobile-app','MA',L,'62%','',1],['—','data-etl','DE',T,'','',0]],
+    banner:'Scores are withheld until every selected repository finishes. A partial ranking would put developers in the wrong order.',
+    bannerInk:AMBER, bannerBg:'#FEF7EC', bannerBorder:'#F3DFBE',
+    navIdx:5
+  },
+  {
+    key:'identity', label:'Match identities', meta:'Author to member', slug:'settings/users',
+    tag:'Automatic', tagInk:T, tagBg:'#EFF8FB', tagBorder:'#CFE7EF',
+    title:'Git authors are matched to members',
+    desc:'Commit email, provider username and invited member email are matched. Unmatched authors are held aside rather than guessed at.',
+    ux:'Settings · Users shows matched developers plus an unmatched queue. An admin resolves each one, or marks it as a bot to exclude from scoring.',
+    liveLabel:'matching', liveDot:T,
+    events:[
+      {title:'ahmed.khan@dpl.com matched to Ahmed Khan',meta:'412 commits · GitHub @akhan-dpl',state:'Matched',ink:GREEN,d:D.commit},
+      {title:'u.ali@contractor.io needs review',meta:'88 commits · no invited member with this email',state:'Unmatched',ink:AMBER,d:D.issue},
+      {title:'dependabot[bot] excluded',meta:'214 commits · classified as automation',state:'Excluded',ink:MUTED,d:D.hook},
+      {title:'Team membership resolved for 128 developers',meta:'5 teams · 3 departments',state:'Applied',ink:GREEN,d:D.score}
+    ],
+    heading:'Users', sub:'128 matched · 1 unmatched · 3 bots excluded',
+    listTitle:'Identity matching', listMeta:'128 of 129',
+    tiles:[['Developers','128','+128 matched',1],['Teams','5','',1],['Bots excluded','3','not scored',1],['Unmatched','1','needs review',1]],
+    rows:[['✓','Ahmed Khan','AK',V,'412 c','',1],['✓','Usman Ali','UA',P,'388 c','',1],['✓','Ali Raza','AR',L,'301 c','',1],['!','u.ali@contractor.io','?','#5C6879','88 c','',1]],
+    banner:'Bot commits are excluded from every score. Counting them would let automation inflate a team ranking.',
+    bannerInk:T, bannerBg:'#EFF8FB', bannerBorder:'#CFE7EF',
+    navIdx:5
+  },
+  {
+    key:'analyze', label:'Analyze code', meta:'Static · deterministic', slug:'quality',
+    tag:'Analysis run', tagInk:V, tagBg:'#F1EDFA', tagBorder:'#E6DDF6',
+    title:'Static analysis produces the evidence',
+    desc:'Duplication, complexity, coverage, security and performance are measured by rule, not by model. The AI layer only interprets what the analyzer found.',
+    ux:'Code Quality fills in first: score, coverage, findings by severity, and a per-repository table. The Improvement Center lists each finding with its file and line.',
+    liveLabel:'analyzing', liveDot:V,
+    events:[
+      {title:'Duplicate email validation in five locations',meta:'customer-web · userService.ts 42–78 · rule DUP-014',state:'High',ink:RED,d:D.issue},
+      {title:'N+1 query in invoice listing',meta:'payment-api · invoice.service.ts 118 · rule PERF-021',state:'High',ink:RED,d:D.issue},
+      {title:'Refund path has no test coverage',meta:'payment-api · payment.controller.ts 56 · rule COV-003',state:'Medium',ink:AMBER,d:D.test},
+      {title:'Coverage measured across 24 repositories',meta:'weighted by lines executed',state:'82%',ink:GREEN,d:D.ci}
+    ],
+    heading:'Code Quality', sub:'Analysis run #418 · 24 repositories · 6 minutes',
+    listTitle:'Findings by severity', listMeta:'37 open',
+    tiles:[['Quality score','91.4','+1.8',1],['Coverage','82%','+3.4 pts',1],['Findings','37','12 critical',1],['Duplication','7.4%','under 5% target',1]],
+    rows:[['3','Blocker','B',RED,'3','',1],['12','Critical','C','#C4551F','12','',1],['48','Major','M',AMBER,'48','',1],['186','Minor','m','#5C6879','186','',1]],
+    banner:'Every finding names the rule that produced it, so a developer can verify the claim before acting on it.',
+    bannerInk:V, bannerBg:'#F1EDFA', bannerBorder:'#E6DDF6',
+    navIdx:3
+  },
+  {
+    key:'score', label:'Score and rank', meta:'Weighted · versioned', slug:'leaderboard/developers',
+    tag:'Recalculated', tagInk:GREEN, tagBg:'#F1FBF5', tagBorder:'#CDEEDC',
+    title:'Scores and rankings are generated',
+    desc:'Configured weights combine quality, delivery, review, testing, reliability, collaboration, documentation and project impact. Lines of code carry no weight.',
+    ux:'Leaderboards, podiums, profiles and team pages all populate at once from the same run, so an individual score and its team score can never disagree.',
+    liveLabel:'live', liveDot:GREEN,
+    events:[
+      {title:'128 developer scores computed',meta:'weight version v3 · run #418',state:'Applied',ink:GREEN,d:D.score},
+      {title:'5 team scores computed from member evidence',meta:'not an average of individual ranks',state:'Applied',ink:GREEN,d:D.score},
+      {title:'Frontend Core moved to rank 1',meta:'was rank 2 · quality 96, testing 95',state:'▲ 1',ink:GREEN,d:D.rank},
+      {title:'Lines of code recorded as activity',meta:'112.9k this period · zero scoring weight',state:'Neutral',ink:MUTED,d:D.commit}
+    ],
+    heading:'Developer Leaderboard', sub:'Weekly period · 128 developers ranked',
+    listTitle:'Top developers', listMeta:'run #418',
+    tiles:[['Developers','128','ranked',1],['Quality score','91.4','+1.8',1],['Pull requests','938','+7.2%',1],['Reviews','1,646','+9.1%',1]],
+    rows:[['#1','Ahmed Khan','AK',V,'94.2','▲ 2',1],['#2','Usman Ali','UA',P,'92.8','▲ 1',1],['#3','Ali Raza','AR',L,'91.7','▼ 1',1],['#4','Sara Iqbal','SI',V,'89.4','▲ 3',1],['#5','Bilal Ahmed','BA',P,'87.9','– 0',1]],
+    banner:'Each ranking records the weight version that produced it, so a leadership change to weights never silently rewrites history.',
+    bannerInk:GREEN, bannerBg:'#F1FBF5', bannerBorder:'#CDEEDC',
+    navIdx:1
+  },
+  {
+    key:'live', label:'Stay current', meta:'Webhook · incremental', slug:'dashboard',
+    tag:'Continuous', tagInk:GREEN, tagBg:'#F1FBF5', tagBorder:'#CDEEDC',
+    title:'Webhooks keep the dashboard current',
+    desc:'After the backfill, provider events arrive as they happen. Activity appears within seconds; scores recalculate on the next incremental analysis run.',
+    ux:'The activity feed and repository sync times update live. Score tiles show their run number, so a fresh commit does not appear to have already moved a ranking.',
+    liveLabel:'live · 6s ago', liveDot:GREEN,
+    events:[
+      {title:'Ahmed Khan merged PR #482 in payment-api',meta:'push received 6 seconds ago · feed updated',state:'Live',ink:GREEN,d:D.pr},
+      {title:'CI pipeline failed for mobile-app',meta:'reliability recalculates on next run',state:'Failing',ink:RED,d:D.ci},
+      {title:'QA Automation added 24 tests in customer-web',meta:'coverage 82% → 84% pending verification',state:'Queued',ink:AMBER,d:D.test},
+      {title:'Incremental analysis run #419 scheduled',meta:'triggered by 3 merged pull requests',state:'In 4 min',ink:V,d:D.score}
+    ],
+    heading:'Engineering Overview', sub:'Live · last event 6 seconds ago',
+    listTitle:'Recent activity', listMeta:'live',
+    tiles:[['Commits','5,353','+11.4%',1],['Quality score','91.4','run #418',1],['Open findings','37','2 new today',1],['Active goals','6','2 at risk',1]],
+    rows:[['now','Ahmed Khan merged PR #482','AK',V,'6s','',1],['now','QA added 24 tests','QA',T,'23m','',1],['now','mobile-app CI failed','MA',L,'41m','',1],['now','Usman Ali resolved 3 bugs','UA',P,'1h','',1]],
+    banner:'Activity is live. Scores state their analysis run, so nobody reads a just-pushed commit as an already-counted one.',
+    bannerInk:GREEN, bannerBg:'#F1FBF5', bannerBorder:'#CDEEDC',
+    navIdx:0
+  }
+];
+
+class Component extends DCLogic {
+  state = { stage: 0, playing: true };
+
+  componentDidMount() { this.arm(); }
+  componentWillUnmount() { clearInterval(this._i); }
+
+  arm() {
+    clearInterval(this._i);
+    if (!this.state.playing) return;
+    this._i = setInterval(() => {
+      this.setState(s => {
+        if (s.stage >= STAGES.length - 1) { clearInterval(this._i); return { stage: STAGES.length - 1, playing: false }; }
+        return { stage: s.stage + 1 };
+      });
+    }, 4600);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const st = STAGES[s.stage];
+    const NAVL = ['Dashboard','Developer Leaderboard','Teams','Code Quality','Improvement','Integrations'];
+
+    return {
+      playing: s.playing,
+      playLabel: s.playing ? 'Pause walkthrough' : s.stage >= STAGES.length - 1 ? 'Replay' : 'Play walkthrough',
+      playIcon: s.playing ? 'M7.6 5.4v9.2M12.4 5.4v9.2' : 'M7 5.2l7 4.8-7 4.8V5.2z',
+      playBg: s.playing ? '#F1EDFA' : GRAD,
+      playBorder: s.playing ? '#E6DDF6' : 'transparent',
+      playInk: s.playing ? V : '#FFFFFF',
+      togglePlay: () => {
+        if (s.playing) { clearInterval(this._i); this.setState({ playing: false }); return; }
+        this.setState({ playing: true, stage: s.stage >= STAGES.length - 1 ? 0 : s.stage }, () => this.arm());
+      },
+      resetFlow: () => this.setState({ stage: 0, playing: true }, () => this.arm()),
+
+      stageNo: s.stage + 1,
+      stageClock: ['minute 0','minute 1 to 60','minute 61','minute 67','minute 73','continuous'][s.stage],
+      stages: STAGES.map((x, i) => ({
+        label: x.label, meta: x.meta,
+        mark: i < s.stage ? '✓' : String(i + 1),
+        bar: i < s.stage ? V : i === s.stage ? '#E6DDF6' : '#EFF2F7',
+        live: i === s.stage && s.playing,
+        dotBg: i < s.stage ? '#F1EDFA' : i === s.stage ? V : 'transparent',
+        dotBorder: i < s.stage ? '#E6DDF6' : i === s.stage ? V : '#CBD5E1',
+        dotInk: i < s.stage ? V : i === s.stage ? '#FFFFFF' : MUTED,
+        ink: i <= s.stage ? '#241d4d' : MUTED,
+        weight: i === s.stage ? 600 : 400,
+        go: () => { clearInterval(this._i); this.setState({ stage: i, playing: false }); }
+      })),
+
+      panel: {
+        title: st.title, desc: st.desc, ux: st.ux, slug: st.slug,
+        tag: st.tag, tagInk: st.tagInk, tagBg: st.tagBg, tagBorder: st.tagBorder,
+        liveLabel: st.liveLabel, liveDot: st.liveDot,
+        events: st.events.map((e, i) => ({
+          title: e.title, meta: e.meta, state: e.state, stateInk: e.ink,
+          delay: (i * 70) + 'ms', d: e.d,
+          bg: '#FFFFFF', border: '#EFF2F7',
+          tile: e.ink === GREEN ? GREEN : e.ink === RED ? RED : e.ink === AMBER ? AMBER : e.ink === MUTED ? '#94A3B8' : V,
+          glyph: '#FFFFFF'
+        }))
+      },
+
+      mockNav: NAVL.map((l, i) => ({
+        label: l,
+        bg: i === st.navIdx ? 'rgba(255,255,255,.2)' : 'transparent',
+        bar: i === st.navIdx ? 'inset 2px 0 0 #FFFFFF' : 'none',
+        dot: i === st.navIdx ? '#FFFFFF' : 'rgba(255,255,255,.4)',
+        weight: i === st.navIdx ? 600 : 400
+      })),
+      mock: {
+        heading: st.heading, sub: st.sub, listTitle: st.listTitle, listMeta: st.listMeta,
+        tiles: st.tiles.map(t => ({ label: t[0], value: t[1], delta: t[2], ready: !!t[3], pending: !t[3], ink: t[2].indexOf('+') === 0 ? GREEN : MUTED })),
+        rows: st.rows.map(r => ({
+          rank: r[0], name: r[1], ini: r[2], tc: r[3], score: r[4], trend: r[5],
+          ready: !!r[6], pending: !r[6],
+          rankInk: r[0] === '#1' ? V : r[0] === '!' ? RED : MUTED,
+          trendInk: r[5].indexOf('▲') === 0 ? GREEN : r[5].indexOf('▼') === 0 ? RED : MUTED
+        })),
+        hasBanner: true, banner: st.banner,
+        bannerInk: st.bannerInk, bannerBg: st.bannerBg, bannerBorder: st.bannerBorder
+      },
+
+      attribution: [
+        {n:'1',title:'A commit arrives',body:'The push webhook carries the author email, repository, branch and changed files.',tile:V,hasLine:true,hasCode:true,
+         code:'repo    payment-api\nauthor  ahmed.khan@dpl.com\nfiles   4 changed · +182 −41'},
+        {n:'2',title:'The author becomes a developer',body:'The email matches an invited member, so the commit attaches to Ahmed Khan. An unmatched email holds in the queue and scores nothing.',tile:L,hasLine:true,hasCode:false,code:''},
+        {n:'3',title:'The repository names a project and team',body:'payment-api belongs to the Payment Platform project, owned by Backend Core. One commit therefore feeds an individual, a team and a project.',tile:P,hasLine:true,hasCode:false,code:''},
+        {n:'4',title:'Analysis attaches quality to the change',body:'Duplication, complexity and coverage are measured on the changed files, so quality credit lands on the person who wrote them.',tile:T,hasLine:true,hasCode:false,code:''},
+        {n:'5',title:'Team score is built from evidence, not from ranks',body:'A team score is computed from its members\u2019 measured output, never by averaging their leaderboard positions — that would let one strong developer mask a weak team.',tile:GREEN,hasLine:false,hasCode:false,code:''}
+      ],
+
+      cadence: [
+        {surface:'Activity feed and sync status',trigger:'Provider webhook · push, PR, pipeline',speed:'Seconds',ink:GREEN,bg:'#F1FBF5',border:'#CDEEDC'},
+        {surface:'Repository commit and PR counts',trigger:'Incremental collection every 5 minutes',speed:'Minutes',ink:GREEN,bg:'#F1FBF5',border:'#CDEEDC'},
+        {surface:'Code quality, coverage, findings',trigger:'Analysis run on merge to a default branch',speed:'Per run',ink:V,bg:'#F1EDFA',border:'#E6DDF6'},
+        {surface:'Developer and team scores',trigger:'Recalculated after each analysis run',speed:'Per run',ink:V,bg:'#F1EDFA',border:'#E6DDF6'},
+        {surface:'Leaderboard positions',trigger:'Period close · daily, weekly, monthly',speed:'Per period',ink:T,bg:'#EFF8FB',border:'#CFE7EF'},
+        {surface:'Goal verification',trigger:'Compared against baseline on the next run',speed:'Per run',ink:T,bg:'#EFF8FB',border:'#CFE7EF'}
+      ],
+
+      failures: [
+        {title:'Token expired',tag:'Frozen',ink:RED,bg:'#FDF4F3',border:'#F0C9C1',body:'Collection stops for that provider. Affected repositories show their last successful sync time and metrics hold at that value rather than decaying toward zero.'},
+        {title:'Rate limit reached',tag:'Retrying',ink:AMBER,bg:'#FEF7EC',border:'#F3DFBE',body:'Remaining requests queue with backoff. The repository shows Syncing, and any score derived from it is marked partial until the queue drains.'},
+        {title:'Webhook delivery missed',tag:'Reconciled',ink:AMBER,bg:'#FEF7EC',border:'#F3DFBE',body:'The five-minute incremental poll catches anything a dropped webhook missed, so a missed event delays a number rather than losing it.'},
+        {title:'Analysis run fails',tag:'Last good',ink:MUTED,bg:'#F8FAFC',border:'#E2E8F0',body:'Scores stay on the last successful run and keep showing its run number. A failed run never produces a partial ranking.'}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

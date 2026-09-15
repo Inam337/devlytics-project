@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B7D9E"/><stop offset="1" stop-color="#372b73"/></linearGradient></defs><rect width="200" height="200" rx="28" fill="url(#tg)"/><g transform="translate(60,58) scale(0.53)" fill="#FFFFFF"><circle cx="75" cy="52" r="42"/><rect x="40" y="80" width="10" height="60" rx="5"/><rect x="62" y="80" width="10" height="76" rx="5"/><rect x="84" y="80" width="10" height="76" rx="5"/><rect x="106" y="80" width="10" height="60" rx="5"/></g></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F6F7FB; color:#241d4d; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#372b73; text-decoration:none; }
+  a:hover { color:#0B7D9E; }
+  input, button, select, textarea { font-family:inherit; }
+  ::-webkit-scrollbar { width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb { background:#D6DCE6; border-radius:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  @keyframes shimmer { 0%,100% { opacity:.55 } 50% { opacity:1 } }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  @keyframes floatUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes indet { 0% { left:-42% } 100% { left:100% } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex">
+  <div style="width:246px;flex:none;background:linear-gradient(180deg,#0B7D9E 0%,#2E6E8E 34%,#372b73 100%);padding:18px 12px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow:auto">
+    <div style="display:flex;align-items:center;gap:11px;padding:6px 8px 20px">
+      <img src="assets/devlytics-app-icon.png" alt="Devlytics" style="width:32px;height:32px;flex:none;border-radius:9px;box-shadow:0 2px 8px rgba(20,14,45,.28)" />
+      <div style="min-width:0">
+        <img src="assets/devlytics-wordmark-white.svg" alt="Devlytics" style="height:16px;display:block" />
+        <div style="margin-top:5px;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#FFFFFF">Control library</div>
+      </div>
+    </div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+      <div onClick="{{ g.go }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;cursor:pointer;background:{{ g.bg }};border-left:3px solid {{ g.accent }}">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ g.d }}"></path><path d="{{ g.d2 }}"></path></svg>
+        <div style="flex:1;min-width:0;font-size:13px;font-weight:{{ g.weight }};color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.label }}</div>
+        <div style="font:500 10px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ g.count }}</div>
+      </div>
+    </sc-for>
+    <div style="flex:1"></div>
+    <div style="margin:12px 8px 4px;padding:14px;border-radius:11px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)">
+      <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:#FFFFFF">Total controls</div>
+      <div style="margin-top:8px;font:600 22px/1 'IBM Plex Mono',monospace;color:#FFFFFF">{{ totalControls }}</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;padding:34px 36px 80px">
+    <div style="max-width:1080px">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#0F5A73">{{ cat.eyebrow }}</div>
+      <div style="margin-top:13px;font:600 29px/1.12 'IBM Plex Sans';letter-spacing:-0.025em">{{ cat.title }}</div>
+      <div style="margin-top:11px;font-size:14.5px;line-height:1.62;color:#475569;max-width:700px;text-wrap:pretty">{{ cat.desc }}</div>
+
+      <sc-if value="{{ isButtons }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:30px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Variants</div>
+            <div style="margin-top:7px;font-size:12.5px;color:#64748B">Primary carries the gradient. One per view.</div>
+            <div style="margin-top:18px;display:flex;gap:11px;flex-wrap:wrap;align-items:center">
+              <button style="background:linear-gradient(135deg,#372b73 0%,#0B7D9E 100%);color:#FFFFFF;border:none;border-radius:10px;padding:11px 18px;font:600 13px 'IBM Plex Sans';cursor:pointer;box-shadow:0 6px 16px rgba(55,43,115,.22)">Run analysis</button>
+              <button style="background:#372b73;color:#FFFFFF;border:none;border-radius:10px;padding:11px 18px;font:600 13px 'IBM Plex Sans';cursor:pointer">Solid</button>
+              <button style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:11px 18px;color:#241d4d;font:500 13px 'IBM Plex Sans';cursor:pointer" style-hover="border-color:#9d8fd0">Secondary</button>
+              <button style="background:#F1EDFA;border:1px solid #E6DDF6;border-radius:10px;padding:11px 18px;color:#372b73;font:600 13px 'IBM Plex Sans';cursor:pointer">Tinted</button>
+              <button style="background:transparent;border:none;padding:11px 12px;color:#372b73;font:500 13px 'IBM Plex Sans';cursor:pointer">Ghost</button>
+              <button style="background:#FFFFFF;border:1px solid #F0C9C1;border-radius:10px;padding:11px 18px;color:#B4192F;font:500 13px 'IBM Plex Sans';cursor:pointer">Destructive</button>
+              <button style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:11px 18px;color:#5C6879;font:500 13px 'IBM Plex Sans';cursor:not-allowed">Disabled</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start">
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Sizes and icons</div>
+              <div style="margin-top:18px;display:flex;gap:11px;flex-wrap:wrap;align-items:center">
+                <button style="background:#372b73;color:#FFFFFF;border:none;border-radius:8px;padding:7px 12px;font:600 11.5px 'IBM Plex Sans';cursor:pointer">Small</button>
+                <button style="background:#372b73;color:#FFFFFF;border:none;border-radius:10px;padding:11px 18px;font:600 13px 'IBM Plex Sans';cursor:pointer">Medium</button>
+                <button style="background:#372b73;color:#FFFFFF;border:none;border-radius:11px;padding:14px 24px;font:600 14.5px 'IBM Plex Sans';cursor:pointer">Large</button>
+              </div>
+              <div style="margin-top:16px;display:flex;gap:11px;flex-wrap:wrap;align-items:center">
+                <button style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 15px;color:#241d4d;font:500 13px 'IBM Plex Sans';cursor:pointer;display:inline-flex;align-items:center;gap:9px">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#372b73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4.2v11.6M4.2 10h11.6"></path></svg>Create goal
+                </button>
+                <button style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 15px;color:#241d4d;font:500 13px 'IBM Plex Sans';cursor:pointer;display:inline-flex;align-items:center;gap:9px">
+                  Export<svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#372b73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4v8.4M6.6 9.4L10 12.8l3.4-3.4M4.6 15.6h10.8"></path></svg>
+                </button>
+                <button style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#372b73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.6h12M4 13.4h12"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Async and grouped</div>
+              <div style="margin-top:18px;display:flex;gap:11px;flex-wrap:wrap;align-items:center">
+                <button onClick="{{ runFake }}" style="background:linear-gradient(135deg,#372b73 0%,#0B7D9E 100%);color:#FFFFFF;border:none;border-radius:10px;padding:11px 18px;font:600 13px 'IBM Plex Sans';cursor:pointer;display:inline-flex;align-items:center;gap:9px">
+                  <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" style="animation:spin .8s linear infinite"><path d="M10 3.2a6.8 6.8 0 016.8 6.8"></path></svg>
+                  </sc-if>
+                  {{ runLabel }}
+                </button>
+                <button style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:11px 18px;color:#241d4d;font:500 13px 'IBM Plex Sans';cursor:pointer">Cancel</button>
+              </div>
+              <div style="margin-top:18px;display:inline-flex;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden">
+                <sc-for list="{{ segments }}" as="sg" hint-placeholder-count="3">
+                  <div onClick="{{ sg.go }}" style="padding:10px 16px;font-size:12.5px;font-weight:{{ sg.weight }};cursor:pointer;background:{{ sg.bg }};color:{{ sg.ink }};border-right:1px solid #E2E8F0;white-space:nowrap">{{ sg.label }}</div>
+                </sc-for>
+              </div>
+              <div style="margin-top:18px;display:flex;gap:9px;flex-wrap:wrap">
+                <sc-for list="{{ fabs }}" as="fb" hint-placeholder-count="3">
+                  <div style="width:40px;height:40px;border-radius:12px;background:{{ fb.bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 14px rgba(55,43,115,.18)">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ fb.d }}"></path></svg>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isInputs }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;align-items:start">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Text fields</div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ fields }}" as="fd" hint-placeholder-count="5">
+                <label style="display:flex;flex-direction:column;gap:7px">
+                  <span style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">{{ fd.label }}</span>
+                  <div style="position:relative;display:flex;align-items:center">
+                    <input value="{{ fd.value }}" placeholder="{{ fd.ph }}" style="width:100%;background:{{ fd.bg }};border:1px solid {{ fd.border }};border-radius:10px;padding:{{ fd.pad }};color:{{ fd.ink }};font-size:13px;outline:none" style-focus="border-color:#372b73;box-shadow:0 0 0 3px rgba(55,43,115,.12)" />
+                    <sc-if value="{{ fd.hasIcon }}" hint-placeholder-val="{{ false }}">
+                      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#94A3B8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;pointer-events:none"><path d="M12.4 9a3.4 3.4 0 11-6.8 0 3.4 3.4 0 016.8 0z"></path><path d="M11.6 11.6l4 4"></path></svg>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ fd.hasHint }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:11.5px;color:{{ fd.hintInk }};text-wrap:pretty">{{ fd.hint }}</span>
+                  </sc-if>
+                </label>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Select, textarea, stepper, slider</div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:16px">
+              <label style="display:flex;flex-direction:column;gap:7px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">Team</span>
+                <div onClick="{{ toggleSelect }}" style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#F8FAFC;border:1px solid {{ selectBorder }};border-radius:10px;padding:11px 13px;cursor:pointer;font-size:13px">
+                  <div>{{ selectValue }}</div>
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ selectFlip }};transition:transform .2s ease"><path d="M6 8.5l4 4 4-4"></path></svg>
+                  <sc-if value="{{ selectOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:10px;box-shadow:0 16px 36px rgba(20,14,45,.16);padding:5px">
+                      <sc-for list="{{ selectOptions }}" as="op" hint-placeholder-count="4">
+                        <div onClick="{{ op.go }}" style="padding:9px 11px;border-radius:7px;font-size:12.5px;color:{{ op.ink }};font-weight:{{ op.weight }};background:{{ op.bg }}" style-hover="background:#F1EDFA">{{ op.label }}</div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:7px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">Goal description</span>
+                <textarea rows="3" placeholder="Reduce duplication in customer-web below 5%." style="width:100%;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:11px 13px;color:#241d4d;font-size:13px;outline:none;resize:vertical" style-focus="border-color:#372b73;background:#FFFFFF"></textarea>
+              </label>
+              <div>
+                <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">Coverage target</div>
+                <div style="margin-top:9px;display:flex;align-items:center;gap:11px">
+                  <div onClick="{{ dec }}" style="width:34px;height:34px;border:1px solid #E2E8F0;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B;font-size:15px">–</div>
+                  <div style="min-width:64px;text-align:center;font:600 17px 'IBM Plex Mono',monospace">{{ stepValue }}%</div>
+                  <div onClick="{{ inc }}" style="width:34px;height:34px;border:1px solid #E2E8F0;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B;font-size:15px">+</div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">
+                  <div>Quality weight</div><div style="color:#372b73">{{ sliderValue }}%</div>
+                </div>
+                <div onClick="{{ bumpSlider }}" style="margin-top:13px;height:6px;background:#EFF2F7;border-radius:4px;cursor:pointer;position:relative">
+                  <div style="height:6px;width:{{ sliderW }};background:linear-gradient(90deg,#372b73,#0B7D9E);border-radius:4px"></div>
+                  <div style="position:absolute;top:-5px;left:{{ sliderW }};width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#FFFFFF;border:2px solid #372b73;box-shadow:0 2px 6px rgba(20,14,45,.2)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSelection }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px;align-items:start">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Checkbox and radio</div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ checks }}" as="ck" hint-placeholder-count="4">
+                <div onClick="{{ ck.go }}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+                  <div style="width:18px;height:18px;flex:none;border-radius:5px;border:1px solid {{ ck.border }};background:{{ ck.fill }};display:flex;align-items:center;justify-content:center">
+                    <sc-if value="{{ ck.on }}" hint-placeholder-val="{{ true }}">
+                      <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.4l3.2 3.2L15 6.8"></path></svg>
+                    </sc-if>
+                  </div>
+                  <div style="font-size:13px;color:{{ ck.ink }}">{{ ck.label }}</div>
+                </div>
+              </sc-for>
+              <div style="height:1px;background:#EFF2F7;margin:5px 0"></div>
+              <sc-for list="{{ radios }}" as="rd" hint-placeholder-count="3">
+                <div onClick="{{ rd.go }}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+                  <div style="width:18px;height:18px;flex:none;border-radius:50%;border:1px solid {{ rd.border }};display:flex;align-items:center;justify-content:center">
+                    <div style="width:9px;height:9px;border-radius:50%;background:{{ rd.dot }}"></div>
+                  </div>
+                  <div style="font-size:13px;color:{{ rd.ink }}">{{ rd.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Toggles, chips and tokens</div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ toggles }}" as="tg" hint-placeholder-count="3">
+                <div onClick="{{ tg.go }}" style="display:flex;align-items:center;gap:14px;cursor:pointer">
+                  <div style="width:40px;height:22px;flex:none;border-radius:20px;background:{{ tg.track }};display:flex;align-items:center;justify-content:{{ tg.justify }};padding:3px;transition:background .18s ease">
+                    <div style="width:16px;height:16px;border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(20,14,45,.28)"></div>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;color:#241d4d">{{ tg.label }}</div>
+                    <div style="margin-top:3px;font-size:11.5px;color:#5C6879;text-wrap:pretty">{{ tg.sub }}</div>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="height:1px;background:#EFF2F7"></div>
+              <div>
+                <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">Filter chips</div>
+                <div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ chips }}" as="cp" hint-placeholder-count="5">
+                    <div onClick="{{ cp.go }}" style="display:inline-flex;align-items:center;gap:8px;background:{{ cp.bg }};border:1px solid {{ cp.border }};color:{{ cp.ink }};border-radius:20px;padding:7px 13px;font-size:12.5px;font-weight:{{ cp.weight }};cursor:pointer;white-space:nowrap">
+                      <sc-if value="{{ cp.on }}" hint-placeholder-val="{{ false }}">
+                        <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.4l3.2 3.2L15 6.8"></path></svg>
+                      </sc-if>
+                      {{ cp.label }}
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">Removable tokens</div>
+                <div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ tokens }}" as="tk" hint-placeholder-count="3">
+                    <div style="display:inline-flex;align-items:center;gap:9px;background:#F1EDFA;border:1px solid #E6DDF6;color:#372b73;border-radius:8px;padding:6px 9px 6px 11px;font:500 12px 'IBM Plex Mono',monospace;white-space:nowrap">
+                      {{ tk }}<div style="cursor:pointer;color:#372b73;font-size:13px;line-height:1">×</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:30px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Inline alerts</div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:11px">
+              <sc-for list="{{ alerts }}" as="al" hint-placeholder-count="4">
+                <div style="display:flex;gap:13px;align-items:flex-start;background:{{ al.bg }};border:1px solid {{ al.border }};border-left:3px solid {{ al.ink }};border-radius:11px;padding:14px 16px">
+                  <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="{{ al.ink }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="{{ al.d }}"></path><path d="{{ al.d2 }}"></path></svg>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13.5px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ al.title }}</div>
+                    <div style="margin-top:5px;font-size:12.5px;line-height:1.55;color:#475569;text-wrap:pretty">{{ al.body }}</div>
+                  </div>
+                  <div style="flex:none;font:500 11px 'IBM Plex Mono',monospace;color:{{ al.ink }};cursor:pointer;white-space:nowrap">{{ al.action }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start">
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Badges, dots and counts</div>
+              <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ badges }}" as="bd" hint-placeholder-count="6">
+                  <div style="background:{{ bd.bg }};border:1px solid {{ bd.border }};color:{{ bd.ink }};border-radius:20px;padding:4px 11px;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap">{{ bd.label }}</div>
+                </sc-for>
+              </div>
+              <div style="margin-top:20px;display:flex;flex-direction:column;gap:11px">
+                <sc-for list="{{ dots }}" as="dt" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:#475569">
+                    <div style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ dt.color }}"></div>{{ dt.label }}
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+                <div style="position:relative;display:inline-flex">
+                  <div style="width:36px;height:36px;border-radius:10px;background:#F1EDFA;border:1px solid #E6DDF6;display:flex;align-items:center;justify-content:center">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#372b73" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.6a4.6 4.6 0 014.6 4.6c0 3.4.9 4.6 1.4 5.2H4c.5-.6 1.4-1.8 1.4-5.2A4.6 4.6 0 0110 3.6z"></path><path d="M8.4 16.2a1.8 1.8 0 003.2 0"></path></svg>
+                  </div>
+                  <div style="position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:20px;background:#B4192F;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font:600 10px 'IBM Plex Mono',monospace;padding:0 5px">3</div>
+                </div>
+                <div style="display:inline-flex;align-items:center;gap:9px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px 6px 7px">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#372b73;display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:#FFFFFF">AK</div>
+                  <div style="font-size:12px">Ahmed Khan</div>
+                </div>
+                <div style="display:inline-flex">
+                  <sc-for list="{{ stack }}" as="st" hint-placeholder-count="4">
+                    <div style="width:28px;height:28px;border-radius:50%;background:{{ st.bg }};border:2px solid #FFFFFF;margin-left:{{ st.ml }};display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:{{ st.ink }}">{{ st.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Progress and loading</div>
+              <div style="margin-top:18px;display:flex;flex-direction:column;gap:16px">
+                <sc-for list="{{ meters }}" as="mt" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font:500 11px 'IBM Plex Mono',monospace;color:#64748B">
+                      <div>{{ mt.label }}</div><div style="color:#241d4d">{{ mt.value }}</div>
+                    </div>
+                    <div style="margin-top:7px;height:7px;background:#EFF2F7;border-radius:4px;overflow:hidden">
+                      <div style="height:7px;width:{{ mt.w }};background:{{ mt.fill }};border-radius:4px"></div>
+                    </div>
+                  </div>
+                </sc-for>
+                <div>
+                  <div style="font:500 11px 'IBM Plex Mono',monospace;color:#64748B">Indeterminate</div>
+                  <div style="margin-top:7px;height:7px;background:#EFF2F7;border-radius:4px;overflow:hidden;position:relative">
+                    <div style="position:absolute;top:0;height:7px;width:40%;border-radius:4px;background:linear-gradient(90deg,#372b73,#0B7D9E);animation:indet 1.3s ease-in-out infinite"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+                  <div style="position:relative;width:74px;height:74px">
+                    <svg width="74" height="74" viewBox="0 0 74 74" style="display:block">
+                      <circle cx="37" cy="37" r="31" fill="none" stroke="#EFF2F7" stroke-width="8"></circle>
+                      <circle cx="37" cy="37" r="31" fill="none" stroke="url(#ctrlGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="164 195" transform="rotate(-90 37 37)"></circle>
+                      <defs><linearGradient id="ctrlGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#372b73"></stop><stop offset="100%" stop-color="#0B7D9E"></stop></linearGradient></defs>
+                    </svg>
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 15px 'IBM Plex Mono',monospace">84%</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:#475569">
+                      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#372b73" stroke-width="2.4" stroke-linecap="round" style="animation:spin .8s linear infinite"><path d="M10 3.2a6.8 6.8 0 016.8 6.8"></path></svg>Spinner
+                    </div>
+                    <div style="width:120px;height:11px;border-radius:5px;background:#EFF2F7;animation:shimmer 1.2s infinite"></div>
+                    <div style="width:84px;height:11px;border-radius:5px;background:#EFF2F7;animation:shimmer 1.2s .2s infinite"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isNavigation }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:30px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Tabs and pills</div>
+            <div style="margin-top:16px;display:flex;gap:4px;border-bottom:1px solid #E2E8F0;overflow:auto">
+              <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="4">
+                <div onClick="{{ tb.go }}" style="padding:11px 15px;font-size:12.5px;font-weight:{{ tb.weight }};white-space:nowrap;cursor:pointer;color:{{ tb.ink }};border-bottom:2px solid {{ tb.bar }}">{{ tb.label }}</div>
+              </sc-for>
+            </div>
+            <div style="margin-top:16px;font-size:13px;color:#475569">{{ tabBody }}</div>
+            <div style="margin-top:22px;display:flex;gap:2px;background:#F1F5F9;border-radius:10px;padding:3px;width:fit-content;flex-wrap:wrap">
+              <sc-for list="{{ pills }}" as="pl" hint-placeholder-count="4">
+                <div onClick="{{ pl.go }}" style="padding:8px 15px;border-radius:8px;font-size:12.5px;font-weight:{{ pl.weight }};cursor:pointer;background:{{ pl.bg }};color:{{ pl.ink }};box-shadow:{{ pl.shadow }};white-space:nowrap">{{ pl.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start">
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Breadcrumb, pagination, stepper</div>
+              <div style="margin-top:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:#64748B">
+                <div style="cursor:pointer">Organization</div><div style="color:#CBD5E1">/</div>
+                <div style="cursor:pointer">Teams</div><div style="color:#CBD5E1">/</div>
+                <div style="color:#241d4d;font-weight:600">Frontend Core</div>
+              </div>
+              <div style="margin-top:22px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                <div style="width:32px;height:32px;border:1px solid #E2E8F0;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#5C6879">‹</div>
+                <sc-for list="{{ pages }}" as="pg" hint-placeholder-count="5">
+                  <div onClick="{{ pg.go }}" style="min-width:32px;height:32px;padding:0 8px;border:1px solid {{ pg.border }};border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:{{ pg.bg }};color:{{ pg.ink }};font:500 12.5px 'IBM Plex Mono',monospace">{{ pg.label }}</div>
+                </sc-for>
+                <div style="width:32px;height:32px;border:1px solid #E2E8F0;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748B">›</div>
+              </div>
+              <div style="margin-top:24px;display:flex;gap:8px">
+                <sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+                  <div style="flex:1;min-width:0">
+                    <div style="height:3px;border-radius:2px;background:{{ st.bar }}"></div>
+                    <div style="margin-top:9px;display:flex;align-items:center;gap:7px">
+                      <div style="width:18px;height:18px;flex:none;border-radius:50%;background:{{ st.dotBg }};border:1px solid {{ st.dotBorder }};display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:{{ st.dotInk }}">{{ st.mark }}</div>
+                      <div style="min-width:0;font:400 10.5px 'IBM Plex Mono',monospace;color:{{ st.ink }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.label }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Accordion and menu</div>
+              <div style="margin-top:18px;display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ accordion }}" as="ac" hint-placeholder-count="3">
+                  <div onClick="{{ ac.go }}" style="border:1px solid {{ ac.border }};border-radius:11px;padding:14px 16px;cursor:pointer">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                      <div style="font-size:13px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ ac.q }}</div>
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ ac.flip }};transition:transform .2s ease"><path d="M6 8.5l4 4 4-4"></path></svg>
+                    </div>
+                    <sc-if value="{{ ac.open }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:11px;font-size:12.5px;line-height:1.6;color:#475569;animation:floatUp .22s ease both;text-wrap:pretty">{{ ac.a }}</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:20px;border:1px solid #E2E8F0;border-radius:11px;padding:5px;max-width:250px">
+                <sc-for list="{{ menu }}" as="mn" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:8px;cursor:pointer;color:{{ mn.ink }};font-size:12.5px" style-hover="background:#F1EDFA">
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ mn.d }}"></path></svg>
+                    <div style="flex:1">{{ mn.label }}</div>
+                    <sc-if value="{{ mn.hasKey }}" hint-placeholder-val="{{ false }}">
+                      <div style="font:400 10px 'IBM Plex Mono',monospace;color:#5C6879">{{ mn.key }}</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isData }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:30px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:8px 22px 18px;overflow-x:auto">
+            <div style="min-width:660px">
+              <div style="display:grid;grid-template-columns:34px 52px 1.7fr 1.1fr 84px 74px 62px;gap:12px;padding:15px 4px;font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#64748B">
+                <div onClick="{{ toggleAllRows }}" style="width:16px;height:16px;border-radius:4px;border:1px solid {{ allBorder }};background:{{ allFill }};cursor:pointer;display:flex;align-items:center;justify-content:center">
+                  <sc-if value="{{ allOn }}" hint-placeholder-val="{{ false }}">
+                    <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.4l3.2 3.2L15 6.8"></path></svg>
+                  </sc-if>
+                </div>
+                <div>Rank</div><div>Developer</div><div>Team</div><div>Score</div><div>Quality</div><div>Trend</div>
+              </div>
+              <sc-for list="{{ rows }}" as="rw" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:34px 52px 1.7fr 1.1fr 84px 74px 62px;gap:12px;padding:13px 4px;border-top:1px solid #EFF2F7;align-items:center;font-size:13px;background:{{ rw.bg }}" style-hover="background:#F8FAFC">
+                  <div onClick="{{ rw.toggle }}" style="width:16px;height:16px;border-radius:4px;border:1px solid {{ rw.border }};background:{{ rw.fill }};cursor:pointer;display:flex;align-items:center;justify-content:center">
+                    <sc-if value="{{ rw.on }}" hint-placeholder-val="{{ false }}">
+                      <svg width="10" height="10" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.4l3.2 3.2L15 6.8"></path></svg>
+                    </sc-if>
+                  </div>
+                  <div style="font:600 12.5px 'IBM Plex Mono',monospace;color:{{ rw.rankInk }}">{{ rw.rank }}</div>
+                  <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                    <div style="width:26px;height:26px;flex:none;border-radius:50%;background:{{ rw.tc }};display:flex;align-items:center;justify-content:center;font:600 9.5px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ rw.ini }}</div>
+                    <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ rw.name }}</div>
+                  </div>
+                  <div style="font-size:12px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ rw.team }}</div>
+                  <div style="font:600 12.5px 'IBM Plex Mono',monospace">{{ rw.score }}</div>
+                  <div style="font:400 12.5px 'IBM Plex Mono',monospace;color:#64748B">{{ rw.quality }}</div>
+                  <div style="font:500 11.5px 'IBM Plex Mono',monospace;color:{{ rw.trendInk }}">{{ rw.trend }}</div>
+                </div>
+              </sc-for>
+              <div style="padding:15px 4px 4px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #EFF2F7;flex-wrap:wrap">
+                <div style="font:400 11.5px 'IBM Plex Mono',monospace;color:#64748B">{{ selectedCount }} of 5 selected</div>
+                <div style="display:flex;gap:8px">
+                  <button style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:8px 13px;color:#241d4d;font-size:12px;cursor:pointer;white-space:nowrap">Export</button>
+                  <button style="background:#FFFFFF;border:1px solid #F0C9C1;border-radius:8px;padding:8px 13px;color:#B4192F;font-size:12px;cursor:pointer;white-space:nowrap">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start">
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Definition list</div>
+              <div style="margin-top:16px;display:flex;flex-direction:column">
+                <sc-for list="{{ defs }}" as="df" hint-placeholder-count="5">
+                  <div style="display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-top:1px solid #EFF2F7">
+                    <div style="font-size:12.5px;color:#64748B">{{ df.k }}</div>
+                    <div style="font:500 12.5px 'IBM Plex Mono',monospace;color:#241d4d;text-align:right">{{ df.v }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+              <div style="font:600 15px 'IBM Plex Sans'">Timeline</div>
+              <div style="margin-top:18px;display:flex;flex-direction:column">
+                <sc-for list="{{ timeline }}" as="tl" hint-placeholder-count="4">
+                  <div style="display:flex;gap:14px">
+                    <div style="display:flex;flex-direction:column;align-items:center;flex:none">
+                      <div style="width:11px;height:11px;border-radius:50%;background:{{ tl.dot }};box-shadow:0 0 0 3px {{ tl.ring }}"></div>
+                      <div style="flex:1;width:2px;background:#EFF2F7;min-height:24px"></div>
+                    </div>
+                    <div style="padding-bottom:16px;min-width:0">
+                      <div style="font-size:12.5px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ tl.title }}</div>
+                      <div style="margin-top:4px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879">{{ tl.time }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.05);padding:22px 24px">
+            <div style="font:600 15px 'IBM Plex Sans'">Overlays</div>
+            <div style="margin-top:7px;font-size:12.5px;color:#64748B">Each trigger opens the real overlay so padding, dismissal and stacking can be checked.</div>
+            <div style="margin-top:18px;display:flex;gap:11px;flex-wrap:wrap">
+              <button onClick="{{ openModal }}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 16px;color:#241d4d;font:500 12.5px 'IBM Plex Sans';cursor:pointer">Dialog</button>
+              <button onClick="{{ openDrawer }}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 16px;color:#241d4d;font:500 12.5px 'IBM Plex Sans';cursor:pointer">Side panel</button>
+              <button onClick="{{ openToast }}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 16px;color:#241d4d;font:500 12.5px 'IBM Plex Sans';cursor:pointer">Toast</button>
+              <div style="position:relative;display:inline-flex">
+                <button onClick="{{ toggleTip }}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:10px 16px;color:#241d4d;font:500 12.5px 'IBM Plex Sans';cursor:pointer">Tooltip</button>
+                <sc-if value="{{ tipOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);background:#241d4d;color:#FFFFFF;border-radius:8px;padding:8px 11px;font-size:11.5px;white-space:nowrap;box-shadow:0 8px 20px rgba(20,14,45,.28);animation:floatUp .16s ease both">Lines of code are activity only</div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+
+<sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(38,42,50,.42);display:flex;align-items:center;justify-content:center;z-index:70;padding:40px">
+    <div onClick="{{ stopClick }}" style="width:480px;max-width:100%;background:#FFFFFF;border-radius:14px;box-shadow:0 30px 70px rgba(20,14,45,.3);overflow:hidden;animation:floatUp .2s ease both">
+      <div style="padding:22px 24px;border-bottom:1px solid #EFF2F7;display:flex;justify-content:space-between;align-items:flex-start;gap:14px">
+        <div style="min-width:0">
+          <div style="font:600 17px 'IBM Plex Sans'">Delete repository</div>
+          <div style="margin-top:6px;font-size:12.5px;color:#64748B">customer-web · 1,642 commits</div>
+        </div>
+        <div onClick="{{ closeModal }}" style="flex:none;color:#5C6879;font-size:19px;cursor:pointer;line-height:1">×</div>
+      </div>
+      <div style="padding:22px 24px;font-size:13.5px;line-height:1.6;color:#475569;text-wrap:pretty">Historical metrics and rankings derived from this repository are retained. New commits will no longer be collected.</div>
+      <div style="padding:18px 24px;border-top:1px solid #EFF2F7;display:flex;gap:10px;justify-content:flex-end">
+        <button onClick="{{ closeModal }}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:11px 18px;color:#241d4d;font-size:13px;cursor:pointer">Cancel</button>
+        <button onClick="{{ closeModal }}" style="background:#B4192F;color:#FFFFFF;border:none;border-radius:10px;padding:11px 18px;font:600 13px 'IBM Plex Sans';cursor:pointer">Delete</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(38,42,50,.42);display:flex;justify-content:flex-end;z-index:70">
+    <div onClick="{{ stopClick }}" style="width:380px;max-width:100%;background:#FFFFFF;height:100%;box-shadow:-20px 0 60px rgba(20,14,45,.24);display:flex;flex-direction:column">
+      <div style="padding:22px 24px;border-bottom:1px solid #EFF2F7;display:flex;justify-content:space-between;align-items:flex-start;gap:14px">
+        <div style="min-width:0">
+          <div style="font:600 17px 'IBM Plex Sans'">Finding IMP-104</div>
+          <div style="margin-top:6px;font:400 11.5px 'IBM Plex Mono',monospace;color:#64748B">customer-web · userService.ts</div>
+        </div>
+        <div onClick="{{ closeDrawer }}" style="flex:none;color:#5C6879;font-size:19px;cursor:pointer;line-height:1">×</div>
+      </div>
+      <div style="flex:1;overflow:auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+        <sc-for list="{{ drawerBlocks }}" as="db" hint-placeholder-count="3">
+          <div style="background:{{ db.bg }};border:1px solid {{ db.border }};border-radius:11px;padding:14px 16px">
+            <div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:{{ db.ink }}">{{ db.tag }}</div>
+            <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#475569;text-wrap:pretty">{{ db.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:18px 24px;border-top:1px solid #EFF2F7;display:flex;gap:10px">
+        <button onClick="{{ closeDrawer }}" style="flex:1;background:linear-gradient(135deg,#372b73 0%,#0B7D9E 100%);color:#FFFFFF;border:none;border-radius:10px;padding:12px;font:600 13px 'IBM Plex Sans';cursor:pointer">Create goal</button>
+        <button onClick="{{ closeDrawer }}" style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:12px 18px;color:#241d4d;font-size:13px;cursor:pointer">Close</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:28px;right:28px;z-index:80;display:flex;align-items:flex-start;gap:13px;background:#FFFFFF;border:1px solid #E2E8F0;border-left:3px solid #12A05C;border-radius:12px;padding:15px 17px;box-shadow:0 20px 46px rgba(20,14,45,.22);max-width:360px;animation:floatUp .22s ease both">
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#12A05C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M17 10a7 7 0 11-14 0 7 7 0 0114 0z"></path><path d="M6.9 10.2l2.2 2.2 4-4.1"></path></svg>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600;color:#241d4d">Analysis complete</div>
+      <div style="margin-top:4px;font-size:12px;line-height:1.5;color:#64748B;text-wrap:pretty">24 repositories analyzed. Duplication down 6.8 points.</div>
+    </div>
+    <div onClick="{{ closeToast }}" style="flex:none;color:#5C6879;font-size:16px;cursor:pointer;line-height:1">×</div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:1000}}">
+const CATS = [
+  {key:'buttons',label:'Buttons',count:'16',eyebrow:'Actions',title:'Buttons',
+   desc:'Variants, sizes, icon pairings, async state and grouped controls. Primary is the gradient and appears once per view.',
+   d:'M3.6 7.4c0-1.1.9-2 2-2h8.8c1.1 0 2 .9 2 2v5.2c0 1.1-.9 2-2 2H5.6c-1.1 0-2-.9-2-2V7.4z',d2:'M7.6 10h4.8'},
+  {key:'inputs',label:'Inputs',count:'12',eyebrow:'Data entry',title:'Inputs and fields',
+   desc:'Text fields across default, filled, focused, error and disabled states, plus select, textarea, stepper and slider.',
+   d:'M3.6 6.4c0-1.1.9-2 2-2h8.8c1.1 0 2 .9 2 2v7.2c0 1.1-.9 2-2 2H5.6c-1.1 0-2-.9-2-2V6.4z',d2:'M6.6 10h2.8'},
+  {key:'selection',label:'Selection',count:'14',eyebrow:'Choice',title:'Selection controls',
+   desc:'Checkbox, radio, switch, filter chip and removable token. Every one is live so you can check the on and off treatments.',
+   d:'M4.4 5.4c0-.6.4-1 1-1h9.2c.6 0 1 .4 1 1v9.2c0 .6-.4 1-1 1H5.4c-.6 0-1-.4-1-1V5.4z',d2:'M7 10.2l2.2 2.2 4-4.2'},
+  {key:'feedback',label:'Feedback',count:'21',eyebrow:'Status',title:'Feedback and status',
+   desc:'Alerts, badges, status dots, counts, avatar stacks, progress bars, rings and loading placeholders.',
+   d:'M10 3.4a6.6 6.6 0 016.6 6.6c0 3.6-2.9 6.6-6.6 6.6a6.6 6.6 0 01-6.6-6.6A6.6 6.6 0 0110 3.4z',d2:'M10 6.8v4.4M10 13.6h.01'},
+  {key:'navigation',label:'Navigation',count:'18',eyebrow:'Wayfinding',title:'Navigation',
+   desc:'Tabs, pills, breadcrumb, pagination, wizard stepper, accordion and dropdown menu.',
+   d:'M4 6.6h12M4 10h12M4 13.4h8',d2:''},
+  {key:'data',label:'Data & overlays',count:'13',eyebrow:'Display',title:'Data display and overlays',
+   desc:'Selectable table with bulk actions, definition list, timeline, and the dialog, side panel, toast and tooltip overlays.',
+   d:'M3.6 5.4h12.8v9.2H3.6V5.4z',d2:'M3.6 8.6h12.8M8 8.6v6'}
+];
+
+class Component extends DCLogic {
+  state = {
+    cat: 'buttons', running: false, runDone: false,
+    selectOpen: false, selectValue: 'Frontend Core', stepValue: 85, sliderValue: 25,
+    checks: { 'Include archived repositories': true, 'Weight documentation PRs': true, 'Count AI-assisted commits': false, 'Notify team lead on rank change': false },
+    radio: 'Weekly', toggles: { 'Local analysis only': true, 'Email digest': true, 'Public leaderboard': false },
+    chips: { GitHub: true, GitLab: false, Critical: true, 'High impact': false, Unresolved: false },
+    tab: 'Overview', pill: 'Weekly', page: 2, accordion: 0,
+    rowSel: { 'Ahmed Khan': true, 'Ali Raza': true },
+    modalOpen: false, drawerOpen: false, toastOpen: false, tipOpen: false
+  };
+
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._toast); }
+
+  renderVals() {
+    const s = this.state;
+    const cat = CATS.find(c => c.key === s.cat) || CATS[0];
+    const V = '#372b73', T = '#0B7D9E', GRAD = 'linear-gradient(135deg,#372b73 0%,#0B7D9E 100%)';
+
+    const CHECKS = Object.keys(s.checks);
+    const TOGGLES = Object.keys(s.toggles);
+    const CHIPS = Object.keys(s.chips);
+    const ROWS = [
+      {rank:'#1',name:'Ahmed Khan',ini:'AK',tc:V,team:'Frontend Core',score:'94.2',quality:'96',trend:'▲ 2',up:1},
+      {rank:'#2',name:'Usman Ali',ini:'UA',tc:'#2E6E8E',team:'Backend Core',score:'92.8',quality:'94',trend:'▲ 1',up:1},
+      {rank:'#3',name:'Ali Raza',ini:'AR',tc:'#5b3f9e',team:'QA Automation',score:'91.7',quality:'93',trend:'▼ 1',up:0},
+      {rank:'#4',name:'Sara Iqbal',ini:'SI',tc:V,team:'Frontend Core',score:'89.4',quality:'91',trend:'▲ 3',up:1},
+      {rank:'#5',name:'Bilal Ahmed',ini:'BA',tc:'#2E6E8E',team:'Backend Core',score:'87.9',quality:'88',trend:'– 0',up:2}
+    ];
+    const selCount = ROWS.filter(x => s.rowSel[x.name]).length;
+    const ACC = [
+      {q:'Does a higher commit count raise my score?',a:'No. Commit volume is recorded as activity and carries no direct weight. Quality, delivery, review, testing and reliability drive the score.'},
+      {q:'How is a goal verified?',a:'A goal completes only when a later analysis run shows the metric moved past its target. Manual completion is not available.'},
+      {q:'Where does AI usage appear?',a:'AI analytics is reported for adoption insight only and is excluded from scoring and ranking.'}
+    ];
+
+    return {
+      groups: CATS.map(c => ({
+        label: c.label, count: c.count, d: c.d, d2: c.d2,
+        bg: s.cat === c.key ? 'rgba(255,255,255,.16)' : 'transparent',
+        accent: s.cat === c.key ? '#FFFFFF' : 'transparent',
+        weight: s.cat === c.key ? 600 : 400,
+        go: () => this.setState({ cat: c.key, selectOpen: false, tipOpen: false })
+      })),
+      totalControls: CATS.reduce((a, c) => a + parseInt(c.count, 10), 0),
+      cat: { eyebrow: cat.eyebrow, title: cat.title, desc: cat.desc },
+      isButtons: s.cat === 'buttons', isInputs: s.cat === 'inputs', isSelection: s.cat === 'selection',
+      isFeedback: s.cat === 'feedback', isNavigation: s.cat === 'navigation', isData: s.cat === 'data',
+
+      running: s.running,
+      runLabel: s.running ? 'Analyzing…' : s.runDone ? 'Analysis complete' : 'Run analysis',
+      runFake: () => {
+        clearTimeout(this._t);
+        this.setState({ running: true, runDone: false });
+        this._t = setTimeout(() => this.setState({ running: false, runDone: true }), 1600);
+      },
+      segments: ['Day','Week','Month'].map(l => ({
+        label: l, bg: s.pill === l ? '#F1EDFA' : '#FFFFFF',
+        ink: s.pill === l ? V : '#475569', weight: s.pill === l ? 600 : 400,
+        go: () => this.setState({ pill: l })
+      })),
+      fabs: [
+        {bg:GRAD,d:'M10 4.2v11.6M4.2 10h11.6'},
+        {bg:V,d:'M10 4v8.4M6.6 9.4L10 12.8l3.4-3.4M4.6 15.6h10.8'},
+        {bg:T,d:'M12.4 9a3.4 3.4 0 11-6.8 0 3.4 3.4 0 016.8 0zM11.6 11.6l4 4'}
+      ],
+
+      fields: [
+        {label:'Default',value:'',ph:'Team name',bg:'#F8FAFC',border:'#E2E8F0',ink:'#241d4d',pad:'11px 13px',hasIcon:false,hasHint:false,hint:'',hintInk:'#5C6879'},
+        {label:'Filled',value:'Frontend Core',ph:'',bg:'#FFFFFF',border:'#CBD5E1',ink:'#241d4d',pad:'11px 13px',hasIcon:false,hasHint:true,hint:'Team code is generated from the name.',hintInk:'#5C6879'},
+        {label:'With icon',value:'',ph:'Search developers',bg:'#F8FAFC',border:'#E2E8F0',ink:'#241d4d',pad:'11px 13px 11px 34px',hasIcon:true,hasHint:false,hint:'',hintInk:'#5C6879'},
+        {label:'Error',value:'ahmed.khan@',ph:'',bg:'#FDF4F3',border:'#E4A79B',ink:'#241d4d',pad:'11px 13px',hasIcon:false,hasHint:true,hint:'Enter a complete work email address.',hintInk:'#B4192F'},
+        {label:'Disabled',value:'FE-CORE',ph:'',bg:'#F1F5F9',border:'#E2E8F0',ink:'#5C6879',pad:'11px 13px',hasIcon:false,hasHint:true,hint:'Generated automatically.',hintInk:'#5C6879'}
+      ],
+      selectOpen: s.selectOpen, selectValue: s.selectValue,
+      selectBorder: s.selectOpen ? V : '#E2E8F0',
+      selectFlip: s.selectOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleSelect: () => this.setState({ selectOpen: !s.selectOpen }),
+      selectOptions: ['Frontend Core','Backend Core','QA Automation','Platform Infra'].map(l => ({
+        label: l, bg: s.selectValue === l ? '#F1EDFA' : 'transparent',
+        ink: s.selectValue === l ? V : '#334155', weight: s.selectValue === l ? 600 : 400,
+        go: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ selectValue: l, selectOpen: false }); }
+      })),
+      stepValue: s.stepValue,
+      inc: () => this.setState({ stepValue: Math.min(100, s.stepValue + 5) }),
+      dec: () => this.setState({ stepValue: Math.max(0, s.stepValue - 5) }),
+      sliderValue: s.sliderValue, sliderW: s.sliderValue + '%',
+      bumpSlider: () => this.setState({ sliderValue: s.sliderValue >= 60 ? 10 : s.sliderValue + 10 }),
+
+      checks: CHECKS.map(l => ({
+        label: l, on: s.checks[l],
+        border: s.checks[l] ? V : '#CBD5E1',
+        fill: s.checks[l] ? V : '#FFFFFF',
+        ink: s.checks[l] ? '#241d4d' : '#475569',
+        go: () => this.setState(x => ({ checks: Object.assign({}, x.checks, { [l]: !x.checks[l] }) }))
+      })),
+      radios: ['Daily','Weekly','Monthly'].map(l => ({
+        label: l, border: s.radio === l ? V : '#CBD5E1',
+        dot: s.radio === l ? V : 'transparent',
+        ink: s.radio === l ? '#241d4d' : '#475569',
+        go: () => this.setState({ radio: l })
+      })),
+      toggles: TOGGLES.map(l => ({
+        label: l, sub: { 'Local analysis only':'Source code never leaves your environment', 'Email digest':'Weekly ranking summary', 'Public leaderboard':'Visible to every member' }[l],
+        track: s.toggles[l] ? GRAD : '#E2E8F0',
+        justify: s.toggles[l] ? 'flex-end' : 'flex-start',
+        go: () => this.setState(x => ({ toggles: Object.assign({}, x.toggles, { [l]: !x.toggles[l] }) }))
+      })),
+      chips: CHIPS.map(l => ({
+        label: l, on: s.chips[l],
+        bg: s.chips[l] ? '#F1EDFA' : '#FFFFFF',
+        border: s.chips[l] ? '#C9BCE8' : '#E2E8F0',
+        ink: s.chips[l] ? V : '#475569',
+        weight: s.chips[l] ? 600 : 400,
+        go: () => this.setState(x => ({ chips: Object.assign({}, x.chips, { [l]: !x.chips[l] }) }))
+      })),
+      tokens: ['payment-api','customer-web','auth-service'],
+
+      alerts: [
+        {title:'Duplication reduced to 7.4%',body:'Verified by analysis run #418. The goal is on track for its 30 September target.',action:'View goal',ink:'#0F7D4F',bg:'#F1FBF5',border:'#CDEEDC',d:'M17 10a7 7 0 11-14 0 7 7 0 0114 0z',d2:'M6.9 10.2l2.2 2.2 4-4.1'},
+        {title:'GitLab token expired for data-etl',body:'Two collection attempts failed. Metrics are frozen at the last successful sync.',action:'Reconnect',ink:'#B4192F',bg:'#FDF4F3',border:'#F0C9C1',d:'M10 3.6l7 12.8H3L10 3.6z',d2:'M10 8v3.4M10 13.8h.01'},
+        {title:'Scoring weights total 105%',body:'Saving is blocked until the weights sum to exactly 100%.',action:'Fix weights',ink:'#8A5A11',bg:'#FEF7EC',border:'#F3DFBE',d:'M10 3.4a6.6 6.6 0 016.6 6.6c0 3.6-2.9 6.6-6.6 6.6a6.6 6.6 0 01-6.6-6.6A6.6 6.6 0 0110 3.4z',d2:'M10 6.8v4.4M10 13.6h.01'},
+        {title:'Lines of code 112.9k this period',body:'Recorded as an activity metric. It carries no scoring weight on its own.',action:'Learn more',ink:'#64748B',bg:'#F8FAFC',border:'#E2E8F0',d:'M10 3.4a6.6 6.6 0 016.6 6.6c0 3.6-2.9 6.6-6.6 6.6a6.6 6.6 0 01-6.6-6.6A6.6 6.6 0 0110 3.4z',d2:'M10 9v4.4M10 6.6h.01'}
+      ],
+      badges: [
+        {label:'Synced',ink:'#0F7D4F',bg:'#F1FBF5',border:'#CDEEDC'},
+        {label:'Syncing',ink:'#8A5A11',bg:'#FEF7EC',border:'#F3DFBE'},
+        {label:'Failing',ink:'#B4192F',bg:'#FDF4F3',border:'#F0C9C1'},
+        {label:'Rank #1',ink:'#FFFFFF',bg:V,border:V},
+        {label:'On track',ink:V,bg:'#F1EDFA',border:'#E6DDF6'},
+        {label:'Activity only',ink:'#64748B',bg:'#F8FAFC',border:'#E2E8F0'}
+      ],
+      dots: [
+        {label:'Connected · GitHub',color:'#0F7D4F'},
+        {label:'Permission required · GitLab',color:'#8A5A11'},
+        {label:'Disconnected · legacy-portal',color:'#B4192F'},
+        {label:'Never synced · data-lake',color:'#5C6879'}
+      ],
+      stack: [
+        {label:'AK',bg:V,ink:'#FFFFFF',ml:'0'},
+        {label:'UA',bg:'#2E6E8E',ink:'#FFFFFF',ml:'-8px'},
+        {label:'AR',bg:'#5b3f9e',ink:'#FFFFFF',ml:'-8px'},
+        {label:'+9',bg:'#F1F5F9',ink:'#4B5563',ml:'-8px'}
+      ],
+      meters: [
+        {label:'Coverage',value:'82%',w:'82%',fill:GRAD},
+        {label:'Duplication',value:'7.4%',w:'26%',fill:'linear-gradient(90deg,#0F7D4F,#12A05C)'},
+        {label:'Security findings',value:'4 of 9',w:'44%',fill:'linear-gradient(90deg,#B4651A,#F76B1C)'}
+      ],
+
+      tabs: ['Overview','Activity','Code Quality','Reviews','Testing'].map(l => ({
+        label: l, ink: s.tab === l ? '#241d4d' : '#64748B',
+        bar: s.tab === l ? V : 'transparent', weight: s.tab === l ? 600 : 400,
+        go: () => this.setState({ tab: l })
+      })),
+      tabBody: { Overview:'Score breakdown, engineering activity and ranking history.', Activity:'Commits, pull requests and reviews for the selected period.', 'Code Quality':'Duplication, complexity, coverage and security findings.', Reviews:'Reviews submitted, comments left and turnaround time.', Testing:'Tests added, coverage delta and flaky test count.' }[s.tab],
+      pills: ['Daily','Weekly','Monthly','Quarterly'].map(l => ({
+        label: l, bg: s.pill === l ? '#FFFFFF' : 'transparent',
+        ink: s.pill === l ? V : '#4B5563', weight: s.pill === l ? 600 : 400,
+        shadow: s.pill === l ? '0 1px 3px rgba(20,14,45,.12)' : 'none',
+        go: () => this.setState({ pill: l })
+      })),
+      pages: [1,2,3,'…',12].map(p => ({
+        label: String(p),
+        bg: s.page === p ? V : '#FFFFFF',
+        border: s.page === p ? V : '#E2E8F0',
+        ink: s.page === p ? '#FFFFFF' : '#475569',
+        go: () => { if (typeof p === 'number') this.setState({ page: p }); }
+      })),
+      steps: ['Connect','Authorize','Select','Sync'].map((l, i) => ({
+        label: l, mark: i < 2 ? '✓' : String(i + 1),
+        bar: i <= 2 ? V : '#E2E8F0',
+        dotBg: i < 2 ? '#F1EDFA' : i === 2 ? V : 'transparent',
+        dotBorder: i < 2 ? '#E6DDF6' : i === 2 ? V : '#CBD5E1',
+        dotInk: i < 2 ? V : i === 2 ? '#FFFFFF' : '#5C6879',
+        ink: i <= 2 ? '#241d4d' : '#5C6879'
+      })),
+      accordion: ACC.map((a, i) => ({
+        q: a.q, a: a.a, open: s.accordion === i,
+        border: s.accordion === i ? '#C9BCE8' : '#E2E8F0',
+        flip: s.accordion === i ? 'rotate(180deg)' : 'rotate(0deg)',
+        go: () => this.setState({ accordion: s.accordion === i ? -1 : i })
+      })),
+      menu: [
+        {label:'View profile',ink:'#334155',hasKey:false,key:'',d:'M10 4.2a2.9 2.9 0 110 5.8 2.9 2.9 0 010-5.8zM4.6 16.4c0-2.8 2.4-4.4 5.4-4.4s5.4 1.6 5.4 4.4'},
+        {label:'Export report',ink:'#334155',hasKey:true,key:'⌘E',d:'M10 4v8.4M6.6 9.4L10 12.8l3.4-3.4M4.6 15.6h10.8'},
+        {label:'Compare',ink:'#334155',hasKey:true,key:'⌘K',d:'M4.6 16.4V9.2M10 16.4V4.4M15.4 16.4v-4.8'},
+        {label:'Remove from team',ink:'#B4192F',hasKey:false,key:'',d:'M5.4 6.6h9.2M8 6.6V4.8h4v1.8M6.8 6.6l.7 9h5l.7-9'}
+      ],
+
+      rows: ROWS.map(x => Object.assign({}, x, {
+        on: !!s.rowSel[x.name],
+        bg: s.rowSel[x.name] ? '#FBFAFE' : 'transparent',
+        border: s.rowSel[x.name] ? V : '#CBD5E1',
+        fill: s.rowSel[x.name] ? V : '#FFFFFF',
+        rankInk: x.rank === '#1' ? V : '#5C6879',
+        trendInk: x.up === 1 ? '#0F7D4F' : x.up === 0 ? '#B4192F' : '#5C6879',
+        toggle: () => this.setState(st => ({ rowSel: Object.assign({}, st.rowSel, { [x.name]: !st.rowSel[x.name] }) }))
+      })),
+      allOn: selCount === ROWS.length,
+      allBorder: selCount ? V : '#CBD5E1',
+      allFill: selCount === ROWS.length ? V : '#FFFFFF',
+      toggleAllRows: () => this.setState({ rowSel: selCount === ROWS.length ? {} : ROWS.reduce((a, x) => (a[x.name] = true, a), {}) }),
+      selectedCount: selCount,
+      defs: [
+        {k:'Repository',v:'customer-web'},{k:'Provider',v:'GitHub'},
+        {k:'Quality score',v:'96'},{k:'Coverage',v:'82%'},{k:'Last sync',v:'8 min ago'}
+      ],
+      timeline: [
+        {title:'Analysis run #418 completed',time:'6 minutes ago',dot:V,ring:'#E6DDF6'},
+        {title:'Ahmed Khan merged PR #482',time:'41 minutes ago',dot:T,ring:'#D6EDF4'},
+        {title:'Duplication goal reached 74%',time:'2 hours ago',dot:'#12A05C',ring:'#CDEEDC'},
+        {title:'GitLab token expired',time:'Yesterday',dot:'#B4192F',ring:'#F0C9C1'}
+      ],
+
+      openModal: () => this.setState({ modalOpen: true }),
+      closeModal: () => this.setState({ modalOpen: false }),
+      modalOpen: s.modalOpen,
+      openDrawer: () => this.setState({ drawerOpen: true }),
+      closeDrawer: () => this.setState({ drawerOpen: false }),
+      drawerOpen: s.drawerOpen,
+      drawerBlocks: [
+        {tag:'Observed fact',ink:'#0F7D4F',bg:'#F1FBF5',border:'#CDEEDC',text:'The same email validation block appears in five places across customer-web and auth-service.'},
+        {tag:'AI inference',ink:V,bg:'#F8F5FD',border:'#E6DDF6',text:'Extracting one shared validator would drop duplication from 14.2% to about 9.6%.'},
+        {tag:'Recommendation',ink:T,bg:'#EFF8FB',border:'#CFE7EF',text:'Create a shared validator module, then re-run analysis to verify the change moved the metric.'}
+      ],
+      openToast: () => {
+        clearTimeout(this._toast);
+        this.setState({ toastOpen: true });
+        this._toast = setTimeout(() => this.setState({ toastOpen: false }), 4200);
+      },
+      closeToast: () => this.setState({ toastOpen: false }),
+      toastOpen: s.toastOpen,
+      tipOpen: s.tipOpen,
+      toggleTip: () => this.setState({ tipOpen: !s.tipOpen }),
+      stopClick: e => { if (e && e.stopPropagation) e.stopPropagation(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

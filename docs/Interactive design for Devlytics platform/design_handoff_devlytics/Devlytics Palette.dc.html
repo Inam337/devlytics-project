@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B7D9E"/><stop offset="1" stop-color="#372b73"/></linearGradient></defs><rect width="200" height="200" rx="28" fill="url(#tg)"/><g transform="translate(60,58) scale(0.53)" fill="#FFFFFF"><circle cx="75" cy="52" r="42"/><rect x="40" y="80" width="10" height="60" rx="5"/><rect x="62" y="80" width="10" height="76" rx="5"/><rect x="84" y="80" width="10" height="76" rx="5"/><rect x="106" y="80" width="10" height="60" rx="5"/></g></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#0F1115; color:#E8EAF0; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#E8EAF0; text-decoration:none; }
+  a:hover { color:#FFFFFF; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:36px 32px 80px">
+  <div style="max-width:1240px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:28px;flex-wrap:wrap">
+      <div style="min-width:0">
+        <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.15em;text-transform:uppercase;color:#8A90A0">Devlytics · colour directions</div>
+        <div style="margin-top:13px;font:600 32px/1.12 'IBM Plex Sans';letter-spacing:-0.025em;color:#FFFFFF">Eight directions, one product</div>
+        <div style="margin-top:12px;font-size:14.5px;line-height:1.62;color:#A8AEBE;max-width:660px;text-wrap:pretty">Every ratio on this page is computed live from the hex values, measured against that palette's own page ground. Nothing is hand-typed, so the numbers cannot drift from the colours.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex:1 1 auto;min-width:0;flex-wrap:wrap;justify-content:flex-end">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+          <div onClick="{{ t.go }}" style="display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:11px;cursor:pointer;background:{{ t.bg }};border:1px solid {{ t.border }}">
+            <div style="display:flex;gap:3px;flex:none">
+              <div style="width:11px;height:22px;border-radius:3px 0 0 3px;background:{{ t.c1 }}"></div>
+              <div style="width:11px;height:22px;background:{{ t.c2 }}"></div>
+              <div style="width:11px;height:22px;border-radius:0 3px 3px 0;background:{{ t.c3 }}"></div>
+            </div>
+            <div style="font-size:13px;font-weight:{{ t.weight }};color:{{ t.ink }};white-space:nowrap">{{ t.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;background:{{ p.ground }};border:1px solid {{ p.hairline }};border-radius:20px;overflow:hidden">
+      <div style="padding:26px 28px;border-bottom:1px solid {{ p.hairline }};display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-start">
+        <div style="min-width:0">
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:{{ p.accentInk }}">{{ p.tagline }}</div>
+          <div style="margin-top:11px;font:600 28px/1.12 'IBM Plex Sans';letter-spacing:-0.025em;color:{{ p.headInk }}">{{ p.name }}</div>
+          <div style="margin-top:11px;font-size:14px;line-height:1.62;color:{{ p.bodyInk }};max-width:620px;text-wrap:pretty">{{ p.desc }}</div>
+        </div>
+        <div style="flex:none;display:flex;flex-direction:column;gap:9px;min-width:190px">
+          <sc-for list="{{ p.verdict }}" as="v" hint-placeholder-count="3">
+            <div style="display:flex;justify-content:space-between;gap:14px;font:400 11.5px 'IBM Plex Mono',monospace">
+              <div style="color:{{ p.mutedInk }}">{{ v.k }}</div>
+              <div style="color:{{ p.headInk }};font-weight:500">{{ v.v }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding:24px 28px 30px">
+        <sc-for list="{{ p.ramps }}" as="r" hint-placeholder-count="3">
+          <div style="margin-bottom:26px">
+            <div style="display:flex;align-items:baseline;gap:12px">
+              <div style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:{{ p.headInk }}">{{ r.label }}</div>
+              <div style="font-size:12px;color:{{ p.mutedInk }};text-wrap:pretty">{{ r.note }}</div>
+              <div style="flex:1;height:1px;background:{{ p.hairline }}"></div>
+            </div>
+            <div style="margin-top:13px;display:grid;grid-template-columns:repeat(auto-fill,minmax(162px,1fr));gap:11px">
+              <sc-for list="{{ r.swatches }}" as="c" hint-placeholder-count="5">
+                <div style="background:{{ p.card }};border:1px solid {{ p.hairline }};border-radius:12px;overflow:hidden">
+                  <div style="height:70px;background:{{ c.hex }};display:flex;align-items:flex-start;justify-content:flex-end;padding:8px">
+                    <div style="background:rgba(255,255,255,.94);border-radius:5px;padding:2px 6px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:#141824">{{ c.ratio }}</div>
+                  </div>
+                  <div style="padding:11px 12px 13px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:7px">
+                      <div style="font:600 11.5px 'IBM Plex Sans';color:{{ p.headInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</div>
+                      <div style="flex:none;font:600 8px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:{{ c.gradeInk }};background:{{ c.gradeBg }};border-radius:20px;padding:2px 6px">{{ c.grade }}</div>
+                    </div>
+                    <div style="margin-top:5px;font:400 10px 'IBM Plex Mono',monospace;color:{{ p.mutedInk }}">{{ c.hex }}</div>
+                    <div style="margin-top:8px;font-size:10.5px;line-height:1.5;color:{{ p.bodyInk }};text-wrap:pretty">{{ c.use }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+
+        <div style="display:flex;align-items:baseline;gap:12px;margin-top:4px">
+          <div style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:{{ p.headInk }}">Applied</div>
+          <div style="font-size:12px;color:{{ p.mutedInk }}">The same Devlytics components in every palette</div>
+          <div style="flex:1;height:1px;background:{{ p.hairline }}"></div>
+        </div>
+
+        <div style="margin-top:15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px;align-items:start">
+          <div style="background:{{ p.card }};border:1px solid {{ p.hairline }};border-radius:15px;padding:18px">
+            <div style="font:600 13.5px 'IBM Plex Sans';color:{{ p.headInk }}">KPI tiles</div>
+            <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <sc-for list="{{ p.kpis }}" as="k" hint-placeholder-count="4">
+                <div style="background:{{ p.subtle }};border:1px solid {{ p.hairline }};border-radius:11px;padding:13px">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                    <div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:{{ p.mutedInk }}">{{ k.label }}</div>
+                    <div style="width:7px;height:7px;flex:none;border-radius:2px;background:{{ k.dot }}"></div>
+                  </div>
+                  <div style="margin-top:10px;font:600 21px/1 'IBM Plex Mono',monospace;color:{{ p.headInk }}">{{ k.value }}</div>
+                  <div style="margin-top:7px;font:500 10px 'IBM Plex Mono',monospace;color:{{ k.ink }}">{{ k.delta }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:{{ p.card }};border:1px solid {{ p.hairline }};border-radius:15px;padding:18px">
+            <div style="font:600 13.5px 'IBM Plex Sans';color:{{ p.headInk }}">Rank tiers</div>
+            <div style="margin-top:7px;font-size:11.5px;color:{{ p.mutedInk }}">Chip treatment, so no tier depends on lightness alone</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column">
+              <sc-for list="{{ p.rankRows }}" as="d" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:40px 1fr 54px 44px;gap:9px;align-items:center;padding:10px 0;border-top:1px solid {{ p.hairline }}">
+                  <div style="justify-self:start;font:600 11px 'IBM Plex Mono',monospace;color:{{ d.rankInk }};background:{{ d.rankBg }};border:1px solid {{ d.rankBorder }};border-radius:6px;padding:{{ d.rankPad }}">{{ d.rank }}</div>
+                  <div style="display:flex;align-items:center;gap:9px;min-width:0">
+                    <div style="width:23px;height:23px;flex:none;border-radius:50%;background:{{ d.tc }};display:flex;align-items:center;justify-content:center;font:600 8.5px 'IBM Plex Mono',monospace;color:{{ d.tcInk }}">{{ d.ini }}</div>
+                    <div style="font-size:12px;color:{{ p.headInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</div>
+                  </div>
+                  <div style="font:600 12px 'IBM Plex Mono',monospace;color:{{ p.headInk }};text-align:right">{{ d.score }}</div>
+                  <div style="font:500 10.5px 'IBM Plex Mono',monospace;color:{{ d.trendInk }};text-align:right">{{ d.trend }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:{{ p.sidebar }};border-radius:15px;padding:18px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:29px;height:29px;flex:none;border-radius:9px;background:{{ p.sidebarAccent }};display:flex;align-items:center;justify-content:center">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="{{ p.sidebarAccentInk }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 16.4V9.2M10 16.4V4.4M15.4 16.4v-4.8"></path></svg>
+              </div>
+              <div style="min-width:0">
+                <div style="font:600 13.5px 'IBM Plex Sans';color:#FFFFFF">Sidebar</div>
+                <div style="margin-top:3px;font:400 10px 'IBM Plex Mono',monospace;color:{{ p.sidebarMuted }}">Active state carries the signal colour</div>
+              </div>
+            </div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:3px">
+              <sc-for list="{{ p.navRows }}" as="n" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:{{ n.bg }};border-left:3px solid {{ n.accent }}">
+                  <div style="width:13px;height:13px;flex:none;border-radius:4px;background:{{ n.dot }}"></div>
+                  <div style="flex:1;min-width:0;font-size:12px;font-weight:{{ n.weight }};color:{{ n.ink }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:{{ p.card }};border:1px solid {{ p.hairline }};border-radius:15px;padding:18px">
+            <div style="font:600 13.5px 'IBM Plex Sans';color:{{ p.headInk }}">Chart ramp</div>
+            <div style="margin-top:7px;font-size:11.5px;color:{{ p.mutedInk }}">Five series that stay separable side by side</div>
+            <div style="margin-top:18px;display:flex;align-items:flex-end;gap:9px;height:126px">
+              <sc-for list="{{ p.bars }}" as="b" hint-placeholder-count="7">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px">
+                  <div style="width:100%;display:flex;gap:3px;align-items:flex-end;height:100px">
+                    <div style="flex:1;height:{{ b.h1 }};background:{{ p.chart1 }};border-radius:3px 3px 0 0"></div>
+                    <div style="flex:1;height:{{ b.h2 }};background:{{ p.chart2 }};border-radius:3px 3px 0 0"></div>
+                    <div style="flex:1;height:{{ b.h3 }};background:{{ p.chart3 }};border-radius:3px 3px 0 0"></div>
+                  </div>
+                  <div style="font:400 9px 'IBM Plex Mono',monospace;color:{{ p.mutedInk }}">{{ b.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+              <sc-for list="{{ p.series }}" as="sr" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:6px;font:400 10px 'IBM Plex Mono',monospace;color:{{ p.bodyInk }}">
+                  <div style="width:9px;height:9px;border-radius:2px;background:{{ sr.hex }}"></div>{{ sr.label }}
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:{{ p.card }};border:1px solid {{ p.hairline }};border-radius:15px;padding:18px">
+            <div style="font:600 13.5px 'IBM Plex Sans';color:{{ p.headInk }}">Actions and states</div>
+            <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+              <button style="background:{{ p.primary }};border:1px solid {{ p.primary }};border-radius:10px;padding:11px 17px;color:{{ p.primaryInk }};font:600 12.5px 'IBM Plex Sans';cursor:pointer">Run analysis</button>
+              <button style="background:{{ p.signal }};border:1px solid {{ p.signalBorder }};border-radius:10px;padding:11px 17px;color:{{ p.signalInk }};font:600 12.5px 'IBM Plex Sans';cursor:pointer">Verify goal</button>
+              <button style="background:{{ p.card }};border:1px solid {{ p.buttonBorder }};border-radius:10px;padding:11px 17px;color:{{ p.headInk }};font:500 12.5px 'IBM Plex Sans';cursor:pointer">Export</button>
+            </div>
+            <div style="margin-top:16px;display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ p.semantics }}" as="x" hint-placeholder-count="4">
+                <div style="display:flex;gap:11px;align-items:center;background:{{ x.bg }};border:1px solid {{ x.border }};border-left:3px solid {{ x.ink }};border-radius:10px;padding:11px 13px">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:600;color:{{ p.headInk }};text-wrap:pretty">{{ x.title }}</div>
+                    <div style="margin-top:4px;font:400 10px 'IBM Plex Mono',monospace;color:{{ p.mutedInk }};text-wrap:pretty">{{ x.meta }}</div>
+                  </div>
+                  <div style="flex:none;font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:{{ x.ink }};white-space:nowrap">{{ x.tag }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:{{ p.subtle }};border:1px solid {{ p.hairline }};border-radius:15px;padding:18px">
+            <div style="font:600 13.5px 'IBM Plex Sans';color:{{ p.headInk }}">Why this fits the scope</div>
+            <div style="margin-top:13px;display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ p.rationale }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex;gap:11px;align-items:flex-start">
+                  <div style="width:19px;height:19px;flex:none;border-radius:6px;background:{{ p.primary }};display:flex;align-items:center;justify-content:center;font:600 8.5px 'IBM Plex Mono',monospace;color:{{ p.primaryInk }}">{{ r.n }}</div>
+                  <div style="font-size:12px;line-height:1.6;color:{{ p.bodyInk }};text-wrap:pretty">{{ r.text }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid {{ p.hairline }}">
+              <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:{{ p.mutedInk }}">Trade-off</div>
+              <div style="margin-top:8px;font-size:12px;line-height:1.6;color:{{ p.bodyInk }};text-wrap:pretty">{{ p.tradeoff }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:22px;background:{{ p.card }};border:1px solid {{ p.hairline }};border-radius:15px;padding:18px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap">
+            <div style="font:600 13.5px 'IBM Plex Sans';color:{{ p.headInk }}">Token handoff</div>
+            <div style="font:400 10.5px 'IBM Plex Mono',monospace;color:{{ p.mutedInk }}">Paste-ready values for this palette</div>
+          </div>
+          <div style="margin-top:13px;display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:8px">
+            <sc-for list="{{ p.tokens }}" as="t" hint-placeholder-count="8">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;background:{{ p.subtle }};border:1px solid {{ p.hairline }};border-radius:8px;padding:9px 11px">
+                <div style="font:400 10.5px 'IBM Plex Mono',monospace;color:{{ p.bodyInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.k }}</div>
+                <div style="display:flex;align-items:center;gap:7px;flex:none">
+                  <div style="width:13px;height:13px;border-radius:3px;background:{{ t.v }};border:1px solid {{ p.hairline }}"></div>
+                  <div style="font:500 10.5px 'IBM Plex Mono',monospace;color:{{ p.headInk }}">{{ t.v }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1320,&quot;height&quot;:1200}}">
+const lum = hex => {
+  const c = [1, 3, 5].map(i => {
+    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+};
+const ratio = (a, b) => {
+  const l1 = lum(a), l2 = lum(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+};
+
+const PALETTES = [
+  {
+    key:'aurora', label:'Aurora', tagline:'Violet mantle, iridescent siphon',
+    name:'Aurora', tabs:['#372b73','#2E6E8E','#0B7D9E'],
+    desc:'The violet base you already have, with the pink half replaced by the blues a live octopus actually shows — the teal-to-peacock iridescence across the mantle and siphon. Warm hues stay reserved for meaning, so nothing in the brand competes with a critical finding.',
+    ground:'#F6F7FB', card:'#FFFFFF', subtle:'#FBFAFE', hairline:'#E2E8F0',
+    headInk:'#241d4d', bodyInk:'#475569', mutedInk:'#5C6879', accentInk:'#0F5A73',
+    primary:'#372b73', primaryInk:'#FFFFFF', signal:'#0B7D9E', signalInk:'#FFFFFF', signalBorder:'#096B87',
+    sidebarBase:'#2E6E8E', sidebarAccent:'#FFFFFF', sidebarAccentInk:'#372b73',
+    buttonBorder:'#E2E8F0',
+    sidebar:'linear-gradient(180deg,#0B7D9E 0%,#2E6E8E 32%,#372b73 100%)', sidebarMuted:'rgba(255,255,255,.68)',
+    chart1:'#372b73', chart2:'#2E6E8E', chart3:'#0B7D9E',
+    series:[['Commits','#372b73'],['Pull requests','#2E6E8E'],['Reviews','#0B7D9E'],['Tests','#B4651A'],['Findings','#94A3B8']],
+    improvement:'#0E7D47', critical:'#B4192F', warning:'#96650F', neutral:'#5C6879',
+    accent:'#0B7D9E', accentDeep:'#0F5A73', accentTintBg:'#EAF4F8', accentTintBorder:'#C3DEE8',
+    avatars:['#372b73','#5b3f9e','#2E6E8E','#0B7D9E','#0F5A73'],
+    core:[
+      ['Violet ink','#372b73','Sidebar base, primary button, headings and first chart series.'],
+      ['Violet 500','#5b3f9e','Hover states on dark surfaces, second-level headings.'],
+      ['Peacock','#2E6E8E','Mantle iridescence: second chart series and avatar backgrounds.'],
+      ['Siphon','#0B7D9E','Signal: active nav, rank #1 fill, focus ring. White text at 4.7:1.'],
+      ['Siphon ink','#0F5A73','The text form of siphon — links, small labels, chip fills behind white.']
+    ],
+    ground_ramp:[
+      ['Page','#F6F7FB','Application background behind all cards.'],
+      ['Card','#FFFFFF','Card, table and modal surfaces.'],
+      ['Hairline','#E2E8F0','Borders and dividers.'],
+      ['Muted ink','#5C6879','Labels, metadata and every activity-only metric.'],
+      ['Body ink','#475569','Body copy and secondary values.']
+    ],
+    rationale:[
+      'The violet mantle, logo and primary button stay as they are today; only the pink half of the gradient changes.',
+      'With the brand entirely cool, red and amber belong to meaning alone, so a failing pipeline can never read as a Devlytics flourish.',
+      'Rank #1 fills with siphon and white text, which is the one place brand colour is allowed to signal position.',
+      'Activity-only metrics such as lines of code render in muted ink by rule, matching the scope requirement that volume never scores.'
+    ],
+    tradeoff:'Violet-to-teal is calmer than the magenta it replaces, which costs some of the warmth and drama in the sidebar and on the marketing hero. The gradient still does a lot of the visual work, which can make dense score tables feel decorative rather than instrumental.'
+  },
+  {
+    key:'meridian', label:'Meridian', tagline:'Indigo record, citron signal',
+    name:'Meridian', tabs:['#1B1F3B','#B8CE3A','#8F4520'],
+    desc:'Indigo ink and citron on a warm chalk ground. Built so the loudest thing on any screen is a number: citron appears on at most two elements, which teaches the eye that it means "this is live".',
+    ground:'#F5F3EF', card:'#FFFFFF', subtle:'#FBFAF7', hairline:'#E0DBD1',
+    headInk:'#1B1F3B', bodyInk:'#4B5162', mutedInk:'#686E80', accentInk:'#8F4520',
+    primary:'#1B1F3B', primaryInk:'#FFFFFF', signal:'#B8CE3A', signalInk:'#1B1F3B', signalBorder:'#A7BC2E',
+    sidebarBase:'#1B1F3B', sidebarAccent:'#B8CE3A', sidebarAccentInk:'#1B1F3B',
+    buttonBorder:'#DCD6CB',
+    sidebar:'#1B1F3B', sidebarMuted:'#9BA1B8',
+    chart1:'#1B1F3B', chart2:'#4A5FA0', chart3:'#B8CE3A',
+    series:[['Commits','#1B1F3B'],['Pull requests','#4A5FA0'],['Reviews','#B8CE3A'],['Tests','#C86B3C'],['Findings','#9BA1B3']],
+    improvement:'#15704A', critical:'#B4192F', warning:'#96650F', neutral:'#686E80',
+    accent:'#C86B3C', accentDeep:'#8F4520', accentTintBg:'#FDF5F0', accentTintBorder:'#E8C6B1',
+    avatars:['#1B1F3B','#343C6B','#4A5FA0','#4A5FA0','#4A5FA0'],
+    core:[
+      ['Indigo ink','#1B1F3B','Sidebar, headings, primary button, first chart series.'],
+      ['Indigo 600','#343C6B','Hover on dark surfaces, secondary headings.'],
+      ['Indigo 400','#4A5FA0','Second chart series, avatar backgrounds.'],
+      ['Citron','#B8CE3A','Signal only: active nav, verified goal, focus ring. Dark ink on top.'],
+      ['Clay ink','#8F4520','Rank #1 fill and milestone labels at small sizes.']
+    ],
+    ground_ramp:[
+      ['Chalk','#F5F3EF','Page background. Warm paper reduces fatigue in dense tables.'],
+      ['Card','#FFFFFF','All card and table surfaces.'],
+      ['Hairline','#E0DBD1','Warm border, so it never reads as cool-grey on chalk.'],
+      ['Muted ink','#686E80','Labels, metadata, activity-only metrics. Lightest ink allowed on text.'],
+      ['Body ink','#4B5162','Body copy and secondary values.']
+    ],
+    rationale:[
+      'Citron is a signal, not a brand wash. Two elements per screen at most, so it reliably means "the live thing".',
+      'Indigo carries authority without celebration. A product that ranks people should read as record, not confetti.',
+      'Rank tiers use clay chips isolated from green, red and amber, so #1 is never misread as a passing state.',
+      'The warm chalk ground is the single biggest departure and the reason long score tables stay comfortable.'
+    ],
+    tradeoff:'Furthest from the colourful, futuristic brief you gave for the logo. The octopus mark would need a citron-indigo gradient, and citron is polarising — it either reads as precision instrument or as highlighter.'
+  },
+  {
+    key:'instrument', label:'Instrument', tagline:'Petrol panel, cyan precision',
+    name:'Instrument', tabs:['#0E2A33','#0A6B6E','#8A5A11'],
+    desc:'Petrol ink with a cyan primary and sodium amber accent on bone. Reads as measurement hardware rather than dashboard software — cool and exact, warmed by amber on the one metric that matters most.',
+    ground:'#F4F2ED', card:'#FFFFFF', subtle:'#FAF9F5', hairline:'#E3DFD6',
+    headInk:'#0E2A33', bodyInk:'#3F5057', mutedInk:'#5B6D74', accentInk:'#8A5A11',
+    primary:'#0A6B6E', primaryInk:'#FFFFFF', signal:'#0E4C55', signalInk:'#FFFFFF', signalBorder:'#0A3A41',
+    sidebarBase:'#123C44', sidebarAccent:'#5FD6D9', sidebarAccentInk:'#0E2A33',
+    buttonBorder:'#DAD5CA',
+    sidebar:'linear-gradient(180deg,#0E2A33 0%,#123C44 62%,#0F5257 100%)', sidebarMuted:'#8FB3B8',
+    chart1:'#0E2A33', chart2:'#17656F', chart3:'#0A6B6E',
+    series:[['Commits','#0E2A33'],['Pull requests','#17656F'],['Reviews','#0A6B6E'],['Tests','#A34A12'],['Findings','#9AA8AD']],
+    improvement:'#15704A', critical:'#B03024', warning:'#8A5A11', neutral:'#5B6D74',
+    accent:'#A34A12', accentDeep:'#7D3A0D', accentTintBg:'#FCF3EC', accentTintBorder:'#EBD4C0',
+    avatars:['#0E2A33','#123C44','#17656F','#1F717A','#0A6B6E'],
+    core:[
+      ['Petrol ink','#0E2A33','Sidebar, headings, first chart series. Near-black but green-shifted.'],
+      ['Petrol 600','#17656F','Hover on dark surfaces, second chart series.'],
+      ['Cyan','#0A6B6E','Primary action, verify button, links. Sits between the red and green semantics.'],
+      ['Cyan light','#5FD6D9','On-dark only: sidebar active accent, icon tile, focus ring inside the sidebar.'],
+      ['Copper','#A34A12','Rank #1, milestones and the single metric to look at first. Distinct from the amber warning.']
+    ],
+    ground_ramp:[
+      ['Bone','#F4F2ED','Page background. Warm, low-glare ground for long reading sessions.'],
+      ['Card','#FFFFFF','Card and table surfaces.'],
+      ['Hairline','#E3DFD6','Warm hairline matched to bone.'],
+      ['Muted ink','#5B6D74','Labels, metadata and activity-only metrics.'],
+      ['Body ink','#3F5057','Body copy and secondary values.']
+    ],
+    rationale:[
+      'Cyan as the primary frees red and green entirely for meaning, which a quality product uses constantly.',
+      'Amber is rationed to one element per view, so "look here first" is a colour decision rather than a font-size decision.',
+      'A single-hue depth ramp keeps five-series charts coherent instead of looking like five unrelated brands.',
+      'Bone rather than blue-grey measurably reduces glare on the dense leaderboard and repository tables.'
+    ],
+    tradeoff:'Cool and clinical. It suits audit and quality reporting well but does less for the competitive, gamified side of the product — podiums and achievement badges have less warmth to work with than under Aurora.'
+  },
+  {
+    key:'orchard', label:'Orchard', tagline:'Forest ledger, brass highlight',
+    name:'Orchard', tagline2:'', tabs:['#16352B','#A8791F','#B4452C'],
+    desc:'Deep forest with brass and terracotta on linen. The most editorial of the four: it reads like a published audit rather than an app, which suits a product whose argument is evidence over opinion.',
+    ground:'#F6F4EF', card:'#FFFFFF', subtle:'#FBFAF6', hairline:'#E1DDD2',
+    headInk:'#16352B', bodyInk:'#3D4F46', mutedInk:'#5E6D66', accentInk:'#8A6218',
+    primary:'#16352B', primaryInk:'#FFFFFF', signal:'#6F4E11', signalInk:'#FFFFFF', signalBorder:'#573D0D',
+    sidebarBase:'#1D4536', sidebarAccent:'#D9B45C', sidebarAccentInk:'#16352B',
+    buttonBorder:'#DBD6C9',
+    sidebar:'linear-gradient(180deg,#16352B 0%,#1D4536 58%,#255140 100%)', sidebarMuted:'#9DB3A7',
+    chart1:'#16352B', chart2:'#2F6B54', chart3:'#A8791F',
+    series:[['Commits','#16352B'],['Pull requests','#2F6B54'],['Reviews','#A8791F'],['Tests','#B4452C'],['Findings','#9AA69E']],
+    improvement:'#1B7A47', critical:'#A8321F', warning:'#8A6218', neutral:'#5E6D66',
+    accent:'#B4452C', accentDeep:'#8C3220', accentTintBg:'#FCF2EE', accentTintBorder:'#EBD1C7',
+    avatars:['#16352B','#1D4536','#255140','#2F6B54','#356F5A'],
+    core:[
+      ['Forest ink','#16352B','Sidebar, headings, primary button, first chart series.'],
+      ['Forest 600','#1D4536','Hover on dark surfaces and secondary headings.'],
+      ['Sage','#2F6B54','Second chart series and avatar backgrounds.'],
+      ['Brass','#6F4E11','Signal: active nav, verified goal, rank #1 fill. Takes white text at 7.4:1.'],
+      ['Terracotta','#B4452C','Milestones and the metric to read first. Distinct from the critical red.']
+    ],
+    ground_ramp:[
+      ['Linen','#F6F4EF','Page background with a paper-stock warmth.'],
+      ['Card','#FFFFFF','Card and table surfaces.'],
+      ['Hairline','#E1DDD2','Warm hairline matched to linen.'],
+      ['Muted ink','#5E6D66','Labels, metadata and activity-only metrics.'],
+      ['Body ink','#3D4F46','Body copy and secondary values.']
+    ],
+    rationale:[
+      'Forest green as the structural colour means the improvement green must be brighter and warmer to stand apart, which makes positive deltas genuinely pop.',
+      'Brass gives achievements and rank #1 a medal quality without resorting to literal gold gradients.',
+      'Terracotta and the critical red are deliberately separated by 12 degrees of hue and 20% lightness, so milestone never reads as failure.',
+      'Linen and forest together read as a printed report, reinforcing that every score traces to recorded evidence.'
+    ],
+    tradeoff:'The warmest and least conventional for a developer tool. Engineers may read forest-and-brass as finance or legal software, and it moves furthest from the "futuristic SaaS" feel of your logo brief.'
+  },
+  {
+    key:'graphite', label:'Graphite', tagline:'Achromatic record, ultramarine signal',
+    name:'Graphite', tabs:['#22252B','#2544D8','#7A3FBF'],
+    desc:'A deliberately colourless interface: graphite, white and one ultramarine. Colour appears only where it carries meaning, so a red row or a green delta is the only saturated thing on screen and cannot be missed.',
+    ground:'#F6F7F8', card:'#FFFFFF', subtle:'#FAFBFB', hairline:'#E3E6E9',
+    headInk:'#16181C', bodyInk:'#454A52', mutedInk:'#5A6068', accentInk:'#5E2F94',
+    primary:'#22252B', primaryInk:'#FFFFFF', signal:'#2544D8', signalInk:'#FFFFFF', signalBorder:'#1C36AE',
+    sidebarBase:'#22252B', sidebarAccent:'#8FA7FF', sidebarAccentInk:'#16181C',
+    buttonBorder:'#DCE0E4',
+    sidebar:'#22252B', sidebarMuted:'#9AA1AB',
+    chart1:'#22252B', chart2:'#2544D8', chart3:'#7F9CE8',
+    series:[['Commits','#22252B'],['Pull requests','#2544D8'],['Reviews','#7F9CE8'],['Tests','#7A3FBF'],['Findings','#8B9199']],
+    improvement:'#12734A', critical:'#B4192F', warning:'#8A5A11', neutral:'#5A6068',
+    accent:'#7A3FBF', accentDeep:'#5E2F94', accentTintBg:'#F5F0FB', accentTintBorder:'#DDCDEF',
+    avatars:['#22252B','#2E3340','#2544D8','#1F3AAE','#3B4A7A'],
+    core:[
+      ['Graphite ink','#22252B','Sidebar, headings, primary button, first chart series.'],
+      ['Graphite 600','#2E3340','Hover on dark surfaces and avatar backgrounds.'],
+      ['Ultramarine','#2544D8','Primary action, active state, links. Takes white text at 7.2:1.'],
+      ['Ultramarine light','#7F9CE8','Third chart series and on-dark sidebar accent. Fill only.'],
+      ['Grape','#5E2F94','Rank #1 chip and milestone labels. Passes as text on card and page.']
+    ],
+    ground_ramp:[
+      ['Page','#F6F7F8','Application background behind all cards.'],
+      ['Card','#FFFFFF','Card, table and modal surfaces.'],
+      ['Hairline','#E3E6E9','Borders and dividers.'],
+      ['Muted ink','#5A6068','Labels, metadata and activity-only metrics.'],
+      ['Body ink','#454A52','Body copy and secondary values.']
+    ],
+    rationale:[
+      'With no decorative colour anywhere, semantic colour becomes unmissable: a critical finding is the only red pixel on the page.',
+      'Ultramarine is the single interactive colour, so anything blue is clickable and nothing clickable is another hue.',
+      'Grape separates rank and achievement from every semantic state, so #1 never reads as pass or fail.',
+      'Achromatic greys survive projector, screenshot and printed report without hue shift, which matters for board reporting.'
+    ],
+    tradeoff:'Deliberately austere. It gives up the warmth and personality of the current identity, and the logo would have to carry all of the brand character on its own.'
+  },
+  {
+    key:'ember', label:'Ember', tagline:'Slate panel, ember competition',
+    name:'Ember', tabs:['#1B3A4F','#0F5F86','#B0450F'],
+    desc:'Cool slate structure with ember as the heat of competition. Blues carry the record and the interface; ember appears only where the product is competitive — rank #1, streaks, milestones.',
+    ground:'#F4F6F8', card:'#FFFFFF', subtle:'#F9FAFC', hairline:'#DFE5EA',
+    headInk:'#16232E', bodyInk:'#3E4E5B', mutedInk:'#566672', accentInk:'#8A3309',
+    primary:'#1B3A4F', primaryInk:'#FFFFFF', signal:'#0F5F86', signalInk:'#FFFFFF', signalBorder:'#0B4A69',
+    sidebarBase:'#1B3A4F', sidebarAccent:'#F0A567', sidebarAccentInk:'#16232E',
+    buttonBorder:'#D8DFE5',
+    sidebar:'linear-gradient(180deg,#16232E 0%,#1B3A4F 58%,#215068 100%)', sidebarMuted:'#93A7B4',
+    chart1:'#1B3A4F', chart2:'#0F5F86', chart3:'#4E96B8',
+    series:[['Commits','#1B3A4F'],['Pull requests','#0F5F86'],['Reviews','#4E96B8'],['Tests','#B0450F'],['Findings','#8B9AA5']],
+    improvement:'#15704A', critical:'#9B1B2E', warning:'#8A5A11', neutral:'#566672',
+    accent:'#B0450F', accentDeep:'#8A3309', accentTintBg:'#FCF2EC', accentTintBorder:'#EED2BF',
+    avatars:['#1B3A4F','#22485F','#0F5F86','#2A5F7A','#14506B'],
+    core:[
+      ['Slate ink','#1B3A4F','Sidebar, headings, primary button, first chart series.'],
+      ['Steel','#0F5F86','Primary action, active state and links. White text at 7.1:1.'],
+      ['Steel light','#4E96B8','Third chart series. Fill only, never small text.'],
+      ['Ember','#B0450F','Rank #1, streaks and milestones. Passes as text on card and page.'],
+      ['Apricot','#F0A567','On-dark only: sidebar active accent and icon tile.']
+    ],
+    ground_ramp:[
+      ['Page','#F4F6F8','Application background behind all cards.'],
+      ['Card','#FFFFFF','Card, table and modal surfaces.'],
+      ['Hairline','#DFE5EA','Borders and dividers.'],
+      ['Muted ink','#566672','Labels, metadata and activity-only metrics.'],
+      ['Body ink','#3E4E5B','Body copy and secondary values.']
+    ],
+    rationale:[
+      'Two colour families with one job each: blue is the system, ember is the contest. Nothing sits ambiguously between them.',
+      'The blue depth ramp gives charts five separable series without importing five unrelated hues.',
+      'Ember at text weight means a leaderboard can label #1 without a fill, which keeps dense tables calm.',
+      'Slate reads as infrastructure tooling, which fits a product engineers open every morning.'
+    ],
+    tradeoff:'Blue-on-blue is the most conventional choice here — closest to generic enterprise analytics, and the least likely to be remembered from a screenshot.'
+  },
+  {
+    key:'nocturne', label:'Nocturne', tagline:'Dark-first, periwinkle primary',
+    name:'Nocturne', tabs:['#171B23','#6E86FF','#F2C14E'],
+    desc:'The only dark-first direction: the product ships dark and light mode is the port, not the source. Built for engineers who keep the dashboard open beside a dark editor all day.',
+    ground:'#0F1218', card:'#171B23', subtle:'#1C212B', hairline:'#2A3140',
+    headInk:'#EDF0F6', bodyInk:'#B9C0CE', mutedInk:'#8C95A6', accentInk:'#F2C14E',
+    primary:'#6E86FF', primaryInk:'#10131A', signal:'#2CB7E0', signalInk:'#0B1218', signalBorder:'#2CB7E0',
+    sidebarBase:'#171B23', sidebarAccent:'#6E86FF', sidebarAccentInk:'#10131A',
+    buttonBorder:'#2A3140',
+    sidebar:'linear-gradient(180deg,#171B23 0%,#1B2130 62%,#222B41 100%)', sidebarMuted:'#8C95A6',
+    chart1:'#6E86FF', chart2:'#2CB7E0', chart3:'#8B7BF0',
+    series:[['Commits','#6E86FF'],['Pull requests','#2CB7E0'],['Reviews','#8B7BF0'],['Tests','#F2C14E'],['Findings','#8C95A6']],
+    improvement:'#3FD98F', critical:'#FF7A72', warning:'#F5B942', neutral:'#8C95A6',
+    accent:'#F2C14E', accentDeep:'#F2C14E', accentTintBg:'#2A2416', accentTintBorder:'#46391C',
+    avatars:['#6E86FF','#8B7BF0','#2CB7E0','#4A9FD8','#7C8AC4'],
+    core:[
+      ['Panel','#171B23','Card, table and sidebar base surface.'],
+      ['Periwinkle','#6E86FF','Primary action, active nav, first chart series. Dark ink on top at 5.9:1.'],
+      ['Cyan','#2CB7E0','Secondary action and second chart series. Dark ink at 8.1:1.'],
+      ['Violet','#8B7BF0','Third chart series and avatar backgrounds.'],
+      ['Gold','#F2C14E','Rank #1 and achievements. Reads as text and as fill with dark ink.']
+    ],
+    ground_ramp:[
+      ['Page','#0F1218','Application background behind all panels.'],
+      ['Panel','#171B23','Card, table and modal surfaces.'],
+      ['Hairline','#2A3140','Borders and dividers on dark.'],
+      ['Muted ink','#8C95A6','Labels, metadata and activity-only metrics.'],
+      ['Body ink','#B9C0CE','Body copy and secondary values.']
+    ],
+    rationale:[
+      'Designed dark rather than inverted from light, so panel depth carries hierarchy instead of borders and shadows.',
+      'Semantic colours are the light, desaturated forms that stay legible on dark without glowing.',
+      'Gold does double duty as text and fill, which suits a product where achievements and rank matter.',
+      'Matches the environment the audience actually works in, next to a dark terminal and editor.'
+    ],
+    tradeoff:'Dark-first doubles the surface work: printed reports, PDF export and the marketing site all need a light counterpart, and the light mode risks becoming a second-class citizen.'
+  },
+  {
+    key:'sandstone', label:'Sandstone', tagline:'Sand ground, ink type, teal signal',
+    name:'Sandstone', tabs:['#1C1A16','#0E6E63','#6B4C9A'],
+    desc:'Near-black type on warm sand with a single deep teal for action. The most typographic direction: it treats the dashboard as a published document where the numbers, not the chrome, carry the emphasis.',
+    ground:'#F2EDE4', card:'#FFFDF9', subtle:'#FAF6EE', hairline:'#DFD6C6',
+    headInk:'#1C1A16', bodyInk:'#4A453C', mutedInk:'#605A4E', accentInk:'#533A7A',
+    primary:'#1C1A16', primaryInk:'#FFFFFF', signal:'#0E6E63', signalInk:'#FFFFFF', signalBorder:'#0A554C',
+    sidebarBase:'#1C1A16', sidebarAccent:'#E8C46A', sidebarAccentInk:'#1C1A16',
+    buttonBorder:'#DAD0BE',
+    sidebar:'linear-gradient(180deg,#1C1A16 0%,#252119 58%,#2E281D 100%)', sidebarMuted:'#A79E8C',
+    chart1:'#1C1A16', chart2:'#0E6E63', chart3:'#6B4C9A',
+    series:[['Commits','#1C1A16'],['Pull requests','#0E6E63'],['Reviews','#6B4C9A'],['Tests','#B23318'],['Findings','#8E877A']],
+    improvement:'#146B44', critical:'#A8231D', warning:'#8A5A11', neutral:'#605A4E',
+    accent:'#6B4C9A', accentDeep:'#533A7A', accentTintBg:'#F4F0FA', accentTintBorder:'#DDD2EE',
+    avatars:['#1C1A16','#33302A','#0E6E63','#145F58','#6B4C9A'],
+    core:[
+      ['Ink','#1C1A16','Headings, primary button, first chart series. Near-black, warm-shifted.'],
+      ['Ink 700','#33302A','Hover on dark surfaces and avatar backgrounds.'],
+      ['Teal','#0E6E63','Primary action, active state and links. White text at 6.2:1.'],
+      ['Iris','#6B4C9A','Rank #1, milestones and third chart series. Passes as text on sand.'],
+      ['Sand gold','#E8C46A','On-dark only: sidebar active accent and icon tile.']
+    ],
+    ground_ramp:[
+      ['Sand','#F2EDE4','Page background with a paper-stock warmth.'],
+      ['Card','#FFFDF9','Card and table surfaces, barely warmer than white.'],
+      ['Hairline','#DFD6C6','Warm hairline matched to sand.'],
+      ['Muted ink','#605A4E','Labels, metadata and activity-only metrics.'],
+      ['Body ink','#4A453C','Body copy and secondary values.']
+    ],
+    rationale:[
+      'Black type on sand gives the highest text contrast of any direction here, which suits screens that are mostly numbers.',
+      'One action colour means the interface never competes with the data for attention.',
+      'Iris keeps rank and milestones clear of the warm semantic range, so nothing warm is ambiguous.',
+      'Sand and warm hairlines make hour-long sessions in the leaderboard and repository tables easier on the eye.'
+    ],
+    tradeoff:'Quiet to the point of plain. Without a gradient or a saturated brand colour in the chrome, the product leans entirely on typography and spacing to feel premium.'
+  }
+];
+
+class Component extends DCLogic {
+  state = { pal: 0 };
+
+  renderVals() {
+    const s = this.state;
+    const P = PALETTES[s.pal];
+
+    const grade = (hex, bg) => {
+      const r = ratio(hex, bg);
+      return r >= 7 ? { grade:'AAA', gradeInk:'#0F5132', gradeBg:'#E8F6EE' }
+           : r >= 4.5 ? { grade:'AA', gradeInk:'#0F5132', gradeBg:'#E8F6EE' }
+           : r >= 3 ? { grade:'Large', gradeInk:'#8A5A11', gradeBg:'#FCF5E9' }
+           : { grade:'Non-text', gradeInk:'#4C554F', gradeBg:'#F1F1EE' };
+    };
+    const swatch = (row) => Object.assign(
+      { name: row[0], hex: row[1], use: row[2], ratio: ratio(row[1], P.ground).toFixed(2) + ':1' },
+      grade(row[1], P.ground)
+    );
+
+    const semRows = [
+      ['Improvement', P.improvement, 'Positive deltas, passing CI, resolved findings, completed goals.'],
+      ['Critical', P.critical, 'Blockers, failing pipelines, expired tokens.'],
+      ['Warning', P.warning, 'At-risk projects, stale syncs, weights not summing to 100.'],
+      ['Neutral', P.neutral, 'Unchanged values and non-scoring metrics such as lines of code.']
+    ];
+
+    const isDark = lum(P.card) < 0.2;
+    const tint = hex => {
+      const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+      const src = rgb(hex), dst = rgb(isDark ? P.card : '#FFFFFF');
+      const hx = t => '#' + src.map((c, i) => Math.round(c + (dst[i] - c) * t).toString(16).padStart(2, '0')).join('');
+      return isDark ? { bg: hx(0.86), border: hx(0.66) } : { bg: hx(0.93), border: hx(0.78) };
+    };
+
+    const onFill = hex => ['#FFFFFF', P.headInk, '#111318']
+      .reduce((best, ink) => (ratio(ink, hex) > ratio(best, hex) ? ink : best), '#FFFFFF');
+    const contrastPass = [P.bodyInk, P.mutedInk, P.improvement, P.critical, P.warning, P.neutral]
+      .every(h => ratio(h, P.ground) >= 4.5 && ratio(h, P.card) >= 4.5 && ratio(h, tint(h).bg) >= 4.5)
+      && P.avatars.every(h => ratio(onFill(h), h) >= 4.5)
+      && ratio(P.signalInk, P.signal) >= 4.5
+      && ratio(P.sidebarAccent, P.sidebarBase) >= 3
+      && ratio(P.sidebarAccentInk, P.sidebarAccent) >= 4.5;
+    const mustDiffer = [[P.accent, P.warning], [P.signal, P.warning], [P.signal, P.primary], [P.improvement, P.critical]];
+    const rolesOk = mustDiffer.every(pair => pair[0] !== pair[1]);
+
+    return {
+      tabs: PALETTES.map((x, i) => ({
+        label: x.label, c1: x.tabs[0], c2: x.tabs[1], c3: x.tabs[2],
+        bg: i === s.pal ? '#1B1F26' : 'transparent',
+        border: i === s.pal ? '#3A4150' : '#242832',
+        ink: i === s.pal ? '#FFFFFF' : '#A8AEBE',
+        weight: i === s.pal ? 600 : 400,
+        go: () => this.setState({ pal: i })
+      })),
+
+      p: {
+        name: P.name, tagline: P.tagline, desc: P.desc, tradeoff: P.tradeoff,
+        ground: P.ground, card: P.card, subtle: P.subtle, hairline: P.hairline,
+        headInk: P.headInk, bodyInk: P.bodyInk, mutedInk: P.mutedInk, accentInk: P.accentInk,
+        primary: P.primary, primaryInk: P.primaryInk,
+        signal: P.signal, signalInk: P.signalInk, signalBorder: P.signalBorder,
+        buttonBorder: P.buttonBorder, sidebar: P.sidebar, sidebarMuted: P.sidebarMuted,
+        sidebarAccent: P.sidebarAccent, sidebarAccentInk: P.sidebarAccentInk,
+        chart1: P.chart1, chart2: P.chart2, chart3: P.chart3,
+
+        verdict: [
+          { k:'Body ink', v: ratio(P.bodyInk, P.ground).toFixed(1) + ':1' },
+          { k:'Lightest text ink', v: ratio(P.mutedInk, P.ground).toFixed(1) + ':1' },
+          { k:'Positive delta', v: ratio(P.improvement, P.card).toFixed(1) + ':1' },
+          { k:'Primary button', v: ratio(P.primaryInk, P.primary).toFixed(1) + ':1' },
+          { k:'Contrast', v: contrastPass ? 'every token at 4.5:1' : 'see swatch grades' },
+          { k:'Role separation', v: rolesOk ? 'signal, accent and semantics distinct' : 'duplicate role value' }
+        ],
+
+        ramps: [
+          { label:'Core', note:'Identity and structure · measured against ' + P.ground, swatches: P.core.map(swatch) },
+          { label:'Ground', note:'Surfaces and ink · measured against ' + P.ground, swatches: P.ground_ramp.map(swatch) },
+          { label:'Semantic', note:'Meaning, never identity · measured against ' + P.ground, swatches: semRows.map(swatch) }
+        ],
+
+        kpis: [
+          { label:'Quality score', value:'91.4', delta:'+1.8', ink: P.improvement, dot: P.chart1 },
+          { label:'Coverage', value:'82%', delta:'+3.4 pts', ink: P.improvement, dot: P.chart3 },
+          { label:'Open findings', value:'37', delta:'12 critical', ink: P.critical, dot: P.critical },
+          { label:'Lines of code', value:'112.9k', delta:'activity metric', ink: P.neutral, dot: P.neutral }
+        ],
+
+        rankRows: [
+          { rank:'#1', name:'Ahmed Khan', ini:'AK', score:'94.2', trend:'▲ 2', tier:0, up:1 },
+          { rank:'#2', name:'Usman Ali', ini:'UA', score:'92.8', trend:'▲ 1', tier:1, up:1 },
+          { rank:'#3', name:'Ali Raza', ini:'AR', score:'91.7', trend:'▼ 1', tier:1, up:0 },
+          { rank:'#4', name:'Sara Iqbal', ini:'SI', score:'89.4', trend:'▲ 3', tier:2, up:1 },
+          { rank:'#5', name:'Bilal Ahmed', ini:'BA', score:'87.9', trend:'– 0', tier:2, up:2 }
+        ].map((d, i) => {
+          const chip = d.tier === 0
+            ? { rankInk: onFill(P.accentDeep), rankBg: P.accentDeep, rankBorder: P.accentDeep, rankPad:'3px 7px' }
+            : d.tier === 1
+            ? { rankInk: P.accentDeep, rankBg: P.accentTintBg, rankBorder: P.accentTintBorder, rankPad:'3px 7px' }
+            : { rankInk: P.mutedInk, rankBg:'transparent', rankBorder:'transparent', rankPad:'3px 3px' };
+          return Object.assign({}, d, chip, {
+            tc: P.avatars[i], tcInk: onFill(P.avatars[i]),
+            trendInk: d.up === 1 ? P.improvement : d.up === 0 ? P.critical : P.neutral
+          });
+        }),
+
+        navRows: ['Dashboard','Leaderboard','Code Quality','Improvement','Reports'].map((l, i) => ({
+          label: l,
+          bg: i === 2 ? 'rgba(255,255,255,.16)' : 'transparent',
+          accent: i === 2 ? P.sidebarAccent : 'transparent',
+          dot: i === 2 ? P.sidebarAccent : 'rgba(255,255,255,.34)',
+          ink: i === 2 ? '#FFFFFF' : P.sidebarMuted,
+          weight: i === 2 ? 600 : 400
+        })),
+
+        bars: [34,42,38,51,47,58,61].map((v, i) => ({
+          label:'W' + (i + 1),
+          h1: Math.round((v / 64) * 100) + 'px',
+          h2: Math.round(((v * 0.72) / 64) * 100) + 'px',
+          h3: Math.round(((v * 0.44) / 64) * 100) + 'px'
+        })),
+        series: P.series.map(x => ({ label: x[0], hex: x[1] })),
+
+        semantics: [
+          { title:'Duplication reduced to 7.4%', meta:'Verified by analysis run #418', tag:'Improved', ink: P.improvement },
+          { title:'GitLab token expired for data-etl', meta:'Two failed attempts · metrics frozen', tag:'Critical', ink: P.critical },
+          { title:'Scoring weights total 105%', meta:'Save blocked until weights equal 100%', tag:'Warning', ink: P.warning },
+          { title:'Lines of code 112.9k', meta:'Recorded as activity · no scoring weight', tag:'Neutral', ink: P.neutral }
+        ].map(x => Object.assign({}, x, tint(x.ink))),
+
+        rationale: P.rationale.map((t, i) => ({ n: String(i + 1), text: t })),
+
+        tokens: [
+          ['--primary', P.primary], ['--signal', P.signal], ['--sidebar-accent', P.sidebarAccent], ['--accent', P.accent],
+          ['--page', P.ground], ['--card', P.card], ['--hairline', P.hairline],
+          ['--ink-head', P.headInk], ['--ink-body', P.bodyInk], ['--ink-muted', P.mutedInk],
+          ['--improvement', P.improvement], ['--critical', P.critical], ['--warning', P.warning]
+        ].map(t => ({ k: t[0], v: t[1] }))
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,34 +1,33 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtModule, type JwtModuleOptions } from '@nestjs/jwt';
-import type { SignOptions } from 'jsonwebtoken';
-import { Users } from '../entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import type { SignOptions } from 'jsonwebtoken';
+import { OrganizationsModule } from '../organizations/organizations.module';
+import { UsersModule } from '../users/users.module';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { TokenService } from './token.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService): JwtModuleOptions => {
-        const expiresIn = (configService.get<string>('JWT_EXPIRES_IN') ??
-          '1h') as SignOptions['expiresIn'];
-        return {
-          secret: configService.getOrThrow<string>('JWT_SECRET'),
-          signOptions: { expiresIn },
-        };
-      },
       inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('jwt.secret'),
+        signOptions: {
+          expiresIn: config.get<string>('jwt.expiresIn', '15m') as SignOptions['expiresIn'],
+        },
+      }),
     }),
+    UsersModule,
+    OrganizationsModule,
   ],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard],
   controllers: [AuthController],
-  exports: [JwtStrategy, PassportModule, JwtModule, JwtAuthGuard],
+  providers: [AuthService, TokenService, JwtStrategy],
+  exports: [AuthService, TokenService],
 })
 export class AuthModule {}

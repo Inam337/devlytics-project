@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B7D9E"/><stop offset="1" stop-color="#372b73"/></linearGradient></defs><rect width="200" height="200" rx="28" fill="url(#tg)"/><g transform="translate(60,58) scale(0.53)" fill="#FFFFFF"><circle cx="75" cy="52" r="42"/><rect x="40" y="80" width="10" height="60" rx="5"/><rect x="62" y="80" width="10" height="76" rx="5"/><rect x="84" y="80" width="10" height="76" rx="5"/><rect x="106" y="80" width="10" height="60" rx="5"/></g></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F6F7FB; color:#241d4d; font-family:'IBM Plex Sans',system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#372b73; text-decoration:none; }
+  a:hover { color:#0B7D9E; }
+  input, button { font-family:inherit; }
+  ::-webkit-scrollbar { width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb { background:#D6DCE6; border-radius:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  @keyframes shimmer { 0%,100% { opacity:.55 } 50% { opacity:1 } }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  @keyframes floatUp { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex">
+  <div style="width:246px;flex:none;background:linear-gradient(180deg,#0B7D9E 0%,#2E6E8E 34%,#372b73 100%);padding:18px 12px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow:auto">
+    <div style="display:flex;align-items:center;gap:11px;padding:6px 8px 20px">
+      <img src="assets/devlytics-app-icon.png" alt="Devlytics" style="width:32px;height:32px;flex:none;border-radius:9px;box-shadow:0 2px 8px rgba(20,14,45,.28)" />
+      <div style="min-width:0">
+        <img src="assets/devlytics-wordmark-white.svg" alt="Devlytics" style="height:16px;display:block" />
+        <div style="margin-top:5px;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#FFFFFF">State library</div>
+      </div>
+    </div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+      <div onClick="{{ g.go }}" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;cursor:pointer;background:{{ g.bg }};border-left:3px solid {{ g.accent }}">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ g.d }}"></path><path d="{{ g.d2 }}"></path></svg>
+        <div style="flex:1;min-width:0;font-size:13px;font-weight:{{ g.weight }};color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.label }}</div>
+        <div style="font:500 10px 'IBM Plex Mono',monospace;color:#FFFFFF">{{ g.count }}</div>
+      </div>
+    </sc-for>
+    <div style="flex:1"></div>
+    <div style="margin:12px 8px 4px;padding:14px;border-radius:11px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)">
+      <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:#FFFFFF">Total states</div>
+      <div style="margin-top:8px;font:600 22px/1 'IBM Plex Mono',monospace;color:#FFFFFF">{{ totalStates }}</div>
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0">
+    <div style="background:#FFFFFF;border-bottom:1px solid #E2E8F0;padding:22px 32px;position:sticky;top:0;z-index:20">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap">
+        <div style="min-width:0">
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#0B7D9E">{{ group.kicker }}</div>
+          <div style="margin-top:9px;font:600 24px/1.15 'IBM Plex Sans';letter-spacing:-0.02em">{{ group.label }}</div>
+          <div style="margin-top:8px;font-size:13.5px;color:#64748B;max-width:640px;text-wrap:pretty">{{ group.desc }}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex:none">
+          <sc-for list="{{ densities }}" as="d" hint-placeholder-count="2">
+            <div onClick="{{ d.go }}" style="padding:8px 14px;border-radius:8px;border:1px solid {{ d.border }};background:{{ d.bg }};font-size:12.5px;color:{{ d.ink }};cursor:pointer;white-space:nowrap">{{ d.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:26px 32px 70px;display:grid;grid-template-columns:{{ gridCols }};gap:20px;align-items:start">
+      <sc-for list="{{ states }}" as="s" hint-placeholder-count="6">
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 1px 3px rgba(16,24,40,.06);overflow:hidden;animation:floatUp .35s ease both">
+          <div style="padding:14px 18px;border-bottom:1px solid #EFF2F7;background:#FBFCFD;display:flex;align-items:center;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="font:600 13.5px 'IBM Plex Sans';color:#241d4d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</div>
+              <div style="margin-top:4px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.trigger }}</div>
+            </div>
+            <div style="flex:none;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:{{ s.tagInk }};background:{{ s.tagBg }};border:1px solid {{ s.tagBorder }};border-radius:20px;padding:4px 9px;white-space:nowrap">{{ s.tag }}</div>
+          </div>
+
+          <div style="padding:{{ s.pad }};display:flex;flex-direction:column;justify-content:center;min-height:{{ s.minH }};background:{{ s.canvas }}">
+
+            <sc-if value="{{ s.isHero }}" hint-placeholder-val="{{ true }}">
+              <div style="text-align:center;padding:8px 14px">
+                <div style="width:56px;height:56px;margin:0 auto;border-radius:17px;background:{{ s.tile }};border:1px solid {{ s.tileBorder }};display:flex;align-items:center;justify-content:center">
+                  <svg width="25" height="25" viewBox="0 0 20 20" fill="none" stroke="{{ s.glyph }}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.d }}"></path><path d="{{ s.d2 }}"></path></svg>
+                </div>
+                <div style="margin-top:17px;font:600 16px/1.35 'IBM Plex Sans';color:#241d4d;text-wrap:pretty">{{ s.title }}</div>
+                <div style="margin-top:9px;font-size:13px;line-height:1.6;color:#64748B;max-width:380px;margin-left:auto;margin-right:auto;text-wrap:pretty">{{ s.body }}</div>
+                <sc-if value="{{ s.hasCode }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:14px;display:inline-flex;align-items:center;gap:9px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:7px 12px;font:400 10.5px 'IBM Plex Mono',monospace;color:#64748B">
+                    <div style="width:6px;height:6px;border-radius:50%;background:{{ s.codeDot }}"></div>{{ s.code }}
+                  </div>
+                </sc-if>
+                <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                  <sc-for list="{{ s.actions }}" as="a" hint-placeholder-count="2">
+                    <button style="background:{{ a.bg }};border:1px solid {{ a.border }};border-radius:10px;padding:11px 18px;color:{{ a.ink }};font:{{ a.font }};cursor:pointer;white-space:nowrap;box-shadow:{{ a.shadow }}">{{ a.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ s.isBanner }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;gap:13px;align-items:flex-start;background:{{ s.tile }};border:1px solid {{ s.tileBorder }};border-radius:12px;padding:15px 16px">
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="{{ s.glyph }}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="{{ s.d }}"></path><path d="{{ s.d2 }}"></path></svg>
+                  <div style="flex:1;min-width:0">
+                    <div style="font:600 13.5px 'IBM Plex Sans';color:#241d4d;text-wrap:pretty">{{ s.title }}</div>
+                    <div style="margin-top:7px;font-size:12.5px;line-height:1.6;color:#475569;text-wrap:pretty">{{ s.body }}</div>
+                    <sc-if value="{{ s.hasCode }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:11px;font:400 10.5px 'IBM Plex Mono',monospace;color:#5C6879">{{ s.code }}</div>
+                    </sc-if>
+                    <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+                      <sc-for list="{{ s.actions }}" as="a" hint-placeholder-count="2">
+                        <button style="background:{{ a.bg }};border:1px solid {{ a.border }};border-radius:9px;padding:9px 15px;color:{{ a.ink }};font:{{ a.font }};cursor:pointer;white-space:nowrap">{{ a.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ s.isRows }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:grid;grid-template-columns:44px 1fr 70px 62px;gap:10px;padding:0 4px 11px;font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#5C6879">
+                  <div>Rank</div><div>Developer</div><div>Score</div><div>Trend</div>
+                </div>
+                <sc-for list="{{ s.ghostRows }}" as="r" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:44px 1fr 70px 62px;gap:10px;padding:12px 4px;border-top:1px solid #EFF2F7;align-items:center">
+                    <div style="height:9px;border-radius:4px;background:#EFF2F7;width:60%;animation:shimmer 1.4s infinite;animation-delay:{{ r.delay }}"></div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div style="width:24px;height:24px;flex:none;border-radius:50%;background:#EFF2F7;animation:shimmer 1.4s infinite;animation-delay:{{ r.delay }}"></div>
+                      <div style="height:9px;border-radius:4px;background:#EFF2F7;width:{{ r.w }};animation:shimmer 1.4s infinite;animation-delay:{{ r.delay }}"></div>
+                    </div>
+                    <div style="height:9px;border-radius:4px;background:#EFF2F7;animation:shimmer 1.4s infinite;animation-delay:{{ r.delay }}"></div>
+                    <div style="height:9px;border-radius:4px;background:#EFF2F7;animation:shimmer 1.4s infinite;animation-delay:{{ r.delay }}"></div>
+                  </div>
+                </sc-for>
+                <div style="margin-top:16px;display:flex;align-items:center;gap:11px;justify-content:center">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#372b73" stroke-width="2" stroke-linecap="round" style="animation:spin 1s linear infinite"><path d="M10 3.2a6.8 6.8 0 106.8 6.8"></path></svg>
+                  <div style="font:400 11.5px 'IBM Plex Mono',monospace;color:#64748B">{{ s.title }}</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ s.isChart }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font:600 13px 'IBM Plex Sans';color:#241d4d">{{ s.chartTitle }}</div>
+                <div style="margin-top:4px;font-size:11px;color:#5C6879">{{ s.chartSub }}</div>
+                <div style="margin-top:16px;position:relative;height:132px;border-bottom:1px solid #EFF2F7;border-left:1px solid #EFF2F7">
+                  <sc-for list="{{ s.gridLines }}" as="g" hint-placeholder-count="3">
+                    <div style="position:absolute;left:0;right:0;top:{{ g }};height:1px;background:#F4F6FA"></div>
+                  </sc-for>
+                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px">
+                    <svg width="26" height="26" viewBox="0 0 20 20" fill="none" stroke="{{ s.glyph }}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.d }}"></path><path d="{{ s.d2 }}"></path></svg>
+                    <div style="font:600 13px 'IBM Plex Sans';color:#241d4d;text-align:center">{{ s.title }}</div>
+                    <div style="font-size:11.5px;line-height:1.55;color:#64748B;text-align:center;max-width:280px;text-wrap:pretty">{{ s.body }}</div>
+                  </div>
+                </div>
+                <div style="margin-top:9px;display:flex;justify-content:space-between;font:400 9.5px 'IBM Plex Mono',monospace;color:#CBD5E1">
+                  <sc-for list="{{ s.axis }}" as="a" hint-placeholder-count="7"><div>{{ a }}</div></sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ s.isToast }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:11px">
+                <sc-for list="{{ s.toasts }}" as="t" hint-placeholder-count="3">
+                  <div style="display:flex;gap:12px;align-items:center;background:#FFFFFF;border:1px solid #E2E8F0;border-left:3px solid {{ t.accent }};border-radius:11px;padding:13px 15px;box-shadow:0 6px 18px rgba(36,29,77,.09)">
+                    <div style="width:28px;height:28px;flex:none;border-radius:9px;background:{{ t.tile }};display:flex;align-items:center;justify-content:center">
+                      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="{{ t.glyph }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.d }}"></path><path d="{{ t.d2 }}"></path></svg>
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:12.5px;font-weight:600;color:#241d4d;text-wrap:pretty">{{ t.title }}</div>
+                      <div style="margin-top:4px;font-size:11.5px;color:#64748B;text-wrap:pretty">{{ t.body }}</div>
+                    </div>
+                    <div style="flex:none;font:500 11px 'IBM Plex Mono',monospace;color:{{ t.accent }};cursor:pointer;white-space:nowrap">{{ t.action }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ s.isField }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <sc-for list="{{ s.fields }}" as="fl" hint-placeholder-count="3">
+                  <div>
+                    <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#5C6879">{{ fl.label }}</div>
+                    <div style="margin-top:8px;background:{{ fl.bg }};border:1px solid {{ fl.border }};border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:10px">
+                      <div style="flex:1;min-width:0;font-size:13px;color:{{ fl.valueInk }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fl.value }}</div>
+                      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="{{ fl.glyph }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ fl.d }}"></path><path d="{{ fl.d2 }}"></path></svg>
+                    </div>
+                    <div style="margin-top:7px;display:flex;gap:7px;align-items:flex-start">
+                      <div style="font-size:11.5px;line-height:1.5;color:{{ fl.msgInk }};text-wrap:pretty">{{ fl.msg }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ s.isEmail }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:#F8FAFC;border:1px solid #EFF2F7;border-radius:10px">
+                  <sc-for list="{{ s.headers }}" as="h" hint-placeholder-count="3">
+                    <div style="display:flex;gap:10px;align-items:baseline">
+                      <div style="width:62px;flex:none;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#5C6879">{{ h.label }}</div>
+                      <div style="flex:1;min-width:0;font-size:11.5px;line-height:1.5;color:{{ h.ink }};text-wrap:pretty">{{ h.value }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="margin-top:14px;border:1px solid #E2E8F0;border-radius:13px;overflow:hidden;box-shadow:0 2px 8px rgba(36,29,77,.06)">
+                  <div style="padding:17px 20px;background:linear-gradient(135deg,#372b73 0%,#2E6E8E 58%,#0B7D9E 100%);display:flex;align-items:center;gap:11px">
+                    <img src="assets/devlytics-app-icon.png" alt="Devlytics" style="width:26px;height:26px;flex:none;border-radius:7px" />
+                    <img src="assets/devlytics-wordmark-white.svg" alt="Devlytics" style="height:14px;flex:none" />
+                    <div style="flex:1"></div>
+                    <div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.78);white-space:nowrap">{{ s.emailKicker }}</div>
+                  </div>
+
+                  <div style="padding:20px">
+                    <div style="font:600 16px/1.32 'IBM Plex Sans';color:#241d4d;text-wrap:pretty">{{ s.title }}</div>
+                    <div style="margin-top:10px;font-size:12.5px;line-height:1.65;color:#475569;text-wrap:pretty">{{ s.body }}</div>
+
+                    <sc-if value="{{ s.hasMetrics }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:9px">
+                        <sc-for list="{{ s.metrics }}" as="m" hint-placeholder-count="3">
+                          <div style="background:#FBFAFE;border:1px solid #E6DDF6;border-radius:10px;padding:12px">
+                            <div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#5C6879">{{ m.label }}</div>
+                            <div style="margin-top:7px;font:600 17px/1 'IBM Plex Mono',monospace;color:#241d4d">{{ m.value }}</div>
+                            <div style="margin-top:6px;font:500 9.5px 'IBM Plex Mono',monospace;color:{{ m.deltaInk }}">{{ m.delta }}</div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ s.hasList }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:16px;border:1px solid #EFF2F7;border-radius:10px;overflow:hidden">
+                        <sc-for list="{{ s.list }}" as="li" hint-placeholder-count="3">
+                          <div style="display:flex;gap:11px;align-items:center;padding:11px 13px;border-bottom:1px solid #F4F6FA;background:{{ li.rowBg }}">
+                            <div style="width:20px;height:20px;flex:none;border-radius:6px;background:{{ li.dotBg }};display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:{{ li.dotInk }}">{{ li.mark }}</div>
+                            <div style="flex:1;min-width:0">
+                              <div style="font-size:11.5px;font-weight:500;color:#241d4d;text-wrap:pretty">{{ li.name }}</div>
+                              <div style="margin-top:3px;font:400 9.5px 'IBM Plex Mono',monospace;color:#5C6879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ li.meta }}</div>
+                            </div>
+                            <div style="flex:none;font:600 11px 'IBM Plex Mono',monospace;color:{{ li.valueInk }};white-space:nowrap">{{ li.value }}</div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ s.hasCode }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:15px;display:flex;gap:10px;align-items:flex-start;background:#F8FAFC;border:1px solid #EFF2F7;border-left:3px solid {{ s.codeDot }};border-radius:9px;padding:11px 13px">
+                        <div style="font:400 10.5px/1.6 'IBM Plex Mono',monospace;color:#64748B;white-space:pre-line">{{ s.code }}</div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ s.hasAttachment }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:16px;display:flex;gap:12px;align-items:center;background:#F5F1FB;border:1px solid #E6DDF6;border-radius:10px;padding:12px 14px">
+                        <div style="width:30px;height:36px;flex:none;border-radius:5px;background:linear-gradient(135deg,#372b73,#0B7D9E);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font:600 8px 'IBM Plex Mono',monospace;color:#FFFFFF;letter-spacing:.06em">PDF</div>
+                        <div style="flex:1;min-width:0">
+                          <div style="font:500 11.5px 'IBM Plex Mono',monospace;color:#241d4d;text-wrap:pretty">{{ s.attachment }}</div>
+                          <div style="margin-top:4px;font:400 10px 'IBM Plex Mono',monospace;color:#5C6879">Attached to this email</div>
+                        </div>
+                      </div>
+                    </sc-if>
+
+                    <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                      <sc-for list="{{ s.actions }}" as="a" hint-placeholder-count="2">
+                        <button style="background:{{ a.bg }};border:1px solid {{ a.border }};border-radius:9px;padding:11px 17px;color:{{ a.ink }};font:{{ a.font }};cursor:pointer;white-space:nowrap;box-shadow:{{ a.shadow }}">{{ a.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="padding:13px 20px;background:#FBFCFD;border-top:1px solid #EFF2F7">
+                    <div style="font:400 10px/1.6 'IBM Plex Mono',monospace;color:#5C6879;text-wrap:pretty">{{ s.emailFooter }}</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <div style="padding:13px 18px;border-top:1px solid #EFF2F7;background:#FBFCFD;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+            <div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:#5C6879;white-space:nowrap">Applies to</div>
+            <sc-for list="{{ s.scope }}" as="sc" hint-placeholder-count="2">
+              <div style="font:400 10.5px 'IBM Plex Mono',monospace;color:#4a4470;background:#F5F1FB;border:1px solid #E6DDF6;border-radius:6px;padding:3px 8px;white-space:nowrap">{{ sc }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:940}}">
+const ICON = {
+  repo:      ['M5 4.4h7.2L15 7.2v8.4H5V4.4z','M7.4 9.2h5.2M7.4 12h5.2'],
+  people:    ['M8 4.4a2.7 2.7 0 110 5.4 2.7 2.7 0 010-5.4z','M3 16.2c0-2.5 2.2-4 5-4s5 1.5 5 4M13.9 7.4a2.2 2.2 0 010 4.4M17 16.2c0-1.7-.6-2.9-1.7-3.6'],
+  team:      ['M10 3.4l6 3v4.4c0 3-2.4 5.2-6 6.2-3.6-1-6-3.2-6-6.2V6.4l6-3z','M7.6 9.8l1.8 1.8 3.2-3.2'],
+  project:   ['M3.6 6.2c0-1 .8-1.8 1.8-1.8h3l1.4 1.8h4.8c1 0 1.8.8 1.8 1.8v6c0 1-.8 1.8-1.8 1.8H5.4c-1 0-1.8-.8-1.8-1.8V6.2z',''],
+  search:    ['M12.4 9a3.4 3.4 0 11-6.8 0 3.4 3.4 0 016.8 0z','M11.6 11.6l4 4'],
+  chart:     ['M4.6 16.4V9.2M10 16.4V4.4M15.4 16.4v-4.8',''],
+  bell:      ['M10 3.6a4 4 0 014 4v3l1.4 2.2H4.6L6 10.6v-3a4 4 0 014-4z','M8.4 15.2a1.7 1.7 0 003.2 0'],
+  trophy:    ['M10 3.6a4.3 4.3 0 110 8.6 4.3 4.3 0 010-8.6z','M7.5 11.8L6.2 16.6l3.8-1.9 3.8 1.9-1.3-4.8'],
+  doc:       ['M5.6 3.6h6L15 7v9.4H5.6V3.6z','M7.8 10h5M7.8 12.8h5'],
+  server:    ['M4 5.2c0-.9.7-1.6 1.6-1.6h8.8c.9 0 1.6.7 1.6 1.6v2c0 .9-.7 1.6-1.6 1.6H5.6C4.7 8.8 4 8.1 4 7.2v-2z','M4 12.8c0-.9.7-1.6 1.6-1.6h8.8c.9 0 1.6.7 1.6 1.6v2c0 .9-.7 1.6-1.6 1.6H5.6c-.9 0-1.6-.7-1.6-1.6v-2z'],
+  alert:     ['M10 4.2l6.4 11.2H3.6L10 4.2z','M10 8.4v3M10 13.4v.1'],
+  lock:      ['M5.8 9h8.4c.7 0 1.2.5 1.2 1.2v4.6c0 .7-.5 1.2-1.2 1.2H5.8c-.7 0-1.2-.5-1.2-1.2v-4.6c0-.7.5-1.2 1.2-1.2z','M7.2 9V7a2.8 2.8 0 015.6 0v2'],
+  offline:   ['M3.2 3.2l13.6 13.6','M6.4 12.6a4.2 4.2 0 015.2-5.2M4 9.4a7.4 7.4 0 012.2-2M10 15.6v.1'],
+  clock:     ['M17 10a7 7 0 11-14 0 7 7 0 0114 0z','M10 6.4V10l2.6 1.6'],
+  gauge:     ['M16.4 13.6a7.4 7.4 0 10-12.8 0','M10 10l3.2-2.6'],
+  sync:      ['M15.6 8.4A5.8 5.8 0 005 7.2M4.4 11.6a5.8 5.8 0 0010.6 1.2','M15.6 4.8v3.6h-3.6M4.4 15.2v-3.6h3.6'],
+  key:       ['M12.2 4.4a3.6 3.6 0 012.6 6.2c-.9.9-2.1 1.2-3.2 1L9.4 14l-1.2-.2-.3 1.4-1.5.3-.4 1.5-2.4-.5.6-2.6 4.4-4.4c-.2-1.1.1-2.3 1-3.2a3.6 3.6 0 012.6-1.9z','M13.4 7.4v.1'],
+  puzzle:    ['M7.6 3.8a1.6 1.6 0 013.2 0V5h2.6v2.6h1.2a1.6 1.6 0 010 3.2h-1.2v5.4H4.6V10.8H5.8a1.6 1.6 0 000-3.2H4.6V5h3V3.8z',''],
+  shield:    ['M10 3.4l5.4 2v4.2c0 3.2-2.2 5.6-5.4 6.8-3.2-1.2-5.4-3.6-5.4-6.8V5.4l5.4-2z','M8 9.9l1.6 1.6 2.8-2.8'],
+  sparkle:   ['M10 3.4l1.6 3.9 3.9 1.6-3.9 1.6L10 14.4l-1.6-3.9L4.5 8.9l3.9-1.6L10 3.4z',''],
+  scale:     ['M10 3.6v12.8M5.2 7.2h9.6','M5.2 7.2L3 12.4h4.4L5.2 7.2zM14.8 7.2L12.6 12.4H17l-2.2-5.2z'],
+  filter:    ['M3.6 5.2h12.8l-4.8 5.6v4.4l-3.2-1.6v-2.8L3.6 5.2z',''],
+  check:     ['M5 10.4l3.2 3.2L15 6.8',''],
+  cross:     ['M6.4 6.4l7.2 7.2M13.6 6.4l-7.2 7.2',''],
+  info:      ['M17 10a7 7 0 11-14 0 7 7 0 0114 0z','M10 9.2v4M10 6.8v.1'],
+  branch:    ['M6.6 4.4a1.8 1.8 0 110 3.6 1.8 1.8 0 010-3.6zM6.6 12a1.8 1.8 0 110 3.6 1.8 1.8 0 010-3.6zM13.4 4.4a1.8 1.8 0 110 3.6 1.8 1.8 0 010-3.6z','M6.6 8v4M13.4 8c0 2.6-2.4 3.2-5 4'],
+  mail:      ['M3.4 6.4c0-1.1.9-2 2-2h9.2c1.1 0 2 .9 2 2v7.2c0 1.1-.9 2-2 2H5.4c-1.1 0-2-.9-2-2V6.4z','M3.8 6.8L10 11l6.2-4.2']
+};
+
+const BTN = {
+  primary: { bg:'linear-gradient(135deg,#372b73 0%,#0B7D9E 100%)', border:'transparent', ink:'#FFFFFF', font:"600 13px 'IBM Plex Sans'", shadow:'0 6px 16px rgba(55,43,115,.2)' },
+  ghost:   { bg:'#FFFFFF', border:'#E2E8F0', ink:'#241d4d', font:"500 13px 'IBM Plex Sans'", shadow:'none' },
+  quiet:   { bg:'transparent', border:'transparent', ink:'#64748B', font:"500 13px 'IBM Plex Sans'", shadow:'none' }
+};
+
+const TAG = {
+  empty:   { tag:'Empty',   ink:'#372b73', bg:'#F5F1FB', border:'#E6DDF6' },
+  noresult:{ tag:'No match',ink:'#4a4470', bg:'#F8FAFC', border:'#E2E8F0' },
+  error:   { tag:'Error',   ink:'#c2185b', bg:'#EAF4F8', border:'#C3DEE8' },
+  warn:    { tag:'Warning', ink:'#B45309', bg:'#FEF6EC', border:'#F6E0C3' },
+  loading: { tag:'Loading', ink:'#0F766E', bg:'#F0FAF8', border:'#CFEDE8' },
+  blocked: { tag:'Blocked', ink:'#7c1d3f', bg:'#EAF4F8', border:'#C3DEE8' },
+  transact:{ tag:'Transactional', ink:'#372b73', bg:'#F5F1FB', border:'#E6DDF6' },
+  digest:  { tag:'Digest',  ink:'#0F766E', bg:'#F0FAF8', border:'#CFEDE8' },
+  alertml: { tag:'Alert',   ink:'#c2185b', bg:'#EAF4F8', border:'#C3DEE8' },
+  milestone:{tag:'Milestone',ink:'#B45309',bg:'#FEF6EC', border:'#F6E0C3' }
+};
+
+const TILE = {
+  violet: { tile:'#F5F1FB', tileBorder:'#E6DDF6', glyph:'#372b73' },
+  pink:   { tile:'#EAF4F8', tileBorder:'#C3DEE8', glyph:'#0B7D9E' },
+  amber:  { tile:'#FEF6EC', tileBorder:'#F6E0C3', glyph:'#B45309' },
+  slate:  { tile:'#F8FAFC', tileBorder:'#E2E8F0', glyph:'#64748B' },
+  teal:   { tile:'#F0FAF8', tileBorder:'#CFEDE8', glyph:'#0F766E' }
+};
+
+const S = (o) => o;
+
+const GROUPS = [
+  {
+    key:'first-run', label:'First run', kicker:'Group 01', icon:'repo', accent:'#FFFFFF',
+    desc:'What a brand-new organization sees before any data exists. Each screen carries exactly one next action so setup never dead-ends.',
+    states:[
+      S({name:'No repositories',trigger:'Repositories · zero imported',kind:'hero',tag:'empty',tile:'violet',icon:'repo',
+        title:'No repositories imported yet',body:'Connect GitHub or GitLab and Devlytics will read commits, pull requests, reviews and CI runs. Nothing is written back to your provider.',
+        actions:[BTN.primary,BTN.ghost],labels:['Connect a provider','Read the setup guide'],scope:['Repositories','Projects','Code Quality']}),
+      S({name:'No developers',trigger:'Developers · no Git identities matched',kind:'hero',tag:'empty',tile:'violet',icon:'people',
+        title:'No developers yet',body:'Developers appear automatically once their Git identity is matched during the first sync. You can also invite them by email.',
+        actions:[BTN.primary,BTN.ghost],labels:['Invite developers','Match identities manually'],scope:['Developers','Leaderboards']}),
+      S({name:'No teams',trigger:'Teams · department has no teams',kind:'hero',tag:'empty',tile:'violet',icon:'team',
+        title:'Create your first team',body:'Teams are the unit of competition. Group developers into a team to unlock team scoring and the team leaderboard.',
+        actions:[BTN.primary,BTN.quiet],labels:['Create team','Import from provider groups'],scope:['Teams','Team Leaderboard']}),
+      S({name:'No projects',trigger:'Projects · none created',kind:'hero',tag:'empty',tile:'violet',icon:'project',
+        title:'No projects yet',body:'Projects group repositories for delivery reporting. Assign at least one repository so progress and quality can be measured.',
+        actions:[BTN.primary,BTN.ghost],labels:['New project','Assign repositories'],scope:['Projects','Reports']}),
+      S({name:'Awaiting first sync',trigger:'Dashboard · provider connected, sync queued',kind:'hero',tag:'loading',tile:'teal',icon:'sync',
+        title:'First sync in progress',body:'We are reading history from 4 repositories. Rankings and quality scores appear as soon as the first analysis run completes.',
+        hasCode:true,code:'Estimated 12 minutes remaining',codeDot:'#0F766E',
+        actions:[BTN.ghost,BTN.quiet],labels:['View sync log','Notify me when done'],scope:['Dashboard','Leaderboards','Analytics']}),
+      S({name:'No achievements',trigger:'Achievements · nothing earned or in progress',kind:'hero',tag:'empty',tile:'violet',icon:'trophy',
+        title:'No badges yet',body:'Badges unlock from measured evidence: resolved findings, coverage gains, review participation. The first analysis run starts tracking progress.',
+        actions:[BTN.ghost],labels:['See badge criteria'],scope:['Achievements','Developer profile']})
+    ]
+  },
+  {
+    key:'no-results', label:'No results', kicker:'Group 02', icon:'search', accent:'transparent',
+    desc:'Data exists, but the current filters, period or query returns nothing. These states always name the constraint that caused it.',
+    states:[
+      S({name:'Search found nothing',trigger:'Global search · no match for query',kind:'hero',tag:'noresult',tile:'slate',icon:'search',
+        title:'No results for "paymnt-api"',body:'Search covers developers, teams, projects and repositories in this organization. Check the spelling or search a different entity.',
+        actions:[BTN.ghost,BTN.quiet],labels:['Clear search','Browse repositories'],scope:['Global search','Command palette']}),
+      S({name:'Filters exclude everything',trigger:'Leaderboard · 4 filters active',kind:'hero',tag:'noresult',tile:'slate',icon:'filter',
+        title:'No developers match these filters',body:'Platform Infra has no developers with a score above 90 in the selected period. Remove a filter to widen the result.',
+        hasCode:true,code:'team=Platform Infra · score>90 · period=Weekly',codeDot:'#5C6879',
+        actions:[BTN.primary,BTN.quiet],labels:['Reset filters','Remove score filter'],scope:['Leaderboards','Developers','Repositories']}),
+      S({name:'Period has no activity',trigger:'Analytics · selected range is empty',kind:'chart',tag:'noresult',tile:'slate',icon:'chart',
+        chartTitle:'Commit Trend',chartSub:'01 Jan – 07 Jan 2026 · all repositories',
+        title:'No activity in this period',body:'The selected week predates your first sync. Data starts from 12 Feb 2026.',
+        actions:[],labels:[],scope:['Analytics','Reports','Trends']}),
+      S({name:'Team has no members',trigger:'Team profile · roster empty',kind:'hero',tag:'empty',tile:'violet',icon:'people',
+        title:'Mobile Platform has no members',body:'A team needs at least one member before it can be scored or appear on the team leaderboard.',
+        actions:[BTN.primary,BTN.quiet],labels:['Add members','Delete team'],scope:['Team profile','Team Leaderboard']}),
+      S({name:'No findings to improve',trigger:'Improvement Center · queue clear',kind:'hero',tag:'empty',tile:'teal',icon:'check',
+        title:'No open findings',body:'Every finding from analysis run #418 has been resolved or dismissed. The next run is scheduled after the following merge.',
+        hasCode:true,code:'Last run 41 minutes ago · 0 open · 37 resolved',codeDot:'#12A05C',
+        actions:[BTN.ghost,BTN.quiet],labels:['View resolved findings','Run analysis now'],scope:['Improvement Center','Code Quality']}),
+      S({name:'Report returned no rows',trigger:'Reports · preview empty for scope',kind:'hero',tag:'noresult',tile:'slate',icon:'doc',
+        title:'Nothing to report for this scope',body:'No developer in QA Automation recorded activity between 01 and 07 Aug. Widen the date range or change the department.',
+        actions:[BTN.ghost,BTN.quiet],labels:['Change date range','Switch report type'],scope:['Reports','Scheduled exports']})
+    ]
+  },
+  {
+    key:'server', label:'Server & network', kicker:'Group 03', icon:'server', accent:'transparent',
+    desc:'Responses from the API and analysis service. Every message states what failed, whether a retry is safe, and what is still usable.',
+    states:[
+      S({name:'500 · request failed',trigger:'Any screen · unhandled server error',kind:'hero',tag:'error',tile:'pink',icon:'alert',
+        title:'Something went wrong on our side',body:'The request failed before it reached the analysis service. Your data is unaffected and a retry is safe.',
+        hasCode:true,code:'500 · trace 8f2c41a9 · 14:22 PKT',codeDot:'#0B7D9E',
+        actions:[BTN.primary,BTN.ghost],labels:['Retry request','Copy trace ID'],scope:['Global','All screens']}),
+      S({name:'503 · service unavailable',trigger:'Analysis service down for maintenance',kind:'banner',tag:'warn',tile:'amber',icon:'server',
+        title:'Analysis service is temporarily unavailable',body:'Existing scores and reports are still readable. New analysis runs are queued and will start automatically when the service returns.',
+        hasCode:true,code:'503 · 6 runs queued · retry in 00:04:12',
+        actions:[BTN.ghost,BTN.quiet],labels:['View queue','Check status page'],scope:['Improvement Center','Code Quality','Dashboard']}),
+      S({name:'Offline',trigger:'Browser lost network connection',kind:'hero',tag:'error',tile:'pink',icon:'offline',
+        title:'You are offline',body:'Devlytics cannot reach the server. The last loaded dashboard is shown from cache and may be out of date.',
+        hasCode:true,code:'Cached at 14:06 PKT · 18 minutes ago',codeDot:'#0B7D9E',
+        actions:[BTN.primary,BTN.quiet],labels:['Try again','Continue with cached data'],scope:['Global','All screens']}),
+      S({name:'Request timed out',trigger:'Report export exceeded 30s',kind:'banner',tag:'warn',tile:'amber',icon:'clock',
+        title:'This export took too long',body:'A 12-month report across 24 repositories exceeds the interactive limit. Generate it in the background and we will email the file.',
+        hasCode:true,code:'Timeout after 30s · 428,190 rows',
+        actions:[BTN.primary,BTN.ghost],labels:['Generate in background','Narrow the range'],scope:['Reports','Analytics exports']}),
+      S({name:'Rate limited by provider',trigger:'GitHub API quota exhausted',kind:'banner',tag:'warn',tile:'amber',icon:'gauge',
+        title:'GitHub rate limit reached',body:'Sync paused at 68% of the queue. It resumes automatically when the quota resets. Metrics currently shown exclude the remaining repositories.',
+        hasCode:true,code:'5000/5000 requests · resets 15:00 PKT · 11 repositories pending',
+        actions:[BTN.ghost,BTN.quiet],labels:['View pending repositories','Increase quota'],scope:['Integrations','Repositories']}),
+      S({name:'Partial response',trigger:'Dashboard · 2 of 9 widgets failed',kind:'toast',tag:'warn',
+        toasts:[
+          {kind:'warn',title:'2 widgets could not load',body:'AI Analytics and Ranking Trends failed. Everything else is current.',action:'Reload',icon:'alert'},
+          {kind:'error',title:'Repository sync failed',body:'mobile-app returned 403 from GitLab.',action:'Fix access',icon:'cross'},
+          {kind:'ok',title:'Analysis run #418 complete',body:'37 findings resolved, quality score up 1.8.',action:'View',icon:'check'}
+        ],scope:['Dashboard','Notifications','Global toasts']})
+    ]
+  },
+  {
+    key:'access', label:'Access & permission', kicker:'Group 04', icon:'lock', accent:'transparent',
+    desc:'Authorization outcomes. These never hide the reason — the user learns which role or scope is missing and who can grant it.',
+    states:[
+      S({name:'403 · role cannot view',trigger:'Developer opens Settings',kind:'hero',tag:'blocked',tile:'pink',icon:'lock',
+        title:'You do not have access to Settings',body:'Scoring rules, integrations and audit logs are restricted to Organization Admins. Your role is Developer.',
+        hasCode:true,code:'Required role: Organization Admin',codeDot:'#0B7D9E',
+        actions:[BTN.primary,BTN.quiet],labels:['Request access','Back to dashboard'],scope:['Settings','Audit Logs','Integrations']}),
+      S({name:'404 · record not found',trigger:'Deleted developer profile opened',kind:'hero',tag:'error',tile:'slate',icon:'search',
+        title:'This developer no longer exists',body:'The profile was removed from the organization on 14 Aug 2026. Historical rankings that included them are preserved in reports.',
+        hasCode:true,code:'GET /developers/2f81 · 404',codeDot:'#5C6879',
+        actions:[BTN.ghost,BTN.quiet],labels:['Back to Developers','Search reports'],scope:['Developer profile','Team profile','Repository']}),
+      S({name:'Token expired',trigger:'GitLab OAuth token no longer valid',kind:'banner',tag:'error',tile:'pink',icon:'key',
+        title:'GitLab connection needs re-authorization',body:'The stored token expired, so 6 repositories stopped syncing 2 hours ago. Scores for those repositories are frozen at their last successful run.',
+        hasCode:true,code:'Token expired 12:04 PKT · 6 repositories affected',
+        actions:[BTN.primary,BTN.ghost],labels:['Reconnect GitLab','View affected repositories'],scope:['Integrations','Repositories','Dashboard']}),
+      S({name:'Missing provider scope',trigger:'Connect flow · scope not granted',kind:'banner',tag:'warn',tile:'amber',icon:'shield',
+        title:'One permission is missing',body:'Devlytics can read repositories but not Actions runs, so CI success rate and reliability scores will be unavailable.',
+        hasCode:true,code:'Granted: repo:read, org:read · Missing: actions:read',
+        actions:[BTN.primary,BTN.quiet],labels:['Grant permission','Continue without CI data'],scope:['Integrations','Onboarding','Code Quality']}),
+      S({name:'Seat limit reached',trigger:'Invite exceeds plan seats',kind:'hero',tag:'blocked',tile:'amber',icon:'people',
+        title:'All 128 seats are in use',body:'Remove an inactive developer or add seats to invite more. Pending invitations do not consume a seat until accepted.',
+        hasCode:true,code:'128 of 128 seats · 3 inactive over 90 days',codeDot:'#B45309',
+        actions:[BTN.primary,BTN.ghost],labels:['Add seats','Review inactive developers'],scope:['Developers','Settings · Users']}),
+      S({name:'Session expired',trigger:'Idle timeout after 8 hours',kind:'hero',tag:'blocked',tile:'slate',icon:'clock',
+        title:'Your session has expired',body:'Sign in again to continue. Unsaved changes on this screen have been kept locally and will be restored.',
+        hasCode:true,code:'Idle since 06:14 PKT',codeDot:'#5C6879',
+        actions:[BTN.primary,BTN.quiet],labels:['Sign in again','Discard draft'],scope:['Global','All screens']})
+    ]
+  },
+  {
+    key:'analysis', label:'Analysis & scoring', kicker:'Group 05', icon:'sparkle', accent:'transparent',
+    desc:'Failures specific to the evidence pipeline. Because rankings depend on these, each state says exactly which metric became unreliable.',
+    states:[
+      S({name:'Analysis run failed',trigger:'Static analysis crashed mid-run',kind:'banner',tag:'error',tile:'pink',icon:'alert',
+        title:'Analysis run #419 failed',body:'The parser could not read 3 files in payment-api. Findings from run #418 remain the current evidence, so no score changed.',
+        hasCode:true,code:'Run #419 · failed at 62% · parser error in invoice.service.ts',
+        actions:[BTN.primary,BTN.ghost],labels:['Re-run analysis','View error log'],scope:['Improvement Center','Code Quality','Repository']}),
+      S({name:'Insufficient data to score',trigger:'Developer below evidence threshold',kind:'hero',tag:'blocked',tile:'slate',icon:'scale',
+        title:'Not enough evidence to score yet',body:'Zainab Noor has 4 commits and no reviewed pull requests in this period. Scoring requires at least 10 commits or 3 reviewed pull requests.',
+        hasCode:true,code:'4 commits · 0 reviewed PRs · threshold not met',codeDot:'#5C6879',
+        actions:[BTN.ghost,BTN.quiet],labels:['Switch to monthly period','See scoring thresholds'],scope:['Developer profile','Leaderboards']}),
+      S({name:'Weights do not total 100',trigger:'Settings · scoring rules invalid',kind:'field',tag:'error',
+        fields:[
+          {label:'Total weight',value:'95%',state:'error',msg:'Scoring weights must total exactly 100%. Add 5% before saving, or rankings will keep using the last valid version.'},
+          {label:'Documentation',value:'0%',state:'warn',msg:'A category at 0% is ignored entirely. Remove it instead if that is intended.'},
+          {label:'Effective from',value:'Next analysis run',state:'ok',msg:'Existing rankings are not recalculated retroactively.'}
+        ],scope:['Settings · Scoring Rules']}),
+      S({name:'AI provider unavailable',trigger:'Assistant · local model not reachable',kind:'banner',tag:'warn',tile:'amber',icon:'sparkle',
+        title:'AI interpretation is paused',body:'The local model is not responding, so findings are shown as raw analyzer output without inference or recommendations. Observed facts are unaffected.',
+        hasCode:true,code:'localhost:11434 unreachable · 3 retries',
+        actions:[BTN.primary,BTN.ghost],labels:['Retry connection','Show raw findings'],scope:['AI Assistant','Improvement Center','AI Analytics']}),
+      S({name:'Leaderboard recalculating',trigger:'Ranking rebuild after weight change',kind:'rows',tag:'loading',
+        title:'Recalculating 128 developer scores…',scope:['Leaderboards','Developer profile','Team profile']}),
+      S({name:'Score confidence too low',trigger:'Finding below confidence floor',kind:'banner',tag:'warn',tile:'amber',icon:'info',
+        title:'This inference was withheld',body:'The analyzer found the pattern, but AI confidence was 0.41 — below the 0.60 floor. The observed fact is shown without a recommendation.',
+        hasCode:true,code:'Confidence 0.41 · rule DUP-004 · customer-web',
+        actions:[BTN.ghost,BTN.quiet],labels:['Show observed fact','Adjust confidence floor'],scope:['Improvement Center','AI Assistant']})
+    ]
+  },
+  {
+    key:'inline', label:'Inline & partial', kicker:'Group 06', icon:'puzzle', accent:'transparent',
+    desc:'States that live inside a working screen rather than replacing it, so one failing widget never takes the page down.',
+    states:[
+      S({name:'Widget failed to load',trigger:'Dashboard card · request rejected',kind:'chart',tag:'error',tile:'pink',icon:'alert',
+        chartTitle:'Ranking Trends',chartSub:'Frontend Core · last 7 weeks',
+        title:'This chart could not load',body:'The trends endpoint returned 500. Other dashboard widgets are unaffected.',
+        actions:[],labels:[],scope:['Dashboard','Analytics','Team profile']}),
+      S({name:'Chart has one data point',trigger:'Trend needs 2+ points to draw',kind:'chart',tag:'noresult',tile:'slate',icon:'chart',
+        chartTitle:'Coverage Trend',chartSub:'design-system · since 02 Sep 2026',
+        title:'Not enough points for a trend',body:'This repository has one analysis run. A second run draws the line.',
+        actions:[],labels:[],scope:['Repository','Code Quality','Analytics']}),
+      S({name:'Row-level sync error',trigger:'Repositories table · one row failed',kind:'toast',tag:'error',
+        toasts:[
+          {kind:'error',title:'mobile-app · sync failed',body:'GitLab returned 403. Metrics are frozen at 22 minutes ago.',action:'Reconnect',icon:'cross'},
+          {kind:'warn',title:'data-etl · partial sync',body:'Commits imported, CI runs skipped — actions scope missing.',action:'Grant scope',icon:'alert'},
+          {kind:'ok',title:'payment-api · synced',body:'1,284 commits and 212 pull requests up to date.',action:'View',icon:'check'}
+        ],scope:['Repositories','Integrations','Projects']}),
+      S({name:'Stale data warning',trigger:'Screen older than sync interval',kind:'banner',tag:'warn',tile:'amber',icon:'clock',
+        title:'These numbers are 3 hours old',body:'The last successful sync was at 11:18 PKT. Commits merged since then are not reflected in scores or rankings.',
+        hasCode:true,code:'Last sync 11:18 PKT · next attempt in 00:07:40',
+        actions:[BTN.primary,BTN.quiet],labels:['Sync now','Dismiss'],scope:['Dashboard','Leaderboards','Repositories']}),
+      S({name:'Form validation',trigger:'Create team · invalid input',kind:'field',tag:'error',
+        fields:[
+          {label:'Team code',value:'FE-CORE',state:'error',msg:'This code is already used by Frontend Core. Codes must be unique within a department.'},
+          {label:'Team lead',value:'Not selected',state:'warn',msg:'Without a lead, team-level reports will have no owner.'},
+          {label:'Team name',value:'Mobile Platform',state:'ok',msg:'Available.'}
+        ],scope:['Create team','Create project','Invite developer']}),
+      S({name:'Destructive confirm',trigger:'Delete repository from organization',kind:'hero',tag:'blocked',tile:'pink',icon:'alert',
+        title:'Delete payment-api from Devlytics?',body:'This removes 1,284 commits, 212 pull requests and 6 analysis runs from scoring. Historical reports keep their snapshots. The repository itself is untouched.',
+        hasCode:true,code:'Type the repository name to confirm',codeDot:'#0B7D9E',
+        actions:[BTN.primary,BTN.ghost],labels:['Delete repository','Cancel'],scope:['Repositories','Projects','Settings']})
+    ]
+  },
+  {
+    key:'email', label:'Email templates', kicker:'Group 07', icon:'mail', accent:'#FFFFFF',
+    desc:'Every email Devlytics sends, in the order an account meets them. One purpose per email, one primary action, and no metric quoted without the evidence behind it.',
+    states:[
+      S({name:'Organization created',trigger:'Sign-up completed · to the new admin',kind:'email',tag:'transact',
+        emailKicker:'Account',to:'ahmed.khan@dpl.com',subject:'Your Devlytics workspace for DPL is ready',
+        preheader:'Verify your email, then connect a Git provider to generate the first rankings.',
+        title:'Welcome to Devlytics, Ahmed',
+        body:'Your organization DPL is created and you are its administrator. Verify your email to activate the workspace. Nothing is analyzed until you connect a provider.',
+        hasCode:true,codeDot:'#372b73',code:'Verification link expires in 24 hours · requested from 103.12.44.9, Karachi',
+        actions:[BTN.primary,BTN.ghost],labels:['Verify email address','Read the setup guide'],
+        emailFooter:'You received this because an account was created with this address. If this was not you, ignore this email and the account stays inactive.',
+        scope:['Register','Onboarding']}),
+
+      S({name:'Developer invitation',trigger:'Admin invites a developer · to the invitee',kind:'email',tag:'transact',
+        emailKicker:'Invitation',to:'sara.iqbal@dpl.com',subject:'Ahmed Khan invited you to Devlytics (DPL)',
+        preheader:'Set your password and confirm your Git identities.',
+        title:'You have been invited to DPL on Devlytics',
+        body:'Ahmed Khan added you to the Frontend Core team as a Developer. Set a password, then confirm which Git identities belong to you so your commits and reviews are attributed correctly.',
+        list:[
+          {name:'Frontend Core',meta:'Team · Engineering department',value:'Developer',kind:'ok',mark:'T'},
+          {name:'sara.iqbal / s-iqbal',meta:'Git identities awaiting your confirmation',value:'2 found',kind:'warn',mark:'?'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['Accept invitation','Not your account?'],
+        emailFooter:'Invitation expires in 7 days. Devlytics reads repository metadata only; it never pushes to your repositories.',
+        scope:['Invite developer','Developers']}),
+
+      S({name:'Password reset',trigger:'Reset requested · to the account owner',kind:'email',tag:'transact',
+        emailKicker:'Security',to:'usman.ali@dpl.com',subject:'Reset your Devlytics password',
+        preheader:'This link works once and expires in 30 minutes.',
+        title:'Reset your password',
+        body:'We received a request to reset the password for this account. Use the link below to choose a new one. Your current password stays valid until you complete the reset.',
+        hasCode:true,codeDot:'#0B7D9E',code:'Requested 09 Sep 2026, 10:42 PKT · Chrome on macOS · 103.12.44.9\nIf you did not request this, change your password and enable two-factor authentication.',
+        actions:[BTN.primary,BTN.ghost],labels:['Choose a new password','Review account activity'],
+        emailFooter:'Devlytics never asks for your password by email or chat.',
+        scope:['Login','Settings · Security']}),
+
+      S({name:'Added to a team',trigger:'Team membership changed · to the developer',kind:'email',tag:'transact',
+        emailKicker:'Team',to:'bilal.ahmed@dpl.com',subject:'You joined Backend Core',
+        preheader:'Your scores now contribute to the Backend Core team ranking.',
+        title:'You are now part of Backend Core',
+        body:'Fahad Malik moved you into Backend Core. From the next analysis run, your quality, delivery and testing scores contribute to this team\u2019s ranking, and you appear on its member list.',
+        metrics:[
+          {label:'Team rank',value:'#2',delta:'of 5 teams',dir:'flat'},
+          {label:'Team score',value:'92.8',delta:'+0.4 this week',dir:'up'},
+          {label:'Members',value:'14',delta:'+1 you',dir:'up'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['View team profile','Manage notifications'],
+        emailFooter:'Team changes are recorded in the organization audit log.',
+        scope:['Teams','Team profile','Developers']}),
+
+      S({name:'Assigned to a project',trigger:'Project membership changed · to the developer',kind:'email',tag:'transact',
+        emailKicker:'Project',to:'ali.raza@dpl.com',subject:'You were assigned to Payment Platform',
+        preheader:'3 repositories are now in scope for your delivery metrics.',
+        title:'You are assigned to Payment Platform',
+        body:'Usman Ali added you to Payment Platform as a QA Automation Engineer. Work in the repositories below now counts toward this project\u2019s delivery and quality reporting.',
+        list:[
+          {name:'payment-api',meta:'NestJS · GitHub · quality 94',value:'In scope',kind:'ok',mark:'\u2713'},
+          {name:'auth-service',meta:'Go · GitHub · quality 92',value:'In scope',kind:'ok',mark:'\u2713'},
+          {name:'payment-e2e',meta:'Playwright · GitHub · awaiting first sync',value:'Pending',kind:'warn',mark:'\u2026'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['Open project','See assigned repositories'],
+        emailFooter:'Project assignment does not change your personal score weights.',
+        scope:['Projects','Project profile']}),
+
+      S({name:'Analysis run complete',trigger:'Analysis finished · to repository owners',kind:'email',tag:'digest',
+        emailKicker:'Analysis',to:'frontend-core@dpl.com',subject:'Analysis run #418 complete for customer-web',
+        preheader:'Quality 96, coverage 82%. Three findings need a decision.',
+        title:'Analysis run #418 finished for customer-web',
+        body:'The run analyzed 284 changed files across 41 commits. Every finding below separates what the analyzer observed from what it recommends, with the file and line attached.',
+        metrics:[
+          {label:'Quality',value:'96',delta:'+1.8',dir:'up'},
+          {label:'Coverage',value:'82%',delta:'+3.4 pts',dir:'up'},
+          {label:'Duplication',value:'7.4%',delta:'-6.8 pts',dir:'up'}
+        ],
+        list:[
+          {name:'Duplicate API validation in 5 places',meta:'userService.ts 42\u201378 · rule S1192',value:'High',kind:'err',mark:'!'},
+          {name:'Refund path has no test coverage',meta:'payment.controller.ts 56 · rule COV-01',value:'Medium',kind:'warn',mark:'!'},
+          {name:'Unused export retained after refactor',meta:'formatters.ts 12 · rule S1128',value:'Low',kind:'ok',mark:'i'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['Open Improvement Center','Download run report'],
+        emailFooter:'Findings are produced by static analysis. AI interpretation is labelled separately inside the app.',
+        scope:['Repositories','Code Quality','Improvement Center']}),
+
+      S({name:'Weekly developer summary',trigger:'Weekly schedule · to each developer',kind:'email',tag:'digest',
+        emailKicker:'Weekly summary',to:'ahmed.khan@dpl.com',subject:'Your week on Devlytics: score 94.2, rank #1',
+        preheader:'Quality held at 96 and your review turnaround improved by 4 hours.',
+        title:'Your week in engineering, Ahmed',
+        body:'Between 01 and 07 September your score moved from 92.1 to 94.2. The largest contribution came from testing, where you added 96 tests across two repositories.',
+        metrics:[
+          {label:'Score',value:'94.2',delta:'+2.1',dir:'up'},
+          {label:'Rank',value:'#1',delta:'up 2 places',dir:'up'},
+          {label:'Reviews',value:'118',delta:'+14',dir:'up'}
+        ],
+        list:[
+          {name:'Testing',meta:'96 tests added · coverage 95',value:'+4',kind:'ok',mark:'\u25b2'},
+          {name:'Code review',meta:'Median turnaround 5h 12m',value:'+2',kind:'ok',mark:'\u25b2'},
+          {name:'Documentation',meta:'No documentation changes this week',value:'-1',kind:'warn',mark:'\u25bc'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['View your profile','Change email frequency'],
+        emailFooter:'Lines of code are reported as activity only and carry no weight in this score.',
+        scope:['Developer profile','Analytics','Settings · Notifications']}),
+
+      S({name:'Team leaderboard digest',trigger:'Weekly schedule · to team leads and admins',kind:'email',tag:'digest',
+        emailKicker:'Leaderboard',to:'engineering-leads@dpl.com',subject:'Team leaderboard, week of 01 September',
+        preheader:'Frontend Core holds #1. QA Automation gained two places.',
+        title:'Team leaderboard for the week of 01 September',
+        body:'Rankings are calculated from the scoring weights active on 07 September. Position changes are shown against the previous week.',
+        list:[
+          {name:'Frontend Core',meta:'12 members · quality 96 · testing 95',value:'94.2',kind:'rank',mark:'1'},
+          {name:'Backend Core',meta:'14 members · quality 94 · testing 90',value:'92.8',kind:'rank',mark:'2'},
+          {name:'QA Automation',meta:'8 members · quality 92 · testing 98',value:'89.7',kind:'rank',mark:'3'},
+          {name:'Platform Infra',meta:'6 members · quality 87 · testing 79',value:'85.4',kind:'ok',mark:'4'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['Open team leaderboard','Export as PDF'],
+        emailFooter:'Sent every Monday at 09:00 PKT. Team leads can change the schedule in notification settings.',
+        scope:['Team Leaderboard','Reports']}),
+
+      S({name:'Rank change alert',trigger:'Position moves by 2 or more · to the developer',kind:'email',tag:'milestone',
+        emailKicker:'Ranking',to:'sara.iqbal@dpl.com',subject:'You moved up 3 places to #4',
+        preheader:'Delivery and collaboration drove the change.',
+        title:'You moved from #7 to #4',
+        body:'Your score rose 3.6 points this period. Delivery improved after cycle time dropped below one day, and your collaboration score rose with 12 additional reviews on other teams\u2019 pull requests.',
+        metrics:[
+          {label:'Score',value:'89.4',delta:'+3.6',dir:'up'},
+          {label:'Delivery',value:'90',delta:'+5',dir:'up'},
+          {label:'Collaboration',value:'92',delta:'+6',dir:'up'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['See what changed','View leaderboard'],
+        emailFooter:'Ranking alerts can be limited to weekly summaries in notification settings.',
+        scope:['Developer Leaderboard','Developer profile']}),
+
+      S({name:'Achievement earned',trigger:'Badge criteria met · to the developer',kind:'email',tag:'milestone',
+        emailKicker:'Achievement',to:'ali.raza@dpl.com',subject:'Achievement earned: Testing Champion',
+        preheader:'150 tests added with coverage above 90% for four consecutive weeks.',
+        title:'You earned Testing Champion',
+        body:'The badge is awarded when a developer adds 150 or more tests while holding coverage above 90% for four consecutive analysis periods. Your evidence is below.',
+        list:[
+          {name:'150 tests added',meta:'Across payment-api and payment-e2e',value:'Met',kind:'ok',mark:'\u2713'},
+          {name:'Coverage above 90%',meta:'Weeks of 11, 18, 25 Aug and 01 Sep',value:'Met',kind:'ok',mark:'\u2713'},
+          {name:'Next badge: Security Guardian',meta:'4 of 10 security findings resolved',value:'40%',kind:'warn',mark:'\u2026'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['View your achievements','Share with your team'],
+        emailFooter:'Badges reflect measured evidence and are recalculated after every analysis run.',
+        scope:['Achievements','Developer profile']}),
+
+      S({name:'Improvement goal completed',trigger:'Re-analysis proves the target · to owner and lead',kind:'email',tag:'milestone',
+        emailKicker:'Improvement',to:'frontend-core@dpl.com',subject:'Goal completed: reduce duplication in customer-web',
+        preheader:'Duplication fell from 14.2% to 7.4%, verified by run #418.',
+        title:'Improvement goal completed and verified',
+        body:'The goal closed automatically because a later analysis run measured the target. Baseline was captured on 12 August, verification came from run #418 on 07 September.',
+        metrics:[
+          {label:'Baseline',value:'14.2%',delta:'12 Aug',dir:'flat'},
+          {label:'Now',value:'7.4%',delta:'-6.8 pts',dir:'up'},
+          {label:'Target',value:'8.0%',delta:'exceeded',dir:'up'}
+        ],
+        hasCode:true,codeDot:'#12A05C',code:'Verified by analysis run #418 · maintainability B \u2192 A · 5 duplicate blocks removed',
+        actions:[BTN.primary,BTN.quiet],labels:['Open the goal record','Start the next goal'],
+        emailFooter:'A goal only completes when re-analysis confirms the metric moved. Manual closure is recorded separately.',
+        scope:['Improvement Center','Goals','Team profile']}),
+
+      S({name:'Project completion summary',trigger:'Project marked complete · to team and stakeholders',kind:'email',tag:'digest',
+        emailKicker:'Project summary',to:'payment-platform@dpl.com',subject:'Payment Platform: final engineering summary',
+        preheader:'Delivered over 14 weeks with quality 93.1 and coverage 87%.',
+        title:'Payment Platform — final engineering summary',
+        body:'The project ran from 02 June to 07 September across 5 repositories and 14 developers. Figures below are drawn from the last analysis run of each repository, not from self-reported status.',
+        metrics:[
+          {label:'Project score',value:'93.1',delta:'+11.4 since start',dir:'up'},
+          {label:'Coverage',value:'87%',delta:'+26 pts',dir:'up'},
+          {label:'Open findings',value:'4',delta:'-38',dir:'up'}
+        ],
+        list:[
+          {name:'Delivery',meta:'212 pull requests merged · median cycle time 1.2 days',value:'93',kind:'ok',mark:'\u2713'},
+          {name:'Quality',meta:'Duplication 3.1% · maintainability A across 5 repositories',value:'94',kind:'ok',mark:'\u2713'},
+          {name:'Reliability',meta:'CI success 95% · 2 rollbacks in 14 weeks',value:'91',kind:'ok',mark:'\u2713'},
+          {name:'Security',meta:'4 low-severity findings carried into maintenance',value:'88',kind:'warn',mark:'!'}
+        ],
+        actions:[BTN.primary,BTN.ghost],labels:['Open full project report','Export PDF summary'],
+        emailFooter:'Reporting snapshots are retained after completion, so this summary stays reproducible.',
+        scope:['Projects','Reports','Analytics']}),
+
+      S({name:'AI analysis report — team',trigger:'Reporting period closes · to team lead and department manager',kind:'email',tag:'digest',
+        emailKicker:'AI analysis report',to:'frontend-core-lead@dpl.com',subject:'Frontend Core: AI engineering analysis, Q3 2026 (PDF attached)',
+        preheader:'Attached PDF covers 12 developers, 8 repositories and 41 verified findings.',
+        title:'AI engineering analysis for Frontend Core',
+        body:'The attached report covers 01 July to 30 September across 8 repositories. Every figure was produced by static analysis and interpreted by AI afterwards; observed facts and inferences are labelled separately throughout the document.',
+        metrics:[
+          {label:'Team score',value:'94.2',delta:'+3.8 vs Q2',dir:'up'},
+          {label:'Findings resolved',value:'41 of 52',delta:'79% closed',dir:'up'},
+          {label:'AI confidence',value:'0.86',delta:'median across findings',dir:'flat'}
+        ],
+        list:[
+          {name:'Section 1 — Measured evidence',meta:'Duplication, complexity, coverage and security per repository',value:'8 pp',kind:'ok',mark:'\u2713'},
+          {name:'Section 2 — AI interpretation',meta:'Each inference carries a confidence score and the rule it derives from',value:'6 pp',kind:'ok',mark:'\u2713'},
+          {name:'Section 3 — Member contribution',meta:'12 developers, scored on the same weighted categories',value:'5 pp',kind:'ok',mark:'\u2713'},
+          {name:'Section 4 — Recommended next quarter',meta:'Three goals with baselines the platform will verify',value:'3 pp',kind:'warn',mark:'!'}
+        ],
+        attachment:'devlytics-frontend-core-q3-2026.pdf · 2.4 MB · 22 pages',
+        actions:[BTN.primary,BTN.ghost],labels:['Download PDF report','Open in Devlytics'],
+        emailFooter:'The PDF is a snapshot of analysis run #418. Opening it in Devlytics shows live figures, which may have moved since.',
+        scope:['AI Analytics','Reports','Teams']}),
+
+      S({name:'AI analysis report — individual',trigger:'Reporting period closes · to the developer, copied to their lead',kind:'email',tag:'digest',
+        emailKicker:'AI analysis report',to:'ahmed.khan@dpl.com',subject:'Your Q3 2026 engineering analysis (PDF attached)',
+        preheader:'Score 94.2, rank #1. Two strengths and one specific area to work on.',
+        title:'Your engineering analysis for Q3 2026',
+        body:'This report is about your code, not your output volume. It draws on 412 commits, 63 pull requests and 118 reviews across 4 repositories between 01 July and 30 September. Lines of code appear as context only and carry no scoring weight.',
+        metrics:[
+          {label:'Overall score',value:'94.2',delta:'+2.1 vs Q2',dir:'up'},
+          {label:'Rank',value:'#1',delta:'held for 6 weeks',dir:'up'},
+          {label:'Findings you closed',value:'19',delta:'+7 vs Q2',dir:'up'}
+        ],
+        list:[
+          {name:'Strength — code quality',meta:'96. Duplication in your changed files stayed under 4% all quarter',value:'96',kind:'ok',mark:'\u2713'},
+          {name:'Strength — testing',meta:'95. You added 96 tests; coverage on your files rose 11 points',value:'95',kind:'ok',mark:'\u2713'},
+          {name:'To work on — review turnaround',meta:'Median 19 hours against a team median of 8. Slowest of the four categories',value:'91',kind:'warn',mark:'!'},
+          {name:'AI note',meta:'Inferred from review timestamps, confidence 0.81. Not a measure of review quality',value:'\u2014',kind:'muted',mark:'i'}
+        ],
+        attachment:'devlytics-ahmed-khan-q3-2026.pdf · 1.1 MB · 9 pages',
+        actions:[BTN.primary,BTN.ghost],labels:['Download PDF report','Set a goal from this'],
+        emailFooter:'Your lead receives a copy. Individual reports are never shared with other developers.',
+        scope:['AI Analytics','Reports','Developers']}),
+
+      S({name:'Sync failure alert',trigger:'Provider sync fails twice · to admins',kind:'email',tag:'alertml',
+        emailKicker:'Integration',to:'ahmed.khan@dpl.com',subject:'Action needed: GitLab sync failed for data-etl',
+        preheader:'The access token expired. Metrics are frozen at 07 September, 08:12.',
+        title:'GitLab sync failed twice for data-etl',
+        body:'The provider returned 401 Unauthorized on both attempts. Scores and rankings for this repository are frozen at the last successful run and are excluded from this week\u2019s team totals until the connection is restored.',
+        hasCode:true,codeDot:'#0B7D9E',code:'Attempt 1 · 07 Sep 08:12 PKT · 401 Unauthorized\nAttempt 2 · 07 Sep 09:12 PKT · 401 Unauthorized\nToken devlytics-etl expired 06 Sep',
+        actions:[BTN.primary,BTN.ghost],labels:['Reconnect GitLab','View integration log'],
+        emailFooter:'Sent to organization admins only. Repeat alerts are suppressed for 12 hours after the first notice.',
+        scope:['Integrations','Repositories','Settings · Integrations']}),
+
+      S({name:'Scoring rules changed',trigger:'Weights saved by an admin · to all developers',kind:'email',tag:'alertml',
+        emailKicker:'Scoring',to:'all-engineering@dpl.com',subject:'Scoring weights changed for DPL',
+        preheader:'Testing rises to 20%, documentation falls to 5%. Applies from the next run.',
+        title:'How scores are calculated has changed',
+        body:'Ahmed Khan updated the organization scoring weights on 08 September. Existing rankings keep the weight version that produced them; the new weights apply from the next analysis run.',
+        list:[
+          {name:'Testing',meta:'Weight increased',value:'15% \u2192 20%',kind:'ok',mark:'\u25b2'},
+          {name:'Code quality',meta:'Unchanged',value:'25%',kind:'rank',mark:'='},
+          {name:'Documentation',meta:'Weight reduced',value:'10% \u2192 5%',kind:'warn',mark:'\u25bc'}
+        ],
+        actions:[BTN.primary,BTN.quiet],labels:['See current weights','Read how scoring works'],
+        emailFooter:'Weight changes are versioned and recorded in the audit log with the admin who made them.',
+        scope:['Settings · Scoring Rules','Audit Logs','Leaderboards']})
+    ]
+  }
+];
+
+class Component extends DCLogic {
+  state = { group: 0, dense: false };
+
+  renderVals() {
+    const s = this.state;
+    const g = GROUPS[s.group];
+
+    const toastStyle = k =>
+      k === 'ok'   ? { accent:'#12A05C', tile:'#F0FAF6', glyph:'#12A05C' } :
+      k === 'warn' ? { accent:'#B45309', tile:'#FEF6EC', glyph:'#B45309' } :
+                     { accent:'#0B7D9E', tile:'#EAF4F8', glyph:'#0B7D9E' };
+
+    const fieldStyle = st =>
+      st === 'error' ? { bg:'#FFFFFF', border:'#e87ba8', valueInk:'#241d4d', glyph:'#0B7D9E', msgInk:'#c2185b', icon:'cross' } :
+      st === 'warn'  ? { bg:'#FFFFFF', border:'#e8c48f', valueInk:'#64748B', glyph:'#B45309', msgInk:'#B45309', icon:'alert' } :
+                       { bg:'#FFFFFF', border:'#a8dcc4', valueInk:'#241d4d', glyph:'#12A05C', msgInk:'#12A05C', icon:'check' };
+
+    return {
+      totalStates: GROUPS.reduce((a, x) => a + x.states.length, 0),
+      groups: GROUPS.map((x, i) => ({
+        label: x.label, count: String(x.states.length),
+        d: ICON[x.icon][0], d2: ICON[x.icon][1],
+        bg: i === s.group ? 'rgba(255,255,255,.19)' : 'transparent',
+        accent: i === s.group ? '#FFFFFF' : 'transparent',
+        weight: i === s.group ? 600 : 400,
+        go: () => this.setState({ group: i })
+      })),
+      group: { label: g.label, kicker: g.kicker, desc: g.desc },
+      densities: [
+        { label:'Comfortable', on:!s.dense, go:() => this.setState({ dense:false }) },
+        { label:'Compact', on:s.dense, go:() => this.setState({ dense:true }) }
+      ].map(d => ({
+        label: d.label, go: d.go,
+        bg: d.on ? '#F5F1FB' : '#FFFFFF',
+        border: d.on ? '#B9C8D6' : '#E2E8F0',
+        ink: d.on ? '#372b73' : '#64748B'
+      })),
+      gridCols: s.dense ? 'repeat(auto-fill,minmax(330px,1fr))' : 'repeat(auto-fill,minmax(430px,1fr))',
+
+      states: g.states.map(x => {
+        const t = TAG[x.tag] || TAG.empty;
+        const tl = TILE[x.tile] || TILE.slate;
+        const ic = ICON[x.icon] || ICON.info;
+        return {
+          name: x.name, trigger: x.trigger,
+          tag: t.tag, tagInk: t.ink, tagBg: t.bg, tagBorder: t.border,
+          isHero: x.kind === 'hero', isBanner: x.kind === 'banner', isRows: x.kind === 'rows',
+          isChart: x.kind === 'chart', isToast: x.kind === 'toast', isField: x.kind === 'field',
+          isEmail: x.kind === 'email',
+          emailKicker: x.emailKicker || '', emailFooter: x.emailFooter || '',
+          headers: [
+            { label:'To', value: x.to || '', ink:'#241d4d' },
+            { label:'Subject', value: x.subject || '', ink:'#241d4d' },
+            { label:'Preheader', value: x.preheader || '', ink:'#64748B' }
+          ],
+          hasMetrics: !!(x.metrics && x.metrics.length),
+          metrics: (x.metrics || []).map(m => ({
+            label: m.label, value: m.value, delta: m.delta,
+            deltaInk: m.dir === 'up' ? '#12A05C' : m.dir === 'down' ? '#0B7D9E' : '#5C6879'
+          })),
+          hasAttachment: !!x.attachment, attachment: x.attachment || '',
+          hasList: !!(x.list && x.list.length),
+          list: (x.list || []).map(li => {
+            const k = li.kind || 'ok';
+            const map = {
+              ok:   { dotBg:'#EAF7F1', dotInk:'#12A05C', valueInk:'#12A05C', rowBg:'#FFFFFF' },
+              warn: { dotBg:'#FEF6EC', dotInk:'#B45309', valueInk:'#B45309', rowBg:'#FFFFFF' },
+              err:  { dotBg:'#EAF4F8', dotInk:'#c2185b', valueInk:'#c2185b', rowBg:'#FFFFFF' },
+              rank: { dotBg:'#F5F1FB', dotInk:'#372b73', valueInk:'#241d4d', rowBg:'#FBFAFE' },
+              muted:{ dotBg:'#F1F5F9', dotInk:'#5C6879', valueInk:'#5C6879', rowBg:'#FBFCFD' }
+            };
+            return Object.assign({ name: li.name, meta: li.meta, value: li.value, mark: li.mark || '' }, map[k] || map.ok);
+          }),
+          pad: x.kind === 'hero' ? '34px 22px' : x.kind === 'email' ? '18px' : '20px 22px',
+          minH: x.kind === 'hero' ? '286px' : x.kind === 'rows' ? '286px' : x.kind === 'email' ? 'auto' : '230px',
+          canvas: x.kind === 'toast' ? '#F8FAFC' : x.kind === 'email' ? '#F6F7FB' : '#FFFFFF',
+          tile: tl.tile, tileBorder: tl.tileBorder, glyph: tl.glyph,
+          d: ic[0], d2: ic[1],
+          title: x.title || '', body: x.body || '',
+          hasCode: !!x.hasCode, code: x.code || '', codeDot: x.codeDot || '#5C6879',
+          chartTitle: x.chartTitle || '', chartSub: x.chartSub || '',
+          gridLines: ['25%','50%','75%'],
+          axis: ['W1','W2','W3','W4','W5','W6','W7'],
+          ghostRows: [{ w:'62%', delay:'0ms' },{ w:'48%', delay:'140ms' },{ w:'70%', delay:'280ms' },{ w:'54%', delay:'420ms' }],
+          actions: (x.actions || []).map((a, i) => Object.assign({}, a, { label: (x.labels || [])[i] || '' })),
+          toasts: (x.toasts || []).map(tt => {
+            const st = toastStyle(tt.kind), ti = ICON[tt.icon] || ICON.info;
+            return { title: tt.title, body: tt.body, action: tt.action, accent: st.accent, tile: st.tile, glyph: st.glyph, d: ti[0], d2: ti[1] };
+          }),
+          fields: (x.fields || []).map(fl => {
+            const st = fieldStyle(fl.state), fi = ICON[st.icon];
+            return Object.assign({ label: fl.label, value: fl.value, msg: fl.msg, d: fi[0], d2: fi[1] }, st);
+          }),
+          scope: x.scope || []
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
