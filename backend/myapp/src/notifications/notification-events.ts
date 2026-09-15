@@ -1,8 +1,9 @@
 import { NotificationCategory } from '@prisma/client';
 
 /**
- * The sixteen notification events from docs/devlytics.md §8. In-app
- * notifications and email templates share this event set.
+ * The sixteen notification events from docs/devlytics.md §8, plus two
+ * Improvement Engine milestones (in-app only — no email template was designed
+ * for these). In-app notifications and email templates share this event set.
  */
 export const NotificationEvent = {
   ORGANIZATION_CREATED: 'organization_created',
@@ -21,6 +22,8 @@ export const NotificationEvent = {
   RANK_CHANGE: 'rank_change',
   ACHIEVEMENT_EARNED: 'achievement_earned',
   GOAL_COMPLETED: 'goal_completed',
+  EXPERIMENT_TARGET_REACHED: 'experiment_target_reached',
+  EXPERIMENT_COMPLETED: 'experiment_completed',
 
   SYNC_FAILURE: 'sync_failure',
   SCORING_RULES_CHANGED: 'scoring_rules_changed',
@@ -45,6 +48,8 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventKey, NotificationCat
   [NotificationEvent.RANK_CHANGE]: 'MILESTONE',
   [NotificationEvent.ACHIEVEMENT_EARNED]: 'MILESTONE',
   [NotificationEvent.GOAL_COMPLETED]: 'MILESTONE',
+  [NotificationEvent.EXPERIMENT_TARGET_REACHED]: 'MILESTONE',
+  [NotificationEvent.EXPERIMENT_COMPLETED]: 'MILESTONE',
 
   [NotificationEvent.SYNC_FAILURE]: 'ALERT',
   [NotificationEvent.SCORING_RULES_CHANGED]: 'ALERT',

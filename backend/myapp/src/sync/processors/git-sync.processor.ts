@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { SyncJobType } from '@prisma/client';
 import { AchievementsService } from '../../achievements/achievements.service';
 import { GoalsService } from '../../goals/goals.service';
+import { ExperimentsService } from '../../improvements/experiments.service';
 import { MetricsAggregationService } from '../../metrics/metrics-aggregation.service';
 import { PrismaService } from '../../database/prisma.service';
 import { QualityAnalysisService } from '../../quality/quality-analysis.service';
@@ -19,7 +20,8 @@ interface GitSyncJobData extends BaseJobData {
 /**
  * Executes the sync pipeline end to end for one repository: collect activity,
  * rebuild its metrics, run deterministic quality analysis, recompute scores
- * and rankings for the organization, re-evaluate goals and achievements.
+ * and rankings for the organization, re-evaluate goals and achievements, and
+ * refresh active Improvement Engine experiments.
  *
  * This is the one place the whole "CONNECT → SYNC → ANALYZE → SCORE" chain
  * runs, so a manual "sync now" and the twelve-month backfill behave the same.
@@ -35,6 +37,7 @@ export class GitSyncProcessor extends WorkerHost {
     private readonly qualityAnalysis: QualityAnalysisService,
     private readonly goals: GoalsService,
     private readonly achievements: AchievementsService,
+    private readonly experiments: ExperimentsService,
     private readonly prisma: PrismaService,
   ) {
     super();
@@ -53,6 +56,7 @@ export class GitSyncProcessor extends WorkerHost {
 
       const analysis = await this.qualityAnalysis.analyzeRepository(organizationId, repositoryId, requestedBy);
       await this.goals.evaluateForRepository(organizationId, repositoryId);
+      await this.experiments.refreshActiveExperimentMetrics(organizationId);
 
       const contributors = await this.prisma.repositoryMember.findMany({
         where: { organizationId, repositoryId },

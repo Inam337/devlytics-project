@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { GitCoreModule } from '../git/git-core.module';
 import { GoalsModule } from '../goals/goals.module';
+import { ImprovementsModule } from '../improvements/improvements.module';
 import { MetricsModule } from '../metrics/metrics.module';
 import { QUEUE } from '../queue/queue.constants';
 import { QualityModule } from '../quality/quality.module';
@@ -19,6 +20,7 @@ import { SyncService } from './sync.service';
     QualityModule,
     GoalsModule,
     AchievementsModule,
+    ImprovementsModule,
   ],
   controllers: [SyncController],
   providers: [SyncService, CollectorService, GitSyncProcessor],

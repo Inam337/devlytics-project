@@ -296,6 +296,7 @@ enum AuditCategory {
   PROJECT
   GOAL
   AUTH
+  EXPERIMENT
 }
 
 enum SyncJobType {
@@ -312,6 +313,52 @@ enum SyncJobStatus {
   COMPLETED
   FAILED
   RETRYING
+}
+
+// Improvement Engine (docs/Interactive design .../DEVLYTICS-SPEC.md, improvement
+// engine addendum): MEASURE → DETECT → EXPLAIN → RECOMMEND → GOAL → EXPERIMENT →
+// RE-MEASURE → PROVE. Confidence is never asserted from AI output alone — see
+// ImprovementVerificationService.
+enum ExperimentStatus {
+  DRAFT
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  PROVEN
+  FAILED
+  CANCELLED
+}
+
+enum ExperimentConfidence {
+  HIGH
+  MEDIUM
+  LOW
+  INSUFFICIENT_DATA
+}
+
+enum MetricType {
+  DURATION
+  COUNT
+  PERCENTAGE
+  RATIO
+  SCORE
+  SIZE
+  RATE
+}
+
+enum MetricDirection {
+  INCREASE
+  DECREASE
+  TARGET_RANGE
+}
+
+enum VerificationStatus {
+  PENDING
+  ACHIEVED
+  PARTIALLY_ACHIEVED
+  NOT_ACHIEVED
+  INSUFFICIENT_DATA
 }
 
 // ---------------------------------------------------------------------------
@@ -337,44 +384,46 @@ model Organization {
   createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  members         OrganizationUser[]
-  roles           Role[]
-  departments     Department[]
-  teams           Team[]
-  teamMembers     TeamMember[]
-  projects        Project[]
-  projectTeams    ProjectTeam[]
-  projectMembers  ProjectMember[]
-  gitProviders    GitProvider[]
-  gitAccounts     GitAccount[]
-  repositories    Repository[]
-  repoMembers     RepositoryMember[]
-  commits         Commit[]
-  pullRequests    PullRequest[]
-  reviews         PullRequestReview[]
-  issues          Issue[]
-  pipelines       CiPipeline[]
-  deployments     Deployment[]
-  qualitySnapshots CodeQualitySnapshot[]
-  developerMetrics DeveloperDailyMetric[]
-  teamMetrics     TeamDailyMetric[]
-  scoringRules    ScoringRule[]
-  developerScores DeveloperScore[]
-  teamScores      TeamScore[]
-  rankingHistory  RankingHistory[]
-  aiProviders     AiProvider[]
-  aiIntegrations  AiIntegration[]
-  aiUsage         AiUsage[]
-  analysisRuns    AiAnalysisRun[]
-  qualityIssues   CodeQualityIssue[]
-  recommendations ImprovementRecommendation[]
-  selfEvaluations SelfEvaluation[]
-  goals           ImprovementGoal[]
-  userAchievements UserAchievement[]
-  notifications   Notification[]
-  auditLogs       AuditLog[]
-  syncJobs        SyncJob[]
-  refreshTokens   RefreshToken[]
+  members           OrganizationUser[]
+  roles             Role[]
+  departments       Department[]
+  teams             Team[]
+  teamMembers       TeamMember[]
+  projects          Project[]
+  projectTeams      ProjectTeam[]
+  projectMembers    ProjectMember[]
+  gitProviders      GitProvider[]
+  gitAccounts       GitAccount[]
+  repositories      Repository[]
+  repoMembers       RepositoryMember[]
+  commits           Commit[]
+  pullRequests      PullRequest[]
+  reviews           PullRequestReview[]
+  issues            Issue[]
+  pipelines         CiPipeline[]
+  deployments       Deployment[]
+  qualitySnapshots  CodeQualitySnapshot[]
+  developerMetrics  DeveloperDailyMetric[]
+  teamMetrics       TeamDailyMetric[]
+  scoringRules      ScoringRule[]
+  developerScores   DeveloperScore[]
+  teamScores        TeamScore[]
+  rankingHistory    RankingHistory[]
+  aiProviders       AiProvider[]
+  aiIntegrations    AiIntegration[]
+  aiUsage           AiUsage[]
+  analysisRuns      AiAnalysisRun[]
+  qualityIssues     CodeQualityIssue[]
+  recommendations   ImprovementRecommendation[]
+  selfEvaluations   SelfEvaluation[]
+  goals             ImprovementGoal[]
+  userAchievements  UserAchievement[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  syncJobs          SyncJob[]
+  refreshTokens     RefreshToken[]
+  experiments       EngineeringExperiment[]
+  improvementProofs ImprovementProof[]
 
   @@index([status])
   @@index([createdAt])
@@ -396,38 +445,40 @@ model User {
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  memberships        OrganizationUser[]
-  managedDepartments Department[]        @relation("DepartmentManager")
-  ledTeams           Team[]              @relation("TeamLead")
-  teamMemberships    TeamMember[]
-  ownedProjects      Project[]           @relation("ProjectOwner")
-  projectMemberships ProjectMember[]
-  gitAccounts        GitAccount[]
-  repoMemberships    RepositoryMember[]
-  connectedProviders GitProvider[]       @relation("ProviderConnectedBy")
-  commits            Commit[]
-  pullRequests       PullRequest[]
-  reviews            PullRequestReview[]
-  createdIssues      Issue[]             @relation("IssueCreator")
-  assignedIssues     Issue[]             @relation("IssueAssignee")
-  dailyMetrics       DeveloperDailyMetric[]
-  scores             DeveloperScore[]
-  rankings           RankingHistory[]
-  createdScoringRules ScoringRule[]      @relation("ScoringRuleAuthor")
-  aiUsage            AiUsage[]
-  requestedRuns      AiAnalysisRun[]     @relation("AnalysisRequestedBy")
-  assignedIssuesQuality CodeQualityIssue[] @relation("QualityIssueAssignee")
-  selfEvaluations    SelfEvaluation[]    @relation("SelfEvaluationSubject")
-  reviewedEvaluations SelfEvaluation[]   @relation("SelfEvaluationReviewer")
-  ownedGoals         ImprovementGoal[]   @relation("GoalOwner")
-  createdGoals       ImprovementGoal[]   @relation("GoalCreatedBy")
-  goalProgress       ImprovementGoalProgress[]
-  achievements       UserAchievement[]
-  notifications      Notification[]
-  auditLogs          AuditLog[]
-  refreshTokens      RefreshToken[]
-  passwordResets     PasswordResetToken[]
-  requestedSyncJobs  SyncJob[]           @relation("SyncJobRequestedBy")
+  memberships           OrganizationUser[]
+  managedDepartments    Department[]              @relation("DepartmentManager")
+  ledTeams              Team[]                    @relation("TeamLead")
+  teamMemberships       TeamMember[]
+  ownedProjects         Project[]                 @relation("ProjectOwner")
+  projectMemberships    ProjectMember[]
+  gitAccounts           GitAccount[]
+  repoMemberships       RepositoryMember[]
+  connectedProviders    GitProvider[]             @relation("ProviderConnectedBy")
+  commits               Commit[]
+  pullRequests          PullRequest[]
+  reviews               PullRequestReview[]
+  createdIssues         Issue[]                   @relation("IssueCreator")
+  assignedIssues        Issue[]                   @relation("IssueAssignee")
+  dailyMetrics          DeveloperDailyMetric[]
+  scores                DeveloperScore[]
+  rankings              RankingHistory[]
+  createdScoringRules   ScoringRule[]             @relation("ScoringRuleAuthor")
+  aiUsage               AiUsage[]
+  requestedRuns         AiAnalysisRun[]           @relation("AnalysisRequestedBy")
+  assignedIssuesQuality CodeQualityIssue[]        @relation("QualityIssueAssignee")
+  selfEvaluations       SelfEvaluation[]          @relation("SelfEvaluationSubject")
+  reviewedEvaluations   SelfEvaluation[]          @relation("SelfEvaluationReviewer")
+  ownedGoals            ImprovementGoal[]         @relation("GoalOwner")
+  createdGoals          ImprovementGoal[]         @relation("GoalCreatedBy")
+  goalProgress          ImprovementGoalProgress[]
+  achievements          UserAchievement[]
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  refreshTokens         RefreshToken[]
+  passwordResets        PasswordResetToken[]
+  requestedSyncJobs     SyncJob[]                 @relation("SyncJobRequestedBy")
+  experiments           EngineeringExperiment[]   @relation("ExperimentOwner")
+  createdExperiments    EngineeringExperiment[]   @relation("ExperimentCreatedBy")
 
   @@index([status])
   @@index([lastActiveAt])
@@ -576,18 +627,19 @@ model Team {
   createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  department     Department?        @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  teamLead       User?              @relation("TeamLead", fields: [teamLeadId], references: [id], onDelete: SetNull)
-  members        TeamMember[]
-  projectTeams   ProjectTeam[]
-  repositories   Repository[]
-  dailyMetrics   TeamDailyMetric[]
-  scores         TeamScore[]
-  rankings       RankingHistory[]
-  aiUsage        AiUsage[]
-  qualityIssues  CodeQualityIssue[] @relation("QualityIssueTeam")
-  goals          ImprovementGoal[]  @relation("GoalTeam")
+  organization  Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department    Department?             @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  teamLead      User?                   @relation("TeamLead", fields: [teamLeadId], references: [id], onDelete: SetNull)
+  members       TeamMember[]
+  projectTeams  ProjectTeam[]
+  repositories  Repository[]
+  dailyMetrics  TeamDailyMetric[]
+  scores        TeamScore[]
+  rankings      RankingHistory[]
+  aiUsage       AiUsage[]
+  qualityIssues CodeQualityIssue[]      @relation("QualityIssueTeam")
+  goals         ImprovementGoal[]       @relation("GoalTeam")
+  experiments   EngineeringExperiment[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -620,22 +672,22 @@ model TeamMember {
 // ---------------------------------------------------------------------------
 
 model Project {
-  id             String        @id @default(uuid()) @db.Uuid
-  organizationId String        @map("organization_id") @db.Uuid
-  name           String        @db.VarChar(150)
-  code           String        @db.VarChar(40)
-  projectKey     String?       @map("project_key") @db.VarChar(40)
-  description    String?       @db.Text
-  status         ProjectStatus @default(ACTIVE)
-  progressPercent Decimal      @default(0) @map("progress_percent") @db.Decimal(5, 2)
-  startDate      DateTime?     @map("start_date") @db.Date
-  endDate        DateTime?     @map("end_date") @db.Date
-  ownerId        String?       @map("owner_id") @db.Uuid
-  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String        @id @default(uuid()) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  name            String        @db.VarChar(150)
+  code            String        @db.VarChar(40)
+  projectKey      String?       @map("project_key") @db.VarChar(40)
+  description     String?       @db.Text
+  status          ProjectStatus @default(ACTIVE)
+  progressPercent Decimal       @default(0) @map("progress_percent") @db.Decimal(5, 2)
+  startDate       DateTime?     @map("start_date") @db.Date
+  endDate         DateTime?     @map("end_date") @db.Date
+  ownerId         String?       @map("owner_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  owner            User?                 @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  organization     Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner            User?                   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   teams            ProjectTeam[]
   members          ProjectMember[]
   repositories     Repository[]
@@ -643,6 +695,7 @@ model Project {
   aiUsage          AiUsage[]
   analysisRuns     AiAnalysisRun[]
   selfEvaluations  SelfEvaluation[]
+  experiments      EngineeringExperiment[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -668,13 +721,13 @@ model ProjectTeam {
 }
 
 model ProjectMember {
-  id             String   @id @default(uuid()) @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
-  projectId      String   @map("project_id") @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  roleLabel      String?  @map("role_label") @db.VarChar(80)
-  allocationPercent Int   @default(100) @map("allocation_percent")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                String   @id @default(uuid()) @db.Uuid
+  organizationId    String   @map("organization_id") @db.Uuid
+  projectId         String   @map("project_id") @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  roleLabel         String?  @map("role_label") @db.VarChar(80)
+  allocationPercent Int      @default(100) @map("allocation_percent")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -690,25 +743,25 @@ model ProjectMember {
 // ---------------------------------------------------------------------------
 
 model GitProvider {
-  id                 String          @id @default(uuid()) @db.Uuid
-  organizationId     String          @map("organization_id") @db.Uuid
-  providerType       GitProviderType @map("provider_type")
-  displayName        String          @map("display_name") @db.VarChar(120)
-  baseUrl            String          @default("https://api.github.com") @map("base_url") @db.Text
-  externalAccountId  String?         @map("external_account_id") @db.VarChar(120)
-  externalAccountName String?        @map("external_account_name") @db.VarChar(160)
-  accessTokenEncrypted String?       @map("access_token_encrypted") @db.Text
-  refreshTokenEncrypted String?      @map("refresh_token_encrypted") @db.Text
-  tokenExpiresAt     DateTime?       @map("token_expires_at") @db.Timestamptz(6)
-  scopes             String[]        @default([])
-  webhookSecretEncrypted String?     @map("webhook_secret_encrypted") @db.Text
-  status             ProviderStatus  @default(CONNECTED)
-  lastSyncAt         DateTime?       @map("last_sync_at") @db.Timestamptz(6)
-  lastErrorMessage   String?         @map("last_error_message") @db.Text
-  connectedById      String?         @map("connected_by_id") @db.Uuid
-  metadata           Json?
-  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                     String          @id @default(uuid()) @db.Uuid
+  organizationId         String          @map("organization_id") @db.Uuid
+  providerType           GitProviderType @map("provider_type")
+  displayName            String          @map("display_name") @db.VarChar(120)
+  baseUrl                String          @default("https://api.github.com") @map("base_url") @db.Text
+  externalAccountId      String?         @map("external_account_id") @db.VarChar(120)
+  externalAccountName    String?         @map("external_account_name") @db.VarChar(160)
+  accessTokenEncrypted   String?         @map("access_token_encrypted") @db.Text
+  refreshTokenEncrypted  String?         @map("refresh_token_encrypted") @db.Text
+  tokenExpiresAt         DateTime?       @map("token_expires_at") @db.Timestamptz(6)
+  scopes                 String[]        @default([])
+  webhookSecretEncrypted String?         @map("webhook_secret_encrypted") @db.Text
+  status                 ProviderStatus  @default(CONNECTED)
+  lastSyncAt             DateTime?       @map("last_sync_at") @db.Timestamptz(6)
+  lastErrorMessage       String?         @map("last_error_message") @db.Text
+  connectedById          String?         @map("connected_by_id") @db.Uuid
+  metadata               Json?
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   connectedBy  User?        @relation("ProviderConnectedBy", fields: [connectedById], references: [id], onDelete: SetNull)
@@ -770,10 +823,10 @@ model Repository {
   createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  provider         GitProvider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  project          Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  team             Team?                 @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  organization     Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider         GitProvider             @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  project          Project?                @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  team             Team?                   @relation(fields: [teamId], references: [id], onDelete: SetNull)
   members          RepositoryMember[]
   commits          Commit[]
   pullRequests     PullRequest[]
@@ -787,6 +840,7 @@ model Repository {
   selfEvaluations  SelfEvaluation[]
   goals            ImprovementGoal[]
   syncJobs         SyncJob[]
+  experiments      EngineeringExperiment[]
 
   @@unique([providerId, externalRepositoryId])
   @@index([organizationId, syncStatus])
@@ -852,16 +906,16 @@ model Commit {
 }
 
 model CommitFile {
-  id           String   @id @default(uuid()) @db.Uuid
-  commitId     String   @map("commit_id") @db.Uuid
-  filePath     String   @map("file_path") @db.VarChar(512)
-  changeType   String   @map("change_type") @db.VarChar(20)
-  additions    Int      @default(0)
-  deletions    Int      @default(0)
-  language     String?  @db.VarChar(60)
-  isTestFile   Boolean  @default(false) @map("is_test_file")
-  isDocFile    Boolean  @default(false) @map("is_doc_file")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id         String   @id @default(uuid()) @db.Uuid
+  commitId   String   @map("commit_id") @db.Uuid
+  filePath   String   @map("file_path") @db.VarChar(512)
+  changeType String   @map("change_type") @db.VarChar(20)
+  additions  Int      @default(0)
+  deletions  Int      @default(0)
+  language   String?  @db.VarChar(60)
+  isTestFile Boolean  @default(false) @map("is_test_file")
+  isDocFile  Boolean  @default(false) @map("is_doc_file")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   commit Commit @relation(fields: [commitId], references: [id], onDelete: Cascade)
 
@@ -871,30 +925,30 @@ model CommitFile {
 }
 
 model PullRequest {
-  id               String            @id @default(uuid()) @db.Uuid
-  organizationId   String            @map("organization_id") @db.Uuid
-  repositoryId     String            @map("repository_id") @db.Uuid
-  authorId         String?           @map("author_id") @db.Uuid
-  externalPrId     String            @map("external_pr_id") @db.VarChar(120)
-  number           Int
-  title            String            @db.VarChar(500)
-  description      String?           @db.Text
-  sourceBranch     String?           @map("source_branch") @db.VarChar(160)
-  targetBranch     String?           @map("target_branch") @db.VarChar(160)
-  status           PullRequestStatus @default(OPEN)
-  createdAtExternal DateTime         @map("created_at_external") @db.Timestamptz(6)
-  mergedAt         DateTime?         @map("merged_at") @db.Timestamptz(6)
-  closedAt         DateTime?         @map("closed_at") @db.Timestamptz(6)
-  firstReviewAt    DateTime?         @map("first_review_at") @db.Timestamptz(6)
-  additions        Int               @default(0)
-  deletions        Int               @default(0)
-  changedFiles     Int               @default(0) @map("changed_files")
-  commentCount     Int               @default(0) @map("comment_count")
-  reviewCount      Int               @default(0) @map("review_count")
-  url              String?           @db.Text
-  metadata         Json?
-  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                String            @id @default(uuid()) @db.Uuid
+  organizationId    String            @map("organization_id") @db.Uuid
+  repositoryId      String            @map("repository_id") @db.Uuid
+  authorId          String?           @map("author_id") @db.Uuid
+  externalPrId      String            @map("external_pr_id") @db.VarChar(120)
+  number            Int
+  title             String            @db.VarChar(500)
+  description       String?           @db.Text
+  sourceBranch      String?           @map("source_branch") @db.VarChar(160)
+  targetBranch      String?           @map("target_branch") @db.VarChar(160)
+  status            PullRequestStatus @default(OPEN)
+  createdAtExternal DateTime          @map("created_at_external") @db.Timestamptz(6)
+  mergedAt          DateTime?         @map("merged_at") @db.Timestamptz(6)
+  closedAt          DateTime?         @map("closed_at") @db.Timestamptz(6)
+  firstReviewAt     DateTime?         @map("first_review_at") @db.Timestamptz(6)
+  additions         Int               @default(0)
+  deletions         Int               @default(0)
+  changedFiles      Int               @default(0) @map("changed_files")
+  commentCount      Int               @default(0) @map("comment_count")
+  reviewCount       Int               @default(0) @map("review_count")
+  url               String?           @db.Text
+  metadata          Json?
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   repository   Repository          @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
@@ -909,17 +963,17 @@ model PullRequest {
 }
 
 model PullRequestReview {
-  id              String      @id @default(uuid()) @db.Uuid
-  organizationId  String      @map("organization_id") @db.Uuid
-  pullRequestId   String      @map("pull_request_id") @db.Uuid
-  reviewerId      String?     @map("reviewer_id") @db.Uuid
-  externalReviewId String     @map("external_review_id") @db.VarChar(120)
-  state           ReviewState @default(COMMENTED)
-  body            String?     @db.Text
-  commentCount    Int         @default(0) @map("comment_count")
-  submittedAt     DateTime    @map("submitted_at") @db.Timestamptz(6)
-  metadata        Json?
-  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  id               String      @id @default(uuid()) @db.Uuid
+  organizationId   String      @map("organization_id") @db.Uuid
+  pullRequestId    String      @map("pull_request_id") @db.Uuid
+  reviewerId       String?     @map("reviewer_id") @db.Uuid
+  externalReviewId String      @map("external_review_id") @db.VarChar(120)
+  state            ReviewState @default(COMMENTED)
+  body             String?     @db.Text
+  commentCount     Int         @default(0) @map("comment_count")
+  submittedAt      DateTime    @map("submitted_at") @db.Timestamptz(6)
+  metadata         Json?
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   pullRequest  PullRequest  @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
@@ -1013,26 +1067,26 @@ model Deployment {
 // ---------------------------------------------------------------------------
 
 model CodeQualitySnapshot {
-  id                   String                @id @default(uuid()) @db.Uuid
-  organizationId       String                @map("organization_id") @db.Uuid
-  repositoryId         String                @map("repository_id") @db.Uuid
-  projectId            String?               @map("project_id") @db.Uuid
-  analysisRunId        String?               @map("analysis_run_id") @db.Uuid
-  snapshotDate         DateTime              @map("snapshot_date") @db.Date
-  qualityScore         Decimal               @default(0) @map("quality_score") @db.Decimal(6, 2)
-  bugs                 Int                   @default(0)
-  vulnerabilities      Int                   @default(0)
-  securityHotspots     Int                   @default(0) @map("security_hotspots")
-  codeSmells           Int                   @default(0) @map("code_smells")
-  coveragePercent      Decimal               @default(0) @map("coverage_percent") @db.Decimal(5, 2)
-  duplicationPercent   Decimal               @default(0) @map("duplication_percent") @db.Decimal(5, 2)
-  complexity           Decimal               @default(0) @db.Decimal(8, 2)
-  maintainabilityScore Decimal               @default(0) @map("maintainability_score") @db.Decimal(6, 2)
+  id                    String                @id @default(uuid()) @db.Uuid
+  organizationId        String                @map("organization_id") @db.Uuid
+  repositoryId          String                @map("repository_id") @db.Uuid
+  projectId             String?               @map("project_id") @db.Uuid
+  analysisRunId         String?               @map("analysis_run_id") @db.Uuid
+  snapshotDate          DateTime              @map("snapshot_date") @db.Date
+  qualityScore          Decimal               @default(0) @map("quality_score") @db.Decimal(6, 2)
+  bugs                  Int                   @default(0)
+  vulnerabilities       Int                   @default(0)
+  securityHotspots      Int                   @default(0) @map("security_hotspots")
+  codeSmells            Int                   @default(0) @map("code_smells")
+  coveragePercent       Decimal               @default(0) @map("coverage_percent") @db.Decimal(5, 2)
+  duplicationPercent    Decimal               @default(0) @map("duplication_percent") @db.Decimal(5, 2)
+  complexity            Decimal               @default(0) @db.Decimal(8, 2)
+  maintainabilityScore  Decimal               @default(0) @map("maintainability_score") @db.Decimal(6, 2)
   maintainabilityRating MaintainabilityRating @default(C) @map("maintainability_rating")
-  technicalDebtMinutes Int                   @default(0) @map("technical_debt_minutes")
-  locTotal             Int                   @default(0) @map("loc_total")
-  metadata             Json?
-  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  technicalDebtMinutes  Int                   @default(0) @map("technical_debt_minutes")
+  locTotal              Int                   @default(0) @map("loc_total")
+  metadata              Json?
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   repository   Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
@@ -1267,20 +1321,20 @@ model AiProvider {
 }
 
 model AiIntegration {
-  id               String   @id @default(uuid()) @db.Uuid
-  organizationId   String   @map("organization_id") @db.Uuid
-  providerId       String   @map("provider_id") @db.Uuid
-  name             String   @db.VarChar(120)
-  model            String   @db.VarChar(120)
-  apiKeyEncrypted  String?  @map("api_key_encrypted") @db.Text
-  baseUrl          String?  @map("base_url") @db.Text
-  isDefault        Boolean  @default(false) @map("is_default")
-  isEnabled        Boolean  @default(true) @map("is_enabled")
-  sanitizeContext  Boolean  @default(true) @map("sanitize_context")
-  maxTokens        Int      @default(2048) @map("max_tokens")
-  temperature      Decimal  @default(0.2) @db.Decimal(3, 2)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  providerId      String   @map("provider_id") @db.Uuid
+  name            String   @db.VarChar(120)
+  model           String   @db.VarChar(120)
+  apiKeyEncrypted String?  @map("api_key_encrypted") @db.Text
+  baseUrl         String?  @map("base_url") @db.Text
+  isDefault       Boolean  @default(false) @map("is_default")
+  isEnabled       Boolean  @default(true) @map("is_enabled")
+  sanitizeContext Boolean  @default(true) @map("sanitize_context")
+  maxTokens       Int      @default(2048) @map("max_tokens")
+  temperature     Decimal  @default(0.2) @db.Decimal(3, 2)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   provider     AiProvider   @relation(fields: [providerId], references: [id], onDelete: Cascade)
@@ -1291,20 +1345,20 @@ model AiIntegration {
 }
 
 model AiUsage {
-  id             String   @id @default(uuid()) @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
-  providerId     String?  @map("provider_id") @db.Uuid
-  userId         String?  @map("user_id") @db.Uuid
-  teamId         String?  @map("team_id") @db.Uuid
-  projectId      String?  @map("project_id") @db.Uuid
-  repositoryId   String?  @map("repository_id") @db.Uuid
-  toolName       String   @map("tool_name") @db.VarChar(80)
-  usageDate      DateTime @map("usage_date") @db.Date
-  requestCount   Int      @default(0) @map("request_count")
-  promptTokens   Int      @default(0) @map("prompt_tokens")
-  completionTokens Int    @default(0) @map("completion_tokens")
-  metadata       Json?
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id               String   @id @default(uuid()) @db.Uuid
+  organizationId   String   @map("organization_id") @db.Uuid
+  providerId       String?  @map("provider_id") @db.Uuid
+  userId           String?  @map("user_id") @db.Uuid
+  teamId           String?  @map("team_id") @db.Uuid
+  projectId        String?  @map("project_id") @db.Uuid
+  repositoryId     String?  @map("repository_id") @db.Uuid
+  toolName         String   @map("tool_name") @db.VarChar(80)
+  usageDate        DateTime @map("usage_date") @db.Date
+  requestCount     Int      @default(0) @map("request_count")
+  promptTokens     Int      @default(0) @map("prompt_tokens")
+  completionTokens Int      @default(0) @map("completion_tokens")
+  metadata         Json?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   provider     AiProvider?  @relation(fields: [providerId], references: [id], onDelete: SetNull)
@@ -1320,28 +1374,28 @@ model AiUsage {
 }
 
 model AiAnalysisRun {
-  id             String            @id @default(uuid()) @db.Uuid
-  organizationId String            @map("organization_id") @db.Uuid
-  providerId     String?           @map("provider_id") @db.Uuid
-  repositoryId   String?           @map("repository_id") @db.Uuid
-  projectId      String?           @map("project_id") @db.Uuid
-  requestedById  String?           @map("requested_by_id") @db.Uuid
-  runNumber      Int               @map("run_number")
-  scope          AnalysisScope     @default(REPOSITORY)
-  status         AnalysisRunStatus @default(QUEUED)
-  model          String?           @db.VarChar(120)
-  startedAt      DateTime?         @map("started_at") @db.Timestamptz(6)
-  finishedAt     DateTime?         @map("finished_at") @db.Timestamptz(6)
-  durationMs     Int?              @map("duration_ms")
-  filesAnalyzed  Int               @default(0) @map("files_analyzed")
-  issuesFound    Int               @default(0) @map("issues_found")
-  promptTokens   Int               @default(0) @map("prompt_tokens")
-  completionTokens Int             @default(0) @map("completion_tokens")
-  errorMessage   String?           @map("error_message") @db.Text
-  observedFacts  Json?             @map("observed_facts")
-  metadata       Json?
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id               String            @id @default(uuid()) @db.Uuid
+  organizationId   String            @map("organization_id") @db.Uuid
+  providerId       String?           @map("provider_id") @db.Uuid
+  repositoryId     String?           @map("repository_id") @db.Uuid
+  projectId        String?           @map("project_id") @db.Uuid
+  requestedById    String?           @map("requested_by_id") @db.Uuid
+  runNumber        Int               @map("run_number")
+  scope            AnalysisScope     @default(REPOSITORY)
+  status           AnalysisRunStatus @default(QUEUED)
+  model            String?           @db.VarChar(120)
+  startedAt        DateTime?         @map("started_at") @db.Timestamptz(6)
+  finishedAt       DateTime?         @map("finished_at") @db.Timestamptz(6)
+  durationMs       Int?              @map("duration_ms")
+  filesAnalyzed    Int               @default(0) @map("files_analyzed")
+  issuesFound      Int               @default(0) @map("issues_found")
+  promptTokens     Int               @default(0) @map("prompt_tokens")
+  completionTokens Int               @default(0) @map("completion_tokens")
+  errorMessage     String?           @map("error_message") @db.Text
+  observedFacts    Json?             @map("observed_facts")
+  metadata         Json?
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization    Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   provider        AiProvider?                 @relation(fields: [providerId], references: [id], onDelete: SetNull)
@@ -1363,31 +1417,31 @@ model AiAnalysisRun {
 // ---------------------------------------------------------------------------
 
 model CodeQualityIssue {
-  id              String             @id @default(uuid()) @db.Uuid
-  organizationId  String             @map("organization_id") @db.Uuid
-  analysisRunId   String?            @map("analysis_run_id") @db.Uuid
-  repositoryId    String             @map("repository_id") @db.Uuid
-  assignedUserId  String?            @map("assigned_user_id") @db.Uuid
-  assignedTeamId  String?            @map("assigned_team_id") @db.Uuid
-  ruleId          String             @map("rule_id") @db.VarChar(120)
-  category        QualityCategory
-  severity        IssueSeverity      @default(MAJOR)
-  status          QualityIssueStatus @default(OPEN)
-  title           String             @db.VarChar(300)
-  observedFact    String             @map("observed_fact") @db.Text
-  aiInference     String?            @map("ai_inference") @db.Text
-  aiConfidence    Decimal?           @map("ai_confidence") @db.Decimal(4, 3)
-  filePath        String?            @map("file_path") @db.VarChar(512)
-  lineStart       Int?               @map("line_start")
-  lineEnd         Int?               @map("line_end")
-  effort          EffortLevel        @default(MEDIUM)
-  impact          ImpactLevel        @default(MEDIUM)
-  metricKey       String?            @map("metric_key") @db.VarChar(80)
-  measuredValue   Decimal?           @map("measured_value") @db.Decimal(12, 3)
-  resolvedAt      DateTime?          @map("resolved_at") @db.Timestamptz(6)
-  metadata        Json?
-  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  analysisRunId  String?            @map("analysis_run_id") @db.Uuid
+  repositoryId   String             @map("repository_id") @db.Uuid
+  assignedUserId String?            @map("assigned_user_id") @db.Uuid
+  assignedTeamId String?            @map("assigned_team_id") @db.Uuid
+  ruleId         String             @map("rule_id") @db.VarChar(120)
+  category       QualityCategory
+  severity       IssueSeverity      @default(MAJOR)
+  status         QualityIssueStatus @default(OPEN)
+  title          String             @db.VarChar(300)
+  observedFact   String             @map("observed_fact") @db.Text
+  aiInference    String?            @map("ai_inference") @db.Text
+  aiConfidence   Decimal?           @map("ai_confidence") @db.Decimal(4, 3)
+  filePath       String?            @map("file_path") @db.VarChar(512)
+  lineStart      Int?               @map("line_start")
+  lineEnd        Int?               @map("line_end")
+  effort         EffortLevel        @default(MEDIUM)
+  impact         ImpactLevel        @default(MEDIUM)
+  metricKey      String?            @map("metric_key") @db.VarChar(80)
+  measuredValue  Decimal?           @map("measured_value") @db.Decimal(12, 3)
+  resolvedAt     DateTime?          @map("resolved_at") @db.Timestamptz(6)
+  metadata       Json?
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization    Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   analysisRun     AiAnalysisRun?              @relation(fields: [analysisRunId], references: [id], onDelete: SetNull)
@@ -1422,10 +1476,11 @@ model ImprovementRecommendation {
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  analysisRun  AiAnalysisRun?    @relation(fields: [analysisRunId], references: [id], onDelete: SetNull)
-  qualityIssue CodeQualityIssue? @relation(fields: [qualityIssueId], references: [id], onDelete: Cascade)
+  organization Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  analysisRun  AiAnalysisRun?          @relation(fields: [analysisRunId], references: [id], onDelete: SetNull)
+  qualityIssue CodeQualityIssue?       @relation(fields: [qualityIssueId], references: [id], onDelete: Cascade)
   goals        ImprovementGoal[]
+  experiments  EngineeringExperiment[]
 
   @@index([organizationId, status])
   @@index([organizationId, category])
@@ -1524,6 +1579,7 @@ model ImprovementGoal {
   recommendation ImprovementRecommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
   createdBy      User?                      @relation("GoalCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   progress       ImprovementGoalProgress[]
+  experiments    EngineeringExperiment[]
 
   @@index([organizationId, status])
   @@index([organizationId, ownerUserId])
@@ -1532,16 +1588,16 @@ model ImprovementGoal {
 }
 
 model ImprovementGoalProgress {
-  id            String   @id @default(uuid()) @db.Uuid
-  goalId        String   @map("goal_id") @db.Uuid
-  analysisRunId String?  @map("analysis_run_id") @db.Uuid
-  recordedById  String?  @map("recorded_by_id") @db.Uuid
-  progressDate  DateTime @map("progress_date") @db.Date
-  measuredValue Decimal  @map("measured_value") @db.Decimal(12, 3)
-  deltaFromBaseline Decimal @default(0) @map("delta_from_baseline") @db.Decimal(12, 3)
-  percentComplete Decimal @default(0) @map("percent_complete") @db.Decimal(5, 2)
-  note          String?  @db.Text
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                String   @id @default(uuid()) @db.Uuid
+  goalId            String   @map("goal_id") @db.Uuid
+  analysisRunId     String?  @map("analysis_run_id") @db.Uuid
+  recordedById      String?  @map("recorded_by_id") @db.Uuid
+  progressDate      DateTime @map("progress_date") @db.Date
+  measuredValue     Decimal  @map("measured_value") @db.Decimal(12, 3)
+  deltaFromBaseline Decimal  @default(0) @map("delta_from_baseline") @db.Decimal(12, 3)
+  percentComplete   Decimal  @default(0) @map("percent_complete") @db.Decimal(5, 2)
+  note              String?  @db.Text
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   goal       ImprovementGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
   recordedBy User?           @relation(fields: [recordedById], references: [id], onDelete: SetNull)
@@ -1555,16 +1611,16 @@ model ImprovementGoalProgress {
 // ---------------------------------------------------------------------------
 
 model Achievement {
-  id            String   @id @default(uuid()) @db.Uuid
-  key           String   @unique @db.VarChar(80)
-  name          String   @db.VarChar(120)
-  description   String   @db.Text
-  icon          String?  @db.VarChar(80)
-  category      String   @db.VarChar(60)
-  metricKey     String   @map("metric_key") @db.VarChar(80)
-  targetValue   Decimal  @map("target_value") @db.Decimal(12, 3)
-  points        Int      @default(10)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique @db.VarChar(80)
+  name        String   @db.VarChar(120)
+  description String   @db.Text
+  icon        String?  @db.VarChar(80)
+  category    String   @db.VarChar(60)
+  metricKey   String   @map("metric_key") @db.VarChar(80)
+  targetValue Decimal  @map("target_value") @db.Decimal(12, 3)
+  points      Int      @default(10)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   userAchievements UserAchievement[]
 
@@ -1573,18 +1629,18 @@ model Achievement {
 }
 
 model UserAchievement {
-  id             String            @id @default(uuid()) @db.Uuid
-  organizationId String            @map("organization_id") @db.Uuid
-  userId         String            @map("user_id") @db.Uuid
-  achievementId  String            @map("achievement_id") @db.Uuid
-  status         AchievementStatus @default(LOCKED)
-  currentValue   Decimal           @default(0) @map("current_value") @db.Decimal(12, 3)
-  targetValue    Decimal           @map("target_value") @db.Decimal(12, 3)
-  progressPercent Decimal          @default(0) @map("progress_percent") @db.Decimal(5, 2)
-  evidence       String?           @db.Text
-  earnedAt       DateTime?         @map("earned_at") @db.Timestamptz(6)
-  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String            @id @default(uuid()) @db.Uuid
+  organizationId  String            @map("organization_id") @db.Uuid
+  userId          String            @map("user_id") @db.Uuid
+  achievementId   String            @map("achievement_id") @db.Uuid
+  status          AchievementStatus @default(LOCKED)
+  currentValue    Decimal           @default(0) @map("current_value") @db.Decimal(12, 3)
+  targetValue     Decimal           @map("target_value") @db.Decimal(12, 3)
+  progressPercent Decimal           @default(0) @map("progress_percent") @db.Decimal(5, 2)
+  evidence        String?           @db.Text
+  earnedAt        DateTime?         @map("earned_at") @db.Timestamptz(6)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1644,25 +1700,25 @@ model AuditLog {
 }
 
 model SyncJob {
-  id             String        @id @default(uuid()) @db.Uuid
-  organizationId String        @map("organization_id") @db.Uuid
-  providerId     String?       @map("provider_id") @db.Uuid
-  repositoryId   String?       @map("repository_id") @db.Uuid
-  requestedById  String?       @map("requested_by_id") @db.Uuid
-  jobType        SyncJobType   @map("job_type")
-  status         SyncJobStatus @default(QUEUED)
-  queueName      String        @default("git-sync") @map("queue_name") @db.VarChar(60)
-  externalJobId  String?       @map("external_job_id") @db.VarChar(120)
-  attempts       Int           @default(0)
-  progressPercent Int          @default(0) @map("progress_percent")
-  itemsProcessed Int           @default(0) @map("items_processed")
-  itemsTotal     Int           @default(0) @map("items_total")
-  startedAt      DateTime?     @map("started_at") @db.Timestamptz(6)
-  finishedAt     DateTime?     @map("finished_at") @db.Timestamptz(6)
-  errorMessage   String?       @map("error_message") @db.Text
-  payload        Json?
-  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String        @id @default(uuid()) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  providerId      String?       @map("provider_id") @db.Uuid
+  repositoryId    String?       @map("repository_id") @db.Uuid
+  requestedById   String?       @map("requested_by_id") @db.Uuid
+  jobType         SyncJobType   @map("job_type")
+  status          SyncJobStatus @default(QUEUED)
+  queueName       String        @default("git-sync") @map("queue_name") @db.VarChar(60)
+  externalJobId   String?       @map("external_job_id") @db.VarChar(120)
+  attempts        Int           @default(0)
+  progressPercent Int           @default(0) @map("progress_percent")
+  itemsProcessed  Int           @default(0) @map("items_processed")
+  itemsTotal      Int           @default(0) @map("items_total")
+  startedAt       DateTime?     @map("started_at") @db.Timestamptz(6)
+  finishedAt      DateTime?     @map("finished_at") @db.Timestamptz(6)
+  errorMessage    String?       @map("error_message") @db.Text
+  payload         Json?
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   provider     GitProvider? @relation(fields: [providerId], references: [id], onDelete: Cascade)
@@ -1673,4 +1729,113 @@ model SyncJob {
   @@index([repositoryId, createdAt])
   @@index([organizationId, jobType])
   @@map("tbl_sync_job")
+}
+
+// ---------------------------------------------------------------------------
+// Improvement Engine
+// ---------------------------------------------------------------------------
+
+model EngineeringExperiment {
+  id               String                @id @default(uuid()) @db.Uuid
+  organizationId   String                @map("organization_id") @db.Uuid
+  userId           String?               @map("user_id") @db.Uuid
+  teamId           String?               @map("team_id") @db.Uuid
+  projectId        String?               @map("project_id") @db.Uuid
+  repositoryId     String?               @map("repository_id") @db.Uuid
+  recommendationId String?               @map("recommendation_id") @db.Uuid
+  goalId           String?               @map("goal_id") @db.Uuid
+  createdById      String?               @map("created_by_id") @db.Uuid
+  title            String                @db.VarChar(255)
+  description      String?               @db.Text
+  problemStatement String                @map("problem_statement") @db.Text
+  hypothesis       String                @db.Text
+  intervention     String                @db.Text
+  status           ExperimentStatus      @default(DRAFT)
+  startDate        DateTime              @map("start_date") @db.Timestamptz(6)
+  endDate          DateTime?             @map("end_date") @db.Timestamptz(6)
+  completedAt      DateTime?             @map("completed_at") @db.Timestamptz(6)
+  baselineSummary  Json?                 @map("baseline_summary")
+  targetSummary    Json?                 @map("target_summary")
+  resultSummary    Json?                 @map("result_summary")
+  confidence       ExperimentConfidence?
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?                      @relation("ExperimentOwner", fields: [userId], references: [id], onDelete: SetNull)
+  team           Team?                      @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  project        Project?                   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  repository     Repository?                @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  recommendation ImprovementRecommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
+  goal           ImprovementGoal?           @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  createdBy      User?                      @relation("ExperimentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  metrics        ExperimentMetric[]
+  proof          ImprovementProof?
+
+  @@index([organizationId, status])
+  @@index([organizationId, userId])
+  @@index([organizationId, teamId])
+  @@index([organizationId, projectId])
+  @@index([organizationId, repositoryId])
+  @@index([organizationId, startDate])
+  @@index([organizationId, createdAt])
+  @@map("tbl_engineering_experiment")
+}
+
+model ExperimentMetric {
+  id                     String          @id @default(uuid()) @db.Uuid
+  experimentId           String          @map("experiment_id") @db.Uuid
+  metricName             String          @map("metric_name") @db.VarChar(100)
+  metricKey              String          @map("metric_key") @db.VarChar(100)
+  metricType             MetricType      @map("metric_type")
+  unit                   String?         @db.VarChar(50)
+  direction              MetricDirection
+  baselineValue          Decimal?        @map("baseline_value") @db.Decimal(18, 6)
+  targetValue            Decimal?        @map("target_value") @db.Decimal(18, 6)
+  currentValue           Decimal?        @map("current_value") @db.Decimal(18, 6)
+  finalValue             Decimal?        @map("final_value") @db.Decimal(18, 6)
+  baselinePeriodStart    DateTime?       @map("baseline_period_start") @db.Timestamptz(6)
+  baselinePeriodEnd      DateTime?       @map("baseline_period_end") @db.Timestamptz(6)
+  measurementPeriodStart DateTime?       @map("measurement_period_start") @db.Timestamptz(6)
+  measurementPeriodEnd   DateTime?       @map("measurement_period_end") @db.Timestamptz(6)
+  isPrimary              Boolean         @default(false) @map("is_primary")
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  experiment      EngineeringExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  proofsAsPrimary ImprovementProof[]    @relation("ProofPrimaryMetric")
+
+  @@unique([experimentId, metricKey])
+  @@index([experimentId, metricKey])
+  @@index([experimentId, isPrimary])
+  @@map("tbl_experiment_metric")
+}
+
+model ImprovementProof {
+  id                    String                @id @default(uuid()) @db.Uuid
+  organizationId        String                @map("organization_id") @db.Uuid
+  experimentId          String                @unique @map("experiment_id") @db.Uuid
+  primaryMetricId       String?               @map("primary_metric_id") @db.Uuid
+  verificationStatus    VerificationStatus    @default(PENDING) @map("verification_status")
+  baselineValue         Decimal?              @map("baseline_value") @db.Decimal(18, 6)
+  finalValue            Decimal?              @map("final_value") @db.Decimal(18, 6)
+  targetValue           Decimal?              @map("target_value") @db.Decimal(18, 6)
+  improvementPercentage Decimal?              @map("improvement_percentage") @db.Decimal(10, 4)
+  targetAchieved        Boolean               @default(false) @map("target_achieved")
+  confidence            ExperimentConfidence?
+  evidenceSummary       String?               @map("evidence_summary") @db.Text
+  evidence              Json?
+  resultSummary         String?               @map("result_summary") @db.Text
+  verifiedAt            DateTime?             @map("verified_at") @db.Timestamptz(6)
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization  Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  experiment    EngineeringExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  primaryMetric ExperimentMetric?     @relation("ProofPrimaryMetric", fields: [primaryMetricId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, verificationStatus])
+  @@index([organizationId, verifiedAt])
+  @@index([experimentId])
+  @@map("tbl_improvement_proof")
 }
