@@ -2,18 +2,17 @@
  * API base URL for axios.
  *
  * Development (recommended):
- *   VITE_API_BASE_URL=   (empty) → same-origin requests via Vite proxy → localhost:3000
+ *   VITE_API_BASE_URL=/api/v1 → same-origin via Vite proxy → localhost:3000/api/v1
  *
  * Development (direct / CORS):
- *   VITE_API_BASE_URL=http://localhost:3000
+ *   VITE_API_BASE_URL=http://localhost:3000/api/v1
  */
 export function getApiBaseUrl(): string {
   const raw = import.meta.env.VITE_API_BASE_URL;
   const fromEnv = typeof raw === 'string' ? raw.trim() : '';
 
-  // Explicit empty = use Vite dev proxy (see vite.config.ts)
   if (fromEnv === '') {
-    return '';
+    return import.meta.env.DEV ? '/api/v1' : '';
   }
 
   if (fromEnv) {
@@ -21,7 +20,7 @@ export function getApiBaseUrl(): string {
   }
 
   if (import.meta.env.DEV) {
-    return '';
+    return '/api/v1';
   }
 
   throw new Error(
@@ -30,5 +29,6 @@ export function getApiBaseUrl(): string {
 }
 
 export function isUsingDevProxy(): boolean {
-  return import.meta.env.DEV && getApiBaseUrl() === '';
+  const base = getApiBaseUrl();
+  return import.meta.env.DEV && (base === '' || base.startsWith('/'));
 }

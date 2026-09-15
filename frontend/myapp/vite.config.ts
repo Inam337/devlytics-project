@@ -3,26 +3,6 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
 
-/** NestJS route prefixes — keep in sync with AppConstants.ApiUrls */
-const API_ROUTE_PREFIXES = [
-  'auth',
-  'users',
-  'products',
-  'categories',
-  'customers',
-  'suppliers',
-  'stocks',
-  'purchases',
-  'purchase-items',
-  'sales',
-  'sale-items',
-  'cart',
-  'cart-items',
-  'orders',
-  'order-items',
-  'payments',
-].join('|');
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const apiTarget = env.VITE_API_PROXY_TARGET?.trim() || 'http://localhost:3000';
@@ -36,7 +16,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: false,
       proxy: {
-        [`^/(${API_ROUTE_PREFIXES})`]: {
+        '/api': {
           target: apiTarget,
           changeOrigin: true,
           secure: false,

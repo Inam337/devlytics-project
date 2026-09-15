@@ -1,16 +1,136 @@
-services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: ShopDB
-    ports:
-      - '5432:5432'
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+name: devlytics
 
-  
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: devlytics-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-devlytics}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-devlytics_local_pw}
+      POSTGRES_DB: ${DATABASE_NAME:-devlytics_db}
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8'
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      # Host 5433 keeps the stack clear of a local/other PostgreSQL on 5432.
+      - '${DATABASE_HOST_PORT:-5433}:5432'
+    volumes:
+      - devlytics_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER:-devlytics} -d ${DATABASE_NAME:-devlytics_db}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - devlytics
+
+  redis:
+    image: redis:7-alpine
+    container_name: devlytics-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_HOST_PORT:-6380}:6379'
+    volumes:
+      - devlytics_redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - devlytics
+
+  backend:
+    build:
+      context: ./backend/myapp
+      dockerfile: Dockerfile
+    container_name: devlytics-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_PREFIX: api/v1
+      APP_NAME: Devlytics
+      APP_URL: http://localhost:${BACKEND_HOST_PORT:-3000}
+      LOG_LEVEL: ${LOG_LEVEL:-log}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+
+      # Service names resolve on the compose network.
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-devlytics_db}
+      DATABASE_USER: ${DATABASE_USER:-devlytics}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-devlytics_local_pw}
+      DATABASE_SCHEMA: public
+      DATABASE_URL: postgresql://${DATABASE_USER:-devlytics}:${DATABASE_PASSWORD:-devlytics_local_pw}@postgres:5432/${DATABASE_NAME:-devlytics_db}?schema=public
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      REDIS_DB: 0
+      QUEUE_PREFIX: devlytics
+
+      JWT_SECRET: ${JWT_SECRET:-dev-only-access-secret-not-for-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-only-refresh-secret-not-for-production}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      PASSWORD_RESET_EXPIRES_MINUTES: 30
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+
+      THROTTLE_TTL_SECONDS: 60
+      THROTTLE_LIMIT: 120
+
+      GITHUB_API_URL: https://api.github.com
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-dev-github-webhook-secret}
+      GITLAB_API_URL: https://gitlab.com/api/v4
+      GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID:-}
+      GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:-}
+      GITLAB_WEBHOOK_SECRET: ${GITLAB_WEBHOOK_SECRET:-dev-gitlab-webhook-secret}
+
+      AI_DEFAULT_PROVIDER: OLLAMA
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1}
+      AI_SANITIZE_CONTEXT: 'true'
+
+      SYNC_HISTORY_MONTHS: 12
+      SYNC_RECONCILE_INTERVAL_MINUTES: 5
+      GOAL_AT_RISK_DAYS: 14
+      INACTIVITY_SUSPEND_DAYS: 90
+    ports:
+      - '${BACKEND_HOST_PORT:-3000}:3000'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://127.0.0.1:3000/api/v1/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - devlytics
 
 volumes:
-  pgdata:
+  devlytics_pgdata:
+  devlytics_redisdata:
+
+networks:
+  devlytics:
+    driver: bridge
