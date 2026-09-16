@@ -1,42 +1,42 @@
-# Zentro API (NestJS)
+# Devlytics API (NestJS)
 
-eCommerce backend for the Zentro project.
+Engineering intelligence backend for Devlytics — organizations, teams, Git integration,
+engineering metrics, code quality, scoring, rankings, AI analysis and improvement goals.
 
-## Quick start (Phase 0)
+## Quick start
 
 ```bash
 cd backend/myapp
-pnpm install
-# Optional: copy .env.example → .env
+npm install
+# Copy .env.example → .env and fill in real values
 
-pnpm run start:dev
+npm run prisma:generate
+npm run prisma:migrate
+npm run start:dev
 ```
 
 | URL | Purpose |
 |-----|---------|
-| http://localhost:3000/ | Health / hello |
-| http://localhost:3000/reference | Scalar API docs |
-| http://localhost:3000/swagger | Swagger UI |
+| http://localhost:3000/api/v1 | API base (see `API_PREFIX` in `.env`) |
+| http://localhost:3000/api/v1/docs | Swagger UI |
+| http://localhost:3000/api/v1/reference | Scalar API reference |
+| http://localhost:3000/api/v1/openapi.json | Raw OpenAPI document |
 
 **CORS:** Enabled for `http://localhost:5173` (Vite) by default. Override with `CORS_ORIGINS` (comma-separated) in `.env`.
 
-**Database:** PostgreSQL `ShopDB` on `localhost:5432` (see `.env.example`).
+**Database:** PostgreSQL `devlytics_db` (see `.env.example` for host/port/credentials).
 
-**Demo data:**
+**Seed data:**
 
 ```bash
-pnpm run seed:demo
-pnpm run seed:demo:fresh   # reset and re-seed
+npm run db:seed
 ```
-
-See [docs/data.md](./docs/data.md).
 
 ## Docs
 
-- [**Full project context**](../docs/project.md)
-- [API reference](./docs/api-reference.md)
-- [Architecture](./docs/backend-architecture.md)
-- [Mock data](./docs/data.md)
+- [**Full project context**](../../docs/devlytics.md)
+- [**API endpoint reference (locked, current)**](../../docs/API_ENDPOINTS.md)
+- [Backend API requirements spec (original plan)](../../docs/Devlytics_Final_Backend_PostgreSQL_API_Requirements.md)
 - [Frontend project context](../../frontend/docs/project.md)
 - [Frontend dev setup](../../frontend/docs/dev-setup.md)
 
@@ -44,39 +44,12 @@ See [docs/data.md](./docs/data.md).
 
 | Command | Description |
 |---------|-------------|
-| `pnpm run start:dev` | Watch mode |
-| `pnpm run build` | Compile |
-| `pnpm run seed:demo` | Load mock shop data |
-| `pnpm run seed:demo:fresh` | Wipe demo commerce data and re-seed |
-
----
-
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-## NestJS starter (reference)
-
-### Project setup
-
-```bash
-$ npm install
-```
-
-### Compile and run
-
-```bash
-$ npm run start:dev
-```
-
-### Tests
-
-```bash
-$ npm run test
-$ npm run test:e2e
-$ npm run test:cov
-```
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+| `npm run start:dev` | Watch mode |
+| `npm run build` | Compile |
+| `npm run prisma:generate` | Generate Prisma client |
+| `npm run prisma:migrate` | Run dev migrations |
+| `npm run prisma:deploy` | Apply migrations (prod) |
+| `npm run db:seed` | Seed the database |
+| `npm run test` | Unit tests |
+| `npm run test:e2e` | E2E tests |
+| `npm run test:cov` | Coverage report |

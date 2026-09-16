@@ -1,6 +1,10 @@
 # Devlytics — Final Backend Development, API & PostgreSQL Requirements
 
-**Status:** Final Development Baseline  
+**Status:** Final Development Baseline — locked as the original planning spec.
+For the actual, implementation-verified endpoint list, see
+[`API_ENDPOINTS.md`](./API_ENDPOINTS.md) (§7 below reflects the original plan;
+the backend has since grown beyond it — Improvement Engine experiments, Git
+identity resolution, sync jobs, and more).  
 **Backend:** NestJS + TypeScript  
 **Database:** PostgreSQL  
 **ORM:** Prisma  
@@ -510,6 +514,12 @@ Other tables follow the same conventions: UUID PKs, explicit FKs, organization s
 ---
 
 ## 7. REST API Structure
+
+> **Superseded by [`API_ENDPOINTS.md`](./API_ENDPOINTS.md).** The section
+> below is the original plan and is kept for historical context; it does not
+> list routes added later (Improvement Engine experiments, Git identity
+> endpoints, sync jobs, roles/permissions reads, department CRUD,
+> achievements, audit logs, health). Use `API_ENDPOINTS.md` for integration.
 
 Base URL:
 
