@@ -108,6 +108,14 @@ services:
       SYNC_RECONCILE_INTERVAL_MINUTES: 5
       GOAL_AT_RISK_DAYS: 14
       INACTIVITY_SUSPEND_DAYS: 90
+
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Devlytics <no-reply@devlytics.local>}
+      SMTP_CONNECTION_TIMEOUT_MS: 10000
     ports:
       - '${BACKEND_HOST_PORT:-3000}:3000'
     extra_hosts:

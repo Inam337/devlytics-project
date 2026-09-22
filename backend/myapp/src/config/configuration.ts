@@ -98,6 +98,17 @@ export const configuration = () => ({
     goalAtRiskDays: toInt(process.env.GOAL_AT_RISK_DAYS, 14),
     inactivitySuspendDays: toInt(process.env.INACTIVITY_SUSPEND_DAYS, 90),
   },
+  mail: {
+    // Empty host means SMTP is unconfigured — MailService logs a startup
+    // warning and skips sends instead of crashing (WOR-13).
+    host: process.env.SMTP_HOST ?? '',
+    port: toInt(process.env.SMTP_PORT, 587),
+    secure: toBool(process.env.SMTP_SECURE, false),
+    user: process.env.SMTP_USER ?? '',
+    password: process.env.SMTP_PASSWORD ?? '',
+    from: process.env.SMTP_FROM ?? 'Devlytics <no-reply@devlytics.local>',
+    connectionTimeoutMs: toInt(process.env.SMTP_CONNECTION_TIMEOUT_MS, 10_000),
+  },
 });
 
 export type AppConfig = ReturnType<typeof configuration>;
