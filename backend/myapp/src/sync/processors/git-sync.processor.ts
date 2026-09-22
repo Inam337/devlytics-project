@@ -80,13 +80,18 @@ export class GitSyncProcessor extends WorkerHost {
 
       // One recompute per org per day even if several repositories sync
       // concurrently — the deterministic jobId makes re-adding a no-op.
+      // BullMQ rejects a custom jobId containing ':' (reserved as its own
+      // Redis key separator), so this must stay dash-separated — and match
+      // SchedulerService#closePeriod's DAILY jobId exactly, so a repo sync
+      // and the WOR-12 period-close trigger dedupe against each other
+      // instead of computing the same day's ranking twice.
       const today = new Date().toISOString().slice(0, 10);
       await safeEnqueue(
         this.rankingQueue,
         'recompute',
         { organizationId, period: 'DAILY', requestedBy },
         this.logger,
-        { jobId: `ranking-calc:${organizationId}:DAILY:${today}` },
+        { jobId: `ranking-calc-${organizationId}-DAILY-${today}` },
       );
 
       await this.sync.markCompleted(syncJobId, result.total);

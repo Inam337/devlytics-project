@@ -82,7 +82,7 @@ describe('GitSyncProcessor', () => {
       { organizationId: 'org-1', period: 'DAILY', requestedBy: 'user-1' },
       expect.objectContaining({
         jobId: expect.stringMatching(
-          /^ranking-calc:org-1:DAILY:\d{4}-\d{2}-\d{2}$/,
+          /^ranking-calc-org-1-DAILY-\d{4}-\d{2}-\d{2}$/,
         ),
       }),
     );

@@ -13,5 +13,6 @@ import { ReportsService } from './reports.service';
   ],
   controllers: [ReportsController],
   providers: [ReportsService, ReportGenerationProcessor],
+  exports: [ReportsService],
 })
 export class ReportsModule {}
