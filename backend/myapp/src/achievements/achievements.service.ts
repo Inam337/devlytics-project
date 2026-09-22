@@ -6,7 +6,11 @@ import { NotificationEvent } from '../notifications/notification-events';
 import { NotificationsService } from '../notifications/notifications.service';
 
 /** Maps an achievement's metric key to how it is measured for one developer. */
-type Measurer = (prisma: PrismaService, organizationId: string, userId: string) => Promise<number>;
+type Measurer = (
+  prisma: PrismaService,
+  organizationId: string,
+  userId: string,
+) => Promise<number>;
 
 const MEASURERS: Record<string, Measurer> = {
   commits: async (prisma, organizationId, userId) => {
@@ -65,10 +69,16 @@ const MEASURERS: Record<string, Measurer> = {
     });
     if (repoIds.length === 0) return 0;
     const snapshots = await prisma.codeQualitySnapshot.findMany({
-      where: { organizationId, repositoryId: { in: repoIds.map((r) => r.repositoryId) } },
+      where: {
+        organizationId,
+        repositoryId: { in: repoIds.map((r) => r.repositoryId) },
+      },
       orderBy: { snapshotDate: 'desc' },
     });
-    const best = Math.max(0, ...snapshots.map((s) => NumberUtil.toNumber(s.coveragePercent)));
+    const best = Math.max(
+      0,
+      ...snapshots.map((s) => NumberUtil.toNumber(s.coveragePercent)),
+    );
     return best;
   },
   goals_completed: async (prisma, organizationId, userId) => {
@@ -92,11 +102,15 @@ export class AchievementsService {
   ) {}
 
   async findForUser(organizationId: string, userId: string) {
-    const catalog = await this.prisma.achievement.findMany({ orderBy: { category: 'asc' } });
+    const catalog = await this.prisma.achievement.findMany({
+      orderBy: { category: 'asc' },
+    });
     const existing = await this.prisma.userAchievement.findMany({
       where: { organizationId, userId },
     });
-    const byAchievement = new Map(existing.map((row) => [row.achievementId, row]));
+    const byAchievement = new Map(
+      existing.map((row) => [row.achievementId, row]),
+    );
 
     return catalog.map((achievement) => {
       const record = byAchievement.get(achievement.id);
@@ -105,7 +119,9 @@ export class AchievementsService {
         status: record?.status ?? 'LOCKED',
         currentValue: record ? NumberUtil.toNumber(record.currentValue) : 0,
         targetValue: NumberUtil.toNumber(achievement.targetValue),
-        progressPercent: record ? NumberUtil.toNumber(record.progressPercent) : 0,
+        progressPercent: record
+          ? NumberUtil.toNumber(record.progressPercent)
+          : 0,
         evidence: record?.evidence ?? null,
         earnedAt: record?.earnedAt ?? null,
       };
@@ -113,7 +129,10 @@ export class AchievementsService {
   }
 
   /** Re-evaluates every badge for one developer; called after scores/goals change. */
-  async evaluateForUser(organizationId: string, userId: string): Promise<number> {
+  async evaluateForUser(
+    organizationId: string,
+    userId: string,
+  ): Promise<number> {
     const catalog = await this.prisma.achievement.findMany();
     let earned = 0;
 
@@ -127,17 +146,29 @@ export class AchievementsService {
       const isEarned = currentValue >= target;
 
       const existing = await this.prisma.userAchievement.findUnique({
-        where: { userId_achievementId: { userId, achievementId: achievement.id } },
+        where: {
+          userId_achievementId: { userId, achievementId: achievement.id },
+        },
       });
       const wasEarned = existing?.status === 'EARNED';
 
       const record = await this.prisma.userAchievement.upsert({
-        where: { userId_achievementId: { userId, achievementId: achievement.id } },
+        where: {
+          userId_achievementId: { userId, achievementId: achievement.id },
+        },
         update: {
           currentValue: new Prisma.Decimal(currentValue),
           progressPercent: new Prisma.Decimal(progressPercent),
-          status: isEarned ? 'EARNED' : currentValue > 0 ? 'IN_PROGRESS' : 'LOCKED',
-          evidence: describeEvidence(achievement.metricKey, currentValue, target),
+          status: isEarned
+            ? 'EARNED'
+            : currentValue > 0
+              ? 'IN_PROGRESS'
+              : 'LOCKED',
+          evidence: describeEvidence(
+            achievement.metricKey,
+            currentValue,
+            target,
+          ),
           earnedAt: isEarned ? (existing?.earnedAt ?? new Date()) : null,
         },
         create: {
@@ -147,8 +178,16 @@ export class AchievementsService {
           currentValue: new Prisma.Decimal(currentValue),
           targetValue: achievement.targetValue,
           progressPercent: new Prisma.Decimal(progressPercent),
-          status: isEarned ? AchievementStatus.EARNED : currentValue > 0 ? AchievementStatus.IN_PROGRESS : AchievementStatus.LOCKED,
-          evidence: describeEvidence(achievement.metricKey, currentValue, target),
+          status: isEarned
+            ? AchievementStatus.EARNED
+            : currentValue > 0
+              ? AchievementStatus.IN_PROGRESS
+              : AchievementStatus.LOCKED,
+          evidence: describeEvidence(
+            achievement.metricKey,
+            currentValue,
+            target,
+          ),
           earnedAt: isEarned ? new Date() : null,
         },
       });
@@ -170,7 +209,11 @@ export class AchievementsService {
   }
 }
 
-function describeEvidence(metricKey: string, current: number, target: number): string {
+function describeEvidence(
+  metricKey: string,
+  current: number,
+  target: number,
+): string {
   switch (metricKey) {
     case 'quality_score':
     case 'coverage_percent':

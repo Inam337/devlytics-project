@@ -1,8 +1,15 @@
-import { DEFAULT_SCORING_WEIGHTS, REQUIRED_WEIGHT_TOTAL, SCORE_CATEGORIES } from './scoring.constants';
+import {
+  DEFAULT_SCORING_WEIGHTS,
+  REQUIRED_WEIGHT_TOTAL,
+  SCORE_CATEGORIES,
+} from './scoring.constants';
 
 describe('scoring.constants', () => {
   it('the default weight configuration totals exactly 100%', () => {
-    const total = Object.values(DEFAULT_SCORING_WEIGHTS).reduce((sum, weight) => sum + weight, 0);
+    const total = Object.values(DEFAULT_SCORING_WEIGHTS).reduce(
+      (sum, weight) => sum + weight,
+      0,
+    );
     expect(total).toBe(REQUIRED_WEIGHT_TOTAL);
   });
 

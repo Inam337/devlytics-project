@@ -21,7 +21,10 @@ describe('ScoringController', () => {
     service.setWeights.mockReturnValue('created');
     const dto = { categories: [] } as unknown as SetScoringWeightsDto;
 
-    const result = controller.createWeights('org-1', dto, 'user-1', { ipAddress: '127.0.0.1', userAgent: 'jest' });
+    const result = controller.createWeights('org-1', dto, 'user-1', {
+      ipAddress: '127.0.0.1',
+      userAgent: 'jest',
+    });
 
     expect(result).toBe('created');
     expect(service.setWeights).toHaveBeenCalledWith('org-1', dto, {
@@ -35,7 +38,10 @@ describe('ScoringController', () => {
     service.setWeights.mockReturnValue('updated');
     const dto = { categories: [] } as unknown as SetScoringWeightsDto;
 
-    const result = controller.setWeights('org-1', dto, 'user-1', { ipAddress: '10.0.0.1', userAgent: 'jest' });
+    const result = controller.setWeights('org-1', dto, 'user-1', {
+      ipAddress: '10.0.0.1',
+      userAgent: 'jest',
+    });
 
     expect(result).toBe('updated');
     expect(service.setWeights).toHaveBeenCalledWith('org-1', dto, {

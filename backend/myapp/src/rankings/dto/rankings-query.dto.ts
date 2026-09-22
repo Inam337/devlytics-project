@@ -9,7 +9,9 @@ export class RankingsQueryDto extends PaginationQueryDto {
   @IsEnum(RankingPeriod)
   period?: RankingPeriod;
 
-  @ApiPropertyOptional({ description: 'Any date within the target period, defaults to today' })
+  @ApiPropertyOptional({
+    description: 'Any date within the target period, defaults to today',
+  })
   @IsOptional()
   @IsISO8601()
   date?: string;

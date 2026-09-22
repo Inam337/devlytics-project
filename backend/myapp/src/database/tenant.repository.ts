@@ -1,4 +1,7 @@
-import { PaginatedResult, PaginationQueryDto } from '../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+} from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from './prisma.service';
 
@@ -61,8 +64,13 @@ export abstract class TenantRepository<TModel> {
     return record;
   }
 
-  async exists(organizationId: string, where: Record<string, unknown>): Promise<boolean> {
-    const count = await this.delegate.count({ where: this.scope(organizationId, where) });
+  async exists(
+    organizationId: string,
+    where: Record<string, unknown>,
+  ): Promise<boolean> {
+    const count = await this.delegate.count({
+      where: this.scope(organizationId, where),
+    });
     return count > 0;
   }
 
@@ -92,8 +100,13 @@ export abstract class TenantRepository<TModel> {
     return PaginatedResult.from(items, total, query);
   }
 
-  async createForTenant(organizationId: string, data: Record<string, unknown>): Promise<TModel> {
-    return (await this.delegate.create({ data: { ...data, organizationId } })) as TModel;
+  async createForTenant(
+    organizationId: string,
+    data: Record<string, unknown>,
+  ): Promise<TModel> {
+    return (await this.delegate.create({
+      data: { ...data, organizationId },
+    })) as TModel;
   }
 
   /** Verifies tenant ownership before applying the update. */

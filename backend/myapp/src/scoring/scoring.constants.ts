@@ -15,7 +15,9 @@ export const DEFAULT_SCORING_WEIGHTS: Record<ScoreCategory, number> = {
   PROJECT_IMPACT: 5,
 };
 
-export const SCORE_CATEGORIES = Object.keys(DEFAULT_SCORING_WEIGHTS) as ScoreCategory[];
+export const SCORE_CATEGORIES = Object.keys(
+  DEFAULT_SCORING_WEIGHTS,
+) as ScoreCategory[];
 
 export const REQUIRED_WEIGHT_TOTAL = 100;
 

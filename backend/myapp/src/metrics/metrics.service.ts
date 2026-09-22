@@ -25,41 +25,77 @@ export class MetricsService {
       where: {
         organizationId,
         status: 'ACTIVE',
-        ...(query.teamId ? { user: { teamMemberships: { some: { teamId: query.teamId } } } } : {}),
+        ...(query.teamId
+          ? { user: { teamMemberships: { some: { teamId: query.teamId } } } }
+          : {}),
       },
       select: {
-        user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
       },
       take: query.limit,
       skip: query.skip,
     });
 
     const userIds = memberships.map((membership) => membership.user.id);
-    const totals = await this.aggregation.developerTotalsBulk(organizationId, userIds, start, end);
+    const totals = await this.aggregation.developerTotalsBulk(
+      organizationId,
+      userIds,
+      start,
+      end,
+    );
 
     return memberships.map((membership) => ({
       user: membership.user,
-      period: { from: PeriodUtil.toDateOnly(start), to: PeriodUtil.toDateOnly(end) },
+      period: {
+        from: PeriodUtil.toDateOnly(start),
+        to: PeriodUtil.toDateOnly(end),
+      },
       metrics: totals.get(membership.user.id) ?? emptyTotals(),
     }));
   }
 
-  async developerOne(organizationId: string, userId: string, query: MetricsQueryDto) {
+  async developerOne(
+    organizationId: string,
+    userId: string,
+    query: MetricsQueryDto,
+  ) {
     const membership = await this.prisma.organizationUser.findUnique({
       where: { organizationId_userId: { organizationId, userId } },
       select: {
-        user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
       },
     });
     if (!membership) throw AppException.notFound('Developer', userId);
 
     const { start, end } = PeriodUtil.range(query.from, query.to);
-    const metrics = await this.aggregation.developerTotals(organizationId, userId, start, end);
+    const metrics = await this.aggregation.developerTotals(
+      organizationId,
+      userId,
+      start,
+      end,
+    );
     const daily = await this.dailySeries(organizationId, userId, start, end);
 
     return {
       user: membership.user,
-      period: { from: PeriodUtil.toDateOnly(start), to: PeriodUtil.toDateOnly(end) },
+      period: {
+        from: PeriodUtil.toDateOnly(start),
+        to: PeriodUtil.toDateOnly(end),
+      },
       metrics,
       trend: daily,
     };
@@ -81,13 +117,25 @@ export class MetricsService {
     return Promise.all(
       teams.map(async (team) => ({
         team,
-        period: { from: PeriodUtil.toDateOnly(start), to: PeriodUtil.toDateOnly(end) },
-        metrics: await this.aggregation.teamTotals(organizationId, team.id, start, end),
+        period: {
+          from: PeriodUtil.toDateOnly(start),
+          to: PeriodUtil.toDateOnly(end),
+        },
+        metrics: await this.aggregation.teamTotals(
+          organizationId,
+          team.id,
+          start,
+          end,
+        ),
       })),
     );
   }
 
-  async teamOne(organizationId: string, teamId: string, query: MetricsQueryDto) {
+  async teamOne(
+    organizationId: string,
+    teamId: string,
+    query: MetricsQueryDto,
+  ) {
     const team = await this.prisma.team.findFirst({
       where: { id: teamId, organizationId },
       select: { id: true, name: true, code: true, teamColor: true },
@@ -95,12 +143,28 @@ export class MetricsService {
     if (!team) throw AppException.notFound('Team', teamId);
 
     const { start, end } = PeriodUtil.range(query.from, query.to);
-    const metrics = await this.aggregation.teamTotals(organizationId, teamId, start, end);
+    const metrics = await this.aggregation.teamTotals(
+      organizationId,
+      teamId,
+      start,
+      end,
+    );
 
-    return { team, period: { from: PeriodUtil.toDateOnly(start), to: PeriodUtil.toDateOnly(end) }, metrics };
+    return {
+      team,
+      period: {
+        from: PeriodUtil.toDateOnly(start),
+        to: PeriodUtil.toDateOnly(end),
+      },
+      metrics,
+    };
   }
 
-  async repositoryOne(organizationId: string, repositoryId: string, query: MetricsQueryDto) {
+  async repositoryOne(
+    organizationId: string,
+    repositoryId: string,
+    query: MetricsQueryDto,
+  ) {
     const repository = await this.prisma.repository.findFirst({
       where: { id: repositoryId, organizationId },
       select: { id: true, name: true, fullName: true },
@@ -110,10 +174,19 @@ export class MetricsService {
     const { start, end } = PeriodUtil.range(query.from, query.to);
     const [commits, prs, reviews, issues] = await this.prisma.$transaction([
       this.prisma.commit.count({
-        where: { organizationId, repositoryId, isBot: false, committedAt: { gte: start, lte: end } },
+        where: {
+          organizationId,
+          repositoryId,
+          isBot: false,
+          committedAt: { gte: start, lte: end },
+        },
       }),
       this.prisma.pullRequest.count({
-        where: { organizationId, repositoryId, createdAtExternal: { gte: start, lte: end } },
+        where: {
+          organizationId,
+          repositoryId,
+          createdAtExternal: { gte: start, lte: end },
+        },
       }),
       this.prisma.pullRequestReview.count({
         where: {
@@ -123,7 +196,11 @@ export class MetricsService {
         },
       }),
       this.prisma.issue.count({
-        where: { organizationId, repositoryId, createdAtExternal: { gte: start, lte: end } },
+        where: {
+          organizationId,
+          repositoryId,
+          createdAtExternal: { gte: start, lte: end },
+        },
       }),
     ]);
 
@@ -131,7 +208,11 @@ export class MetricsService {
     // query kinds collapses Prisma's per-call return-type inference.
     const pipelineSummary = await this.prisma.ciPipeline.groupBy({
       by: ['status'],
-      where: { organizationId, repositoryId, createdAt: { gte: start, lte: end } },
+      where: {
+        organizationId,
+        repositoryId,
+        createdAt: { gte: start, lte: end },
+      },
       orderBy: { status: 'asc' },
       _count: true,
     });
@@ -139,22 +220,33 @@ export class MetricsService {
     const finished = pipelineSummary
       .filter((row) => row.status === 'SUCCESS' || row.status === 'FAILED')
       .reduce((sum, row) => sum + (row._count ?? 0), 0);
-    const succeeded = pipelineSummary.find((row) => row.status === 'SUCCESS')?._count ?? 0;
+    const succeeded =
+      pipelineSummary.find((row) => row.status === 'SUCCESS')?._count ?? 0;
 
     return {
       repository,
-      period: { from: PeriodUtil.toDateOnly(start), to: PeriodUtil.toDateOnly(end) },
+      period: {
+        from: PeriodUtil.toDateOnly(start),
+        to: PeriodUtil.toDateOnly(end),
+      },
       metrics: {
         commits,
         pullRequests: prs,
         reviews,
         issues,
-        ciSuccessRate: finished ? NumberUtil.percent(succeeded, finished) : null,
+        ciSuccessRate: finished
+          ? NumberUtil.percent(succeeded, finished)
+          : null,
       },
     };
   }
 
-  private async dailySeries(organizationId: string, userId: string, start: Date, end: Date) {
+  private async dailySeries(
+    organizationId: string,
+    userId: string,
+    start: Date,
+    end: Date,
+  ) {
     const rows = await this.prisma.developerDailyMetric.findMany({
       where: { organizationId, userId, metricDate: { gte: start, lte: end } },
       orderBy: { metricDate: 'asc' },
@@ -167,7 +259,9 @@ export class MetricsService {
         locRemoved: true,
       },
     });
-    const byDate = new Map(rows.map((row) => [PeriodUtil.toDateOnly(row.metricDate), row]));
+    const byDate = new Map(
+      rows.map((row) => [PeriodUtil.toDateOnly(row.metricDate), row]),
+    );
 
     return PeriodUtil.eachDay(start, end).map((day) => {
       const key = PeriodUtil.toDateOnly(day);

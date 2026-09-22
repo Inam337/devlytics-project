@@ -35,7 +35,10 @@ export class DepartmentsController {
   @Get()
   @RequirePermissions(Permission.DEPARTMENT_READ)
   @ApiOperation({ summary: 'List departments' })
-  findAll(@OrganizationId() organizationId: string, @Query() query: PaginationQueryDto) {
+  findAll(
+    @OrganizationId() organizationId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
     return this.departmentsService.findAll(organizationId, query);
   }
 
@@ -49,7 +52,10 @@ export class DepartmentsController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.departmentsService.create(organizationId, dto, { actorId: userId, ...client });
+    return this.departmentsService.create(organizationId, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get(':id')
@@ -73,7 +79,10 @@ export class DepartmentsController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.departmentsService.update(organizationId, id, dto, { actorId: userId, ...client });
+    return this.departmentsService.update(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Delete(':id')
@@ -87,6 +96,9 @@ export class DepartmentsController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.departmentsService.remove(organizationId, id, { actorId: userId, ...client });
+    return this.departmentsService.remove(organizationId, id, {
+      actorId: userId,
+      ...client,
+    });
   }
 }

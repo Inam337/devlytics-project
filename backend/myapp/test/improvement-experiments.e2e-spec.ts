@@ -54,7 +54,8 @@ describe('Improvement Engine — Experiments (e2e)', () => {
         title: 'Reduce PR Review Time',
         problemStatement: 'Average PR review time increased significantly.',
         hypothesis: 'Reducing PR size will reduce review cycle time.',
-        intervention: 'Encourage smaller PRs and improve reviewer distribution.',
+        intervention:
+          'Encourage smaller PRs and improve reviewer distribution.',
         startDate: '2026-09-01T00:00:00.000Z',
       })
       .expect(201);
@@ -137,7 +138,9 @@ describe('Improvement Engine — Experiments (e2e)', () => {
       .set('Authorization', auth())
       .expect(200);
 
-    const metric = response.body.data.metrics.find((m: { metricId: string }) => m.metricId === metricId);
+    const metric = response.body.data.metrics.find(
+      (m: { metricId: string }) => m.metricId === metricId,
+    );
     expect(metric.baseline).toBe(8.4);
     expect(metric.current).toBe(8.4);
     expect(metric.percentComplete).toBe(0); // no movement yet — never (current/target)*100 = 168%
@@ -149,7 +152,9 @@ describe('Improvement Engine — Experiments (e2e)', () => {
       .set('Authorization', auth())
       .expect(200);
     expect(response.body.data.status).toBe('COMPLETED');
-    expect(response.body.data.resultSummary.review_cycle_time.insufficientData).toBe(true);
+    expect(
+      response.body.data.resultSummary.review_cycle_time.insufficientData,
+    ).toBe(true);
   });
 
   it('verifies the experiment and produces an honest INSUFFICIENT_DATA proof rather than a fabricated result', async () => {
@@ -184,7 +189,9 @@ describe('Improvement Engine — Experiments (e2e)', () => {
       .get('/api/v1/improvements/history')
       .set('Authorization', auth())
       .expect(200);
-    expect(response.body.data.some((row: { id: string }) => row.id === experimentId)).toBe(true);
+    expect(
+      response.body.data.some((row: { id: string }) => row.id === experimentId),
+    ).toBe(true);
   });
 
   it('surfaces the verified experiment in the dashboard trend', async () => {
@@ -203,7 +210,7 @@ describe('Improvement Engine — Experiments (e2e)', () => {
     expect(response.body.code).toBe('INVALID_EXPERIMENT_STATE');
   });
 
-  it('never lets one organization read another organization\'s experiment', async () => {
+  it("never lets one organization read another organization's experiment", async () => {
     const response = await request(server())
       .get(`/api/v1/improvements/experiments/${experimentId}`)
       .set('Authorization', auth(otherOrgToken))

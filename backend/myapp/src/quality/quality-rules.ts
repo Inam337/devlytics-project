@@ -1,4 +1,9 @@
-import { EffortLevel, ImpactLevel, IssueSeverity, QualityCategory } from '@prisma/client';
+import {
+  EffortLevel,
+  ImpactLevel,
+  IssueSeverity,
+  QualityCategory,
+} from '@prisma/client';
 
 /**
  * Deterministic static-analysis rule catalog.
@@ -64,12 +69,15 @@ const testCoverageProxy: Rule = (evidence) => {
 
 const ciReliability: Rule = (evidence) => {
   if (evidence.totalBuilds === 0) return null;
-  const failureRate = round((evidence.failedBuilds / evidence.totalBuilds) * 100);
+  const failureRate = round(
+    (evidence.failedBuilds / evidence.totalBuilds) * 100,
+  );
   if (failureRate <= 10) return null;
   return {
     ruleId: 'RULE_CI_FAILURE_RATE',
     category: 'RELIABILITY',
-    severity: failureRate > 40 ? 'CRITICAL' : failureRate > 20 ? 'MAJOR' : 'MINOR',
+    severity:
+      failureRate > 40 ? 'CRITICAL' : failureRate > 20 ? 'MAJOR' : 'MINOR',
     title: 'Elevated CI failure rate',
     observedFact: `${failureRate}% of ${evidence.totalBuilds} CI runs failed in the last ${evidence.windowDays} days (${evidence.failedBuilds} failures).`,
     effort: 'MEDIUM',
@@ -81,7 +89,9 @@ const ciReliability: Rule = (evidence) => {
 
 const largePullRequests: Rule = (evidence) => {
   if (evidence.totalPullRequests === 0) return null;
-  const ratio = round((evidence.largePullRequests / evidence.totalPullRequests) * 100);
+  const ratio = round(
+    (evidence.largePullRequests / evidence.totalPullRequests) * 100,
+  );
   if (ratio < 25) return null;
   return {
     ruleId: 'RULE_LARGE_PULL_REQUESTS',
@@ -114,11 +124,15 @@ const documentationCoverage: Rule = (evidence) => {
 };
 
 const commitComplexityProxy: Rule = (evidence) => {
-  if (evidence.avgFilesPerCommit <= HIGH_COMPLEXITY_FILES_PER_COMMIT) return null;
+  if (evidence.avgFilesPerCommit <= HIGH_COMPLEXITY_FILES_PER_COMMIT)
+    return null;
   return {
     ruleId: 'RULE_HIGH_COMMIT_FILE_SPAN',
     category: 'COMPLEXITY',
-    severity: evidence.avgFilesPerCommit > HIGH_COMPLEXITY_FILES_PER_COMMIT * 2 ? 'MAJOR' : 'MINOR',
+    severity:
+      evidence.avgFilesPerCommit > HIGH_COMPLEXITY_FILES_PER_COMMIT * 2
+        ? 'MAJOR'
+        : 'MINOR',
     title: 'Commits touch a wide file span',
     observedFact: `Commits changed ${evidence.avgFilesPerCommit} files on average over the last ${evidence.windowDays} days, above the ${HIGH_COMPLEXITY_FILES_PER_COMMIT}-file reference.`,
     effort: 'MEDIUM',
@@ -137,7 +151,9 @@ export const QUALITY_RULES: Rule[] = [
 ];
 
 export function evaluateRules(evidence: RepositoryEvidence): QualityFinding[] {
-  return QUALITY_RULES.map((rule) => rule(evidence)).filter((f): f is QualityFinding => f !== null);
+  return QUALITY_RULES.map((rule) => rule(evidence)).filter(
+    (f): f is QualityFinding => f !== null,
+  );
 }
 
 function round(value: number): number {

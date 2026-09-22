@@ -45,7 +45,13 @@ export class RankingsService {
       range,
       previousRange,
     );
-    const teamCount = await this.closeSubject(organizationId, 'TEAM', period, range, previousRange);
+    const teamCount = await this.closeSubject(
+      organizationId,
+      'TEAM',
+      period,
+      range,
+      previousRange,
+    );
 
     return { developers: developerCount, teams: teamCount };
   }
@@ -80,11 +86,17 @@ export class RankingsService {
       },
     });
     const previousBySubject = new Map(
-      previousRanks.map((row) => [subjectType === 'DEVELOPER' ? row.userId : row.teamId, row.rank]),
+      previousRanks.map((row) => [
+        subjectType === 'DEVELOPER' ? row.userId : row.teamId,
+        row.rank,
+      ]),
     );
 
     const rows = scores.map((score, index) => {
-      const subjectId = subjectType === 'DEVELOPER' ? (score as { userId: string }).userId : (score as { teamId: string }).teamId;
+      const subjectId =
+        subjectType === 'DEVELOPER'
+          ? (score as { userId: string }).userId
+          : (score as { teamId: string }).teamId;
       const rank = index + 1;
       const previousRank = previousBySubject.get(subjectId) ?? null;
       return {
@@ -148,13 +160,18 @@ export class RankingsService {
     organizationId: string,
     rows: { subjectId: string; rank: number; rankDelta: number }[],
   ) {
-    const significant = rows.filter((row) => Math.abs(row.rankDelta) >= RANK_CHANGE_THRESHOLD);
+    const significant = rows.filter(
+      (row) => Math.abs(row.rankDelta) >= RANK_CHANGE_THRESHOLD,
+    );
     await this.notifications.notifyMany(
       significant.map((row) => ({
         organizationId,
         userId: row.subjectId,
         event: NotificationEvent.RANK_CHANGE,
-        title: row.rankDelta > 0 ? `You moved up to #${row.rank}` : `You moved to #${row.rank}`,
+        title:
+          row.rankDelta > 0
+            ? `You moved up to #${row.rank}`
+            : `You moved to #${row.rank}`,
         body:
           row.rankDelta > 0
             ? `You climbed ${row.rankDelta} places on the leaderboard.`
@@ -178,7 +195,10 @@ export class RankingsService {
     query: RankingsQueryDto,
   ) {
     const period = query.period ?? 'MONTHLY';
-    const range = PeriodUtil.resolve(period, query.date ? new Date(query.date) : new Date());
+    const range = PeriodUtil.resolve(
+      period,
+      query.date ? new Date(query.date) : new Date(),
+    );
 
     const rankings = await this.prisma.rankingHistory.findMany({
       where: {
@@ -189,7 +209,9 @@ export class RankingsService {
         ...(query.teamId && subjectType === 'DEVELOPER'
           ? { user: { teamMemberships: { some: { teamId: query.teamId } } } }
           : {}),
-        ...(query.departmentId ? { team: { departmentId: query.departmentId } } : {}),
+        ...(query.departmentId
+          ? { team: { departmentId: query.departmentId } }
+          : {}),
       },
       orderBy: { rank: 'asc' },
       take: query.limit,
@@ -203,11 +225,17 @@ export class RankingsService {
                   firstName: true,
                   lastName: true,
                   avatarUrl: true,
-                  teamMemberships: { select: { team: { select: { id: true, name: true } } } },
+                  teamMemberships: {
+                    select: { team: { select: { id: true, name: true } } },
+                  },
                 },
               },
             }
-          : { team: { select: { id: true, name: true, code: true, teamColor: true } } },
+          : {
+              team: {
+                select: { id: true, name: true, code: true, teamColor: true },
+              },
+            },
     });
 
     const scores =
@@ -217,7 +245,11 @@ export class RankingsService {
               organizationId,
               period,
               periodStart: range.start,
-              userId: { in: rankings.map((r) => r.userId).filter((id): id is string => Boolean(id)) },
+              userId: {
+                in: rankings
+                  .map((r) => r.userId)
+                  .filter((id): id is string => Boolean(id)),
+              },
             },
           })
         : await this.prisma.teamScore.findMany({
@@ -225,19 +257,21 @@ export class RankingsService {
               organizationId,
               period,
               periodStart: range.start,
-              teamId: { in: rankings.map((r) => r.teamId).filter((id): id is string => Boolean(id)) },
+              teamId: {
+                in: rankings
+                  .map((r) => r.teamId)
+                  .filter((id): id is string => Boolean(id)),
+              },
             },
           });
 
     const scoreBySubject = new Map<string, (typeof scores)[number]>(
-      scores.map(
-        (score): [string, (typeof scores)[number]] => [
-          subjectType === 'DEVELOPER'
-            ? (score as { userId: string }).userId
-            : (score as { teamId: string }).teamId,
-          score,
-        ],
-      ),
+      scores.map((score): [string, (typeof scores)[number]] => [
+        subjectType === 'DEVELOPER'
+          ? (score as { userId: string }).userId
+          : (score as { teamId: string }).teamId,
+        score,
+      ]),
     );
 
     return {
@@ -245,20 +279,34 @@ export class RankingsService {
       periodStart: PeriodUtil.toDateOnly(range.start),
       periodEnd: PeriodUtil.toDateOnly(range.end),
       entries: rankings.map((ranking) => {
-        const subjectId = subjectType === 'DEVELOPER' ? ranking.userId! : ranking.teamId!;
+        const subjectId =
+          subjectType === 'DEVELOPER' ? ranking.userId! : ranking.teamId!;
         const score = scoreBySubject.get(subjectId);
         return {
           rank: ranking.rank,
           previousRank: ranking.previousRank,
           rankDelta: ranking.rankDelta,
           score: NumberUtil.toNumber(ranking.score),
-          subject: subjectType === 'DEVELOPER' ? (ranking as { user?: unknown }).user : (ranking as { team?: unknown }).team,
+          subject:
+            subjectType === 'DEVELOPER'
+              ? (ranking as { user?: unknown }).user
+              : (ranking as { team?: unknown }).team,
           breakdown: score
             ? {
-                codeQuality: NumberUtil.toNumber((score as { codeQualityScore: Prisma.Decimal }).codeQualityScore),
-                delivery: NumberUtil.toNumber((score as { deliveryScore: Prisma.Decimal }).deliveryScore),
-                codeReview: NumberUtil.toNumber((score as { codeReviewScore: Prisma.Decimal }).codeReviewScore),
-                testing: NumberUtil.toNumber((score as { testingScore: Prisma.Decimal }).testingScore),
+                codeQuality: NumberUtil.toNumber(
+                  (score as { codeQualityScore: Prisma.Decimal })
+                    .codeQualityScore,
+                ),
+                delivery: NumberUtil.toNumber(
+                  (score as { deliveryScore: Prisma.Decimal }).deliveryScore,
+                ),
+                codeReview: NumberUtil.toNumber(
+                  (score as { codeReviewScore: Prisma.Decimal })
+                    .codeReviewScore,
+                ),
+                testing: NumberUtil.toNumber(
+                  (score as { testingScore: Prisma.Decimal }).testingScore,
+                ),
               }
             : null,
         };

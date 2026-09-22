@@ -1,5 +1,8 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { ALL_PERMISSIONS, permissionParts } from '../common/constants/permissions';
+import {
+  ALL_PERMISSIONS,
+  permissionParts,
+} from '../common/constants/permissions';
 import { PrismaService } from './prisma.service';
 
 /**
@@ -35,7 +38,12 @@ export class ReferenceDataService implements OnApplicationBootstrap {
         return this.prisma.permission.upsert({
           where: { key },
           update: { resource, action },
-          create: { key, resource, action, description: `${action} on ${resource}` },
+          create: {
+            key,
+            resource,
+            action,
+            description: `${action} on ${resource}`,
+          },
         });
       }),
     );

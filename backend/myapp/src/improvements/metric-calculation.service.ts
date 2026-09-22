@@ -22,11 +22,20 @@ const MIN_SAMPLE_SIZE = 3;
 /** Hard cap on rows pulled into JS for duration/size averages — bounds worst case on wide date ranges. */
 const ROW_LIMIT = 5000;
 
-const insufficient: MetricCalculationResult = { value: null, sampleSize: 0, insufficientData: true };
+const insufficient: MetricCalculationResult = {
+  value: null,
+  sampleSize: 0,
+  insufficientData: true,
+};
 
 function finish(values: number[]): MetricCalculationResult {
-  if (values.length < MIN_SAMPLE_SIZE) return { value: null, sampleSize: values.length, insufficientData: true };
-  return { value: NumberUtil.round(NumberUtil.average(values), 4), sampleSize: values.length, insufficientData: false };
+  if (values.length < MIN_SAMPLE_SIZE)
+    return { value: null, sampleSize: values.length, insufficientData: true };
+  return {
+    value: NumberUtil.round(NumberUtil.average(values), 4),
+    sampleSize: values.length,
+    insufficientData: false,
+  };
 }
 
 function hoursBetween(a: Date, b: Date): number {
@@ -54,32 +63,91 @@ export class MetricCalculationService {
     start: Date,
     end: Date,
   ): Promise<MetricCalculationResult> {
-    const repositoryIds = await this.resolveRepositoryIds(organizationId, scope);
+    const repositoryIds = await this.resolveRepositoryIds(
+      organizationId,
+      scope,
+    );
     if (repositoryIds && repositoryIds.length === 0) return insufficient;
 
     switch (metricKey) {
       case 'review_cycle_time':
-        return this.reviewCycleTime(organizationId, scope, repositoryIds, start, end);
+        return this.reviewCycleTime(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+        );
       case 'pr_size':
-        return this.prAggregate(organizationId, scope, repositoryIds, start, end, (pr) => pr.additions + pr.deletions);
+        return this.prAggregate(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+          (pr) => pr.additions + pr.deletions,
+        );
       case 'files_changed_per_pr':
-        return this.prAggregate(organizationId, scope, repositoryIds, start, end, (pr) => pr.changedFiles);
+        return this.prAggregate(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+          (pr) => pr.changedFiles,
+        );
       case 'reviewer_load':
-        return this.reviewerLoad(organizationId, scope, repositoryIds, start, end);
+        return this.reviewerLoad(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+        );
       case 'ci_wait_time':
         return this.ciWaitTime(organizationId, repositoryIds, start, end);
       case 'deployment_frequency':
-        return this.deploymentFrequency(organizationId, repositoryIds, start, end);
+        return this.deploymentFrequency(
+          organizationId,
+          repositoryIds,
+          start,
+          end,
+        );
       case 'deployment_failure_rate':
-        return this.deploymentFailureRate(organizationId, repositoryIds, start, end);
+        return this.deploymentFailureRate(
+          organizationId,
+          repositoryIds,
+          start,
+          end,
+        );
       case 'lead_time':
         return this.leadTime(organizationId, scope, repositoryIds, start, end);
       case 'commit_frequency':
-        return this.commitFrequency(organizationId, scope, repositoryIds, start, end);
+        return this.commitFrequency(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+        );
       case 'code_quality_score':
-        return this.snapshotAverage(organizationId, scope, repositoryIds, start, end, (s) => NumberUtil.toNumber(s.qualityScore));
+        return this.snapshotAverage(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+          (s) => NumberUtil.toNumber(s.qualityScore),
+        );
       case 'test_coverage':
-        return this.snapshotAverage(organizationId, scope, repositoryIds, start, end, (s) => NumberUtil.toNumber(s.coveragePercent));
+        return this.snapshotAverage(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+          (s) => NumberUtil.toNumber(s.coveragePercent),
+        );
       case 'bug_rate':
         return this.snapshotAverage(
           organizationId,
@@ -90,18 +158,40 @@ export class MetricCalculationService {
           (s) => (s.locTotal > 0 ? (s.bugs / s.locTotal) * 1000 : null),
         );
       case 'quality_issue_count':
-        return this.issueCount(organizationId, scope, repositoryIds, start, end);
+        return this.issueCount(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+        );
       case 'critical_issue_count':
-        return this.issueCount(organizationId, scope, repositoryIds, start, end, ['BLOCKER', 'CRITICAL']);
+        return this.issueCount(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+          ['BLOCKER', 'CRITICAL'],
+        );
       case 'build_success_rate':
-        return this.buildSuccessRate(organizationId, scope, repositoryIds, start, end);
+        return this.buildSuccessRate(
+          organizationId,
+          scope,
+          repositoryIds,
+          start,
+          end,
+        );
       default:
         return insufficient;
     }
   }
 
   /** repositoryId wins if given; otherwise team/project scope resolves to their owned repositories. Org-wide when none is given. */
-  async resolveRepositoryIds(organizationId: string, scope: MetricScope): Promise<string[] | undefined> {
+  async resolveRepositoryIds(
+    organizationId: string,
+    scope: MetricScope,
+  ): Promise<string[] | undefined> {
     if (scope.repositoryId) return [scope.repositoryId];
     if (scope.projectId) {
       const repos = await this.prisma.repository.findMany({
@@ -138,7 +228,11 @@ export class MetricCalculationService {
       select: { createdAtExternal: true, firstReviewAt: true },
       take: ROW_LIMIT,
     });
-    return finish(rows.map((r) => hoursBetween(r.createdAtExternal, r.firstReviewAt as Date)));
+    return finish(
+      rows.map((r) =>
+        hoursBetween(r.createdAtExternal, r.firstReviewAt as Date),
+      ),
+    );
   }
 
   private async prAggregate(
@@ -147,7 +241,11 @@ export class MetricCalculationService {
     repositoryIds: string[] | undefined,
     start: Date,
     end: Date,
-    pick: (pr: { additions: number; deletions: number; changedFiles: number }) => number,
+    pick: (pr: {
+      additions: number;
+      deletions: number;
+      changedFiles: number;
+    }) => number,
   ): Promise<MetricCalculationResult> {
     const rows = await this.prisma.pullRequest.findMany({
       where: {
@@ -175,7 +273,9 @@ export class MetricCalculationService {
         organizationId,
         submittedAt: { gte: start, lte: end },
         reviewerId: scope.userId ? scope.userId : { not: null },
-        ...(repositoryIds ? { pullRequest: { repositoryId: { in: repositoryIds } } } : {}),
+        ...(repositoryIds
+          ? { pullRequest: { repositoryId: { in: repositoryIds } } }
+          : {}),
       },
       _count: true,
     });
@@ -216,8 +316,15 @@ export class MetricCalculationService {
       },
     });
     if (count === 0) return insufficient;
-    const weeks = Math.max(1, (end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    return { value: NumberUtil.round(count / weeks, 4), sampleSize: count, insufficientData: false };
+    const weeks = Math.max(
+      1,
+      (end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000),
+    );
+    return {
+      value: NumberUtil.round(count / weeks, 4),
+      sampleSize: count,
+      insufficientData: false,
+    };
   }
 
   private async deploymentFailureRate(
@@ -235,8 +342,13 @@ export class MetricCalculationService {
       this.prisma.deployment.count({ where }),
       this.prisma.deployment.count({ where: { ...where, status: 'FAILED' } }),
     ]);
-    if (total < MIN_SAMPLE_SIZE) return { value: null, sampleSize: total, insufficientData: true };
-    return { value: NumberUtil.percent(failed, total), sampleSize: total, insufficientData: false };
+    if (total < MIN_SAMPLE_SIZE)
+      return { value: null, sampleSize: total, insufficientData: true };
+    return {
+      value: NumberUtil.percent(failed, total),
+      sampleSize: total,
+      insufficientData: false,
+    };
   }
 
   private async leadTime(
@@ -257,7 +369,9 @@ export class MetricCalculationService {
       select: { createdAtExternal: true, mergedAt: true },
       take: ROW_LIMIT,
     });
-    return finish(rows.map((r) => hoursBetween(r.createdAtExternal, r.mergedAt as Date)));
+    return finish(
+      rows.map((r) => hoursBetween(r.createdAtExternal, r.mergedAt as Date)),
+    );
   }
 
   private async commitFrequency(
@@ -277,8 +391,15 @@ export class MetricCalculationService {
       },
     });
     if (count === 0) return insufficient;
-    const weeks = Math.max(1, (end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
-    return { value: NumberUtil.round(count / weeks, 4), sampleSize: count, insufficientData: false };
+    const weeks = Math.max(
+      1,
+      (end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000),
+    );
+    return {
+      value: NumberUtil.round(count / weeks, 4),
+      sampleSize: count,
+      insufficientData: false,
+    };
   }
 
   private async snapshotAverage(
@@ -287,7 +408,12 @@ export class MetricCalculationService {
     repositoryIds: string[] | undefined,
     start: Date,
     end: Date,
-    pick: (s: { qualityScore: Prisma.Decimal; coveragePercent: Prisma.Decimal; bugs: number; locTotal: number }) => number | null,
+    pick: (s: {
+      qualityScore: Prisma.Decimal;
+      coveragePercent: Prisma.Decimal;
+      bugs: number;
+      locTotal: number;
+    }) => number | null,
   ): Promise<MetricCalculationResult> {
     const rows = await this.prisma.codeQualitySnapshot.findMany({
       where: {
@@ -295,7 +421,12 @@ export class MetricCalculationService {
         snapshotDate: { gte: start, lte: end },
         ...(repositoryIds ? { repositoryId: { in: repositoryIds } } : {}),
       },
-      select: { qualityScore: true, coveragePercent: true, bugs: true, locTotal: true },
+      select: {
+        qualityScore: true,
+        coveragePercent: true,
+        bugs: true,
+        locTotal: true,
+      },
       take: ROW_LIMIT,
     });
     const values = rows.map(pick).filter((v): v is number => v !== null);
@@ -333,13 +464,22 @@ export class MetricCalculationService {
     // link) — use the daily metric rollup instead when the scope is a bare developer.
     if (scope.userId && !repositoryIds) {
       const rows = await this.prisma.developerDailyMetric.aggregate({
-        where: { organizationId, userId: scope.userId, metricDate: { gte: start, lte: end } },
+        where: {
+          organizationId,
+          userId: scope.userId,
+          metricDate: { gte: start, lte: end },
+        },
         _sum: { builds: true, successfulBuilds: true },
       });
       const total = rows._sum.builds ?? 0;
       const succeeded = rows._sum.successfulBuilds ?? 0;
-      if (total < MIN_SAMPLE_SIZE) return { value: null, sampleSize: total, insufficientData: true };
-      return { value: NumberUtil.percent(succeeded, total), sampleSize: total, insufficientData: false };
+      if (total < MIN_SAMPLE_SIZE)
+        return { value: null, sampleSize: total, insufficientData: true };
+      return {
+        value: NumberUtil.percent(succeeded, total),
+        sampleSize: total,
+        insufficientData: false,
+      };
     }
 
     const finishedStatuses: PipelineStatus[] = ['SUCCESS', 'FAILED'];
@@ -353,7 +493,12 @@ export class MetricCalculationService {
       this.prisma.ciPipeline.count({ where }),
       this.prisma.ciPipeline.count({ where: { ...where, status: 'SUCCESS' } }),
     ]);
-    if (total < MIN_SAMPLE_SIZE) return { value: null, sampleSize: total, insufficientData: true };
-    return { value: NumberUtil.percent(succeeded, total), sampleSize: total, insufficientData: false };
+    if (total < MIN_SAMPLE_SIZE)
+      return { value: null, sampleSize: total, insufficientData: true };
+    return {
+      value: NumberUtil.percent(succeeded, total),
+      sampleSize: total,
+      insufficientData: false,
+    };
   }
 }

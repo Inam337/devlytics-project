@@ -1,6 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
@@ -25,7 +33,9 @@ export class PaginationQueryDto {
   @Max(MAX_PAGE_SIZE)
   limit: number = DEFAULT_PAGE_SIZE;
 
-  @ApiPropertyOptional({ description: 'Free-text search across the resource label fields' })
+  @ApiPropertyOptional({
+    description: 'Free-text search across the resource label fields',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(200)
@@ -40,7 +50,9 @@ export class PaginationQueryDto {
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
   @IsOptional()
-  @Transform(({ value }) => (typeof value === 'string' ? value.toLowerCase() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toLowerCase() : value,
+  )
   @IsIn(['asc', 'desc'])
   sortOrder: 'asc' | 'desc' = 'desc';
 
@@ -67,7 +79,11 @@ export class PaginatedResult<T> {
     readonly pagination: PaginationMeta,
   ) {}
 
-  static from<T>(items: T[], total: number, query: { page: number; limit: number }) {
+  static from<T>(
+    items: T[],
+    total: number,
+    query: { page: number; limit: number },
+  ) {
     return new PaginatedResult<T>(items, {
       page: query.page,
       limit: query.limit,

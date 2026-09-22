@@ -10,7 +10,11 @@ import { MetricCalculationService } from './metric-calculation.service';
 import { ProgressCalculationService } from './progress-calculation.service';
 
 @Module({
-  controllers: [ImprovementsController, ExperimentsController, ImprovementInsightsController],
+  controllers: [
+    ImprovementsController,
+    ExperimentsController,
+    ImprovementInsightsController,
+  ],
   providers: [
     ImprovementsService,
     ExperimentsService,

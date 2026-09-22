@@ -23,13 +23,18 @@ export class AiProvidersService {
   ) {}
 
   findProviders(organizationId: string) {
-    return this.prisma.aiProvider.findMany({ where: { organizationId }, orderBy: { providerType: 'asc' } });
+    return this.prisma.aiProvider.findMany({
+      where: { organizationId },
+      orderBy: { providerType: 'asc' },
+    });
   }
 
   async findIntegrations(organizationId: string) {
     const integrations = await this.prisma.aiIntegration.findMany({
       where: { organizationId },
-      include: { provider: { select: { providerType: true, name: true, isLocal: true } } },
+      include: {
+        provider: { select: { providerType: true, name: true, isLocal: true } },
+      },
       orderBy: { createdAt: 'asc' },
     });
     return integrations.map(({ apiKeyEncrypted, ...rest }) => ({
@@ -38,9 +43,18 @@ export class AiProvidersService {
     }));
   }
 
-  async createIntegration(organizationId: string, dto: CreateAiIntegrationDto, actor: ActorContext) {
+  async createIntegration(
+    organizationId: string,
+    dto: CreateAiIntegrationDto,
+    actor: ActorContext,
+  ) {
     const provider = await this.prisma.aiProvider.upsert({
-      where: { organizationId_providerType: { organizationId, providerType: dto.providerType } },
+      where: {
+        organizationId_providerType: {
+          organizationId,
+          providerType: dto.providerType,
+        },
+      },
       update: {},
       create: {
         organizationId,
@@ -54,7 +68,9 @@ export class AiProvidersService {
     });
 
     if (dto.providerType !== 'OLLAMA' && !dto.apiKey) {
-      throw AppException.badRequest('apiKey is required for external AI providers');
+      throw AppException.badRequest(
+        'apiKey is required for external AI providers',
+      );
     }
 
     if (dto.isDefault) {
@@ -85,7 +101,11 @@ export class AiProvidersService {
       summary: `AI integration '${integration.name}' (${dto.providerType}) created`,
       entityType: 'AiIntegration',
       entityId: integration.id,
-      after: { providerType: dto.providerType, model: dto.model, isLocal: provider.isLocal },
+      after: {
+        providerType: dto.providerType,
+        model: dto.model,
+        isLocal: provider.isLocal,
+      },
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
     });
@@ -100,7 +120,9 @@ export class AiProvidersService {
     dto: UpdateAiIntegrationDto,
     actor: ActorContext,
   ) {
-    const existing = await this.prisma.aiIntegration.findFirst({ where: { id, organizationId } });
+    const existing = await this.prisma.aiIntegration.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('AI integration', id);
 
     if (dto.isDefault) {
@@ -116,10 +138,14 @@ export class AiProvidersService {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.model !== undefined ? { model: dto.model } : {}),
         ...(dto.baseUrl !== undefined ? { baseUrl: dto.baseUrl } : {}),
-        ...(dto.apiKey !== undefined ? { apiKeyEncrypted: this.crypto.encrypt(dto.apiKey) } : {}),
+        ...(dto.apiKey !== undefined
+          ? { apiKeyEncrypted: this.crypto.encrypt(dto.apiKey) }
+          : {}),
         ...(dto.isDefault !== undefined ? { isDefault: dto.isDefault } : {}),
         ...(dto.isEnabled !== undefined ? { isEnabled: dto.isEnabled } : {}),
-        ...(dto.sanitizeContext !== undefined ? { sanitizeContext: dto.sanitizeContext } : {}),
+        ...(dto.sanitizeContext !== undefined
+          ? { sanitizeContext: dto.sanitizeContext }
+          : {}),
       },
     });
 
@@ -139,8 +165,14 @@ export class AiProvidersService {
     return { ...rest, hasApiKey: Boolean(apiKeyEncrypted) };
   }
 
-  async removeIntegration(organizationId: string, id: string, actor: ActorContext) {
-    const existing = await this.prisma.aiIntegration.findFirst({ where: { id, organizationId } });
+  async removeIntegration(
+    organizationId: string,
+    id: string,
+    actor: ActorContext,
+  ) {
+    const existing = await this.prisma.aiIntegration.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('AI integration', id);
 
     await this.prisma.aiIntegration.delete({ where: { id } });
@@ -161,18 +193,26 @@ export class AiProvidersService {
   }
 
   /** Resolves the integration to use: the org's default, else local Ollama. */
-  async resolveAdapter(
-    organizationId: string,
-  ): Promise<{ adapter: AiProviderAdapter; model: string; sanitize: boolean; integrationId?: string }> {
+  async resolveAdapter(organizationId: string): Promise<{
+    adapter: AiProviderAdapter;
+    model: string;
+    sanitize: boolean;
+    integrationId?: string;
+  }> {
     const defaultIntegration = await this.prisma.aiIntegration.findFirst({
       where: { organizationId, isDefault: true, isEnabled: true },
       include: { provider: true },
     });
 
-    if (defaultIntegration && defaultIntegration.provider.providerType !== 'OLLAMA') {
+    if (
+      defaultIntegration &&
+      defaultIntegration.provider.providerType !== 'OLLAMA'
+    ) {
       const apiKey = this.crypto.decrypt(defaultIntegration.apiKeyEncrypted);
       if (!apiKey) {
-        throw AppException.unprocessable('The configured AI integration has no usable API key');
+        throw AppException.unprocessable(
+          'The configured AI integration has no usable API key',
+        );
       }
       // External adapters (OpenAI/Claude/Gemini) can be added behind this same
       // interface without changing AiAnalysisService.
@@ -182,14 +222,24 @@ export class AiProvidersService {
     }
 
     const ollamaProvider = await this.prisma.aiProvider.findUnique({
-      where: { organizationId_providerType: { organizationId, providerType: AiProviderType.OLLAMA } },
+      where: {
+        organizationId_providerType: {
+          organizationId,
+          providerType: AiProviderType.OLLAMA,
+        },
+      },
     });
     if (!ollamaProvider?.isEnabled) {
-      throw AppException.unprocessable('No enabled AI provider is configured for this organization');
+      throw AppException.unprocessable(
+        'No enabled AI provider is configured for this organization',
+      );
     }
 
     return {
-      adapter: new OllamaAdapter(ollamaProvider.baseUrl, ollamaProvider.defaultModel),
+      adapter: new OllamaAdapter(
+        ollamaProvider.baseUrl,
+        ollamaProvider.defaultModel,
+      ),
       model: ollamaProvider.defaultModel,
       sanitize: defaultIntegration?.sanitizeContext ?? true,
       integrationId: defaultIntegration?.id,

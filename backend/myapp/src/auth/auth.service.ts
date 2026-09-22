@@ -70,10 +70,13 @@ export class AuthService {
       userAgent: client.userAgent,
     });
 
-    const { user, membership, role } = await this.prisma.$transaction(async (tx) => {
+    const { user, membership } = await this.prisma.$transaction(async (tx) => {
       const adminRole = await tx.role.findUniqueOrThrow({
         where: {
-          organizationId_key: { organizationId: organization.id, key: RoleKey.ORGANIZATION_ADMIN },
+          organizationId_key: {
+            organizationId: organization.id,
+            key: RoleKey.ORGANIZATION_ADMIN,
+          },
         },
       });
 
@@ -140,16 +143,29 @@ export class AuthService {
 
     // Same response for unknown account and wrong password — no account enumeration.
     if (!user?.passwordHash) {
-      throw new AppException('Invalid email or password', ErrorCode.INVALID_CREDENTIALS, 401);
+      throw new AppException(
+        'Invalid email or password',
+        ErrorCode.INVALID_CREDENTIALS,
+        401,
+      );
     }
 
-    const matches = await this.crypto.comparePassword(dto.password, user.passwordHash);
+    const matches = await this.crypto.comparePassword(
+      dto.password,
+      user.passwordHash,
+    );
     if (!matches) {
-      throw new AppException('Invalid email or password', ErrorCode.INVALID_CREDENTIALS, 401);
+      throw new AppException(
+        'Invalid email or password',
+        ErrorCode.INVALID_CREDENTIALS,
+        401,
+      );
     }
 
     if (user.status === 'SUSPENDED') {
-      throw AppException.forbidden('This account is suspended. Contact an organization admin.');
+      throw AppException.forbidden(
+        'This account is suspended. Contact an organization admin.',
+      );
     }
 
     const membership = dto.organizationId
@@ -157,10 +173,14 @@ export class AuthService {
       : await this.users.findPrimaryMembership(user.id);
 
     if (!membership || membership.status === 'REMOVED') {
-      throw AppException.forbidden('This account does not belong to an active organization');
+      throw AppException.forbidden(
+        'This account does not belong to an active organization',
+      );
     }
     if (membership.status === 'SUSPENDED') {
-      throw AppException.forbidden('Your membership of this organization is suspended');
+      throw AppException.forbidden(
+        'Your membership of this organization is suspended',
+      );
     }
 
     // First sign-in after an invitation activates the membership.
@@ -189,16 +209,31 @@ export class AuthService {
   }
 
   /** Rotates the refresh token: the presented one is revoked as it is exchanged. */
-  async refresh(dto: RefreshTokenDto, client: ClientInfo): Promise<AuthSession> {
+  async refresh(
+    dto: RefreshTokenDto,
+    client: ClientInfo,
+  ): Promise<AuthSession> {
     const payload = await this.tokens.verifyRefreshToken(dto.refreshToken);
-    const membership = await this.users.findMembership(payload.organizationId, payload.sub);
+    const membership = await this.users.findMembership(
+      payload.organizationId,
+      payload.sub,
+    );
 
-    if (!membership || membership.status === 'REMOVED' || membership.status === 'SUSPENDED') {
+    if (
+      !membership ||
+      membership.status === 'REMOVED' ||
+      membership.status === 'SUSPENDED'
+    ) {
       await this.tokens.revokeFamily(payload.familyId);
       throw AppException.unauthorized('This session is no longer valid');
     }
 
-    const session = await this.buildSession(payload.sub, payload.organizationId, client, payload.familyId);
+    const session = await this.buildSession(
+      payload.sub,
+      payload.organizationId,
+      client,
+      payload.familyId,
+    );
 
     // The successor token id is the jti embedded in the newly issued token.
     const successor = await this.prisma.refreshToken.findUnique({
@@ -210,7 +245,11 @@ export class AuthService {
     return session;
   }
 
-  async logout(refreshToken: string | undefined, userId: string, organizationId: string) {
+  async logout(
+    refreshToken: string | undefined,
+    userId: string,
+    organizationId: string,
+  ) {
     if (refreshToken) {
       await this.tokens.revoke(refreshToken);
     } else {
@@ -252,7 +291,9 @@ export class AuthService {
 
     const teams = await this.prisma.teamMember.findMany({
       where: { organizationId, userId },
-      select: { team: { select: { id: true, name: true, code: true, teamColor: true } } },
+      select: {
+        team: { select: { id: true, name: true, code: true, teamColor: true } },
+      },
     });
 
     return {
@@ -263,7 +304,9 @@ export class AuthService {
         key: membership.role.key,
         name: membership.role.name,
       },
-      permissions: membership.role.permissions.map((entry) => entry.permission.key).sort(),
+      permissions: membership.role.permissions
+        .map((entry) => entry.permission.key)
+        .sort(),
       teams: teams.map((entry) => entry.team),
     };
   }
@@ -273,11 +316,16 @@ export class AuthService {
    * addresses have accounts. The token is returned only outside production,
    * where no mail transport is wired up.
    */
-  async forgotPassword(dto: ForgotPasswordDto): Promise<{ requested: true; resetToken?: string }> {
+  async forgotPassword(
+    dto: ForgotPasswordDto,
+  ): Promise<{ requested: true; resetToken?: string }> {
     const user = await this.users.findByEmail(dto.email);
     if (!user) return { requested: true };
 
-    const minutes = this.config.get<number>('jwt.passwordResetExpiresMinutes', 30);
+    const minutes = this.config.get<number>(
+      'jwt.passwordResetExpiresMinutes',
+      30,
+    );
     const token = this.crypto.generateToken();
 
     await this.prisma.$transaction([
@@ -320,7 +368,9 @@ export class AuthService {
     });
 
     if (!record || record.usedAt || record.expiresAt < new Date()) {
-      throw AppException.badRequest('This reset link is invalid or has expired');
+      throw AppException.badRequest(
+        'This reset link is invalid or has expired',
+      );
     }
 
     const passwordHash = await this.crypto.hashPassword(dto.newPassword);
@@ -364,12 +414,21 @@ export class AuthService {
     const user = await this.users.findById(userId);
     if (!user?.passwordHash) throw AppException.unauthorized();
 
-    const matches = await this.crypto.comparePassword(dto.currentPassword, user.passwordHash);
+    const matches = await this.crypto.comparePassword(
+      dto.currentPassword,
+      user.passwordHash,
+    );
     if (!matches) {
-      throw new AppException('Current password is incorrect', ErrorCode.INVALID_CREDENTIALS, 401);
+      throw new AppException(
+        'Current password is incorrect',
+        ErrorCode.INVALID_CREDENTIALS,
+        401,
+      );
     }
     if (dto.currentPassword === dto.newPassword) {
-      throw AppException.badRequest('The new password must differ from the current one');
+      throw AppException.badRequest(
+        'The new password must differ from the current one',
+      );
     }
 
     await this.prisma.user.update({
@@ -394,22 +453,34 @@ export class AuthService {
   }
 
   /** Invitation acceptance: sets the first password and activates membership. */
-  async acceptInvitation(dto: AcceptInvitationDto, client: ClientInfo): Promise<AuthSession> {
+  async acceptInvitation(
+    dto: AcceptInvitationDto,
+    client: ClientInfo,
+  ): Promise<AuthSession> {
     const user = await this.users.findByEmail(dto.email);
-    if (!user) throw AppException.badRequest('This invitation is no longer valid');
+    if (!user)
+      throw AppException.badRequest('This invitation is no longer valid');
 
-    const membership = await this.users.findMembership(dto.organizationId, user.id);
+    const membership = await this.users.findMembership(
+      dto.organizationId,
+      user.id,
+    );
     if (!membership || membership.status !== 'INVITED') {
       throw AppException.badRequest('This invitation is no longer valid');
     }
     if (user.passwordHash) {
-      throw AppException.conflict('This account already has a password — sign in instead');
+      throw AppException.conflict(
+        'This account already has a password — sign in instead',
+      );
     }
 
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: user.id },
-        data: { passwordHash: await this.crypto.hashPassword(dto.password), status: 'ACTIVE' },
+        data: {
+          passwordHash: await this.crypto.hashPassword(dto.password),
+          status: 'ACTIVE',
+        },
       }),
       this.prisma.organizationUser.update({
         where: { id: membership.id },
@@ -471,8 +542,14 @@ export class AuthService {
         status: view.status,
       },
       organization,
-      role: { id: membership.role.id, key: membership.role.key, name: membership.role.name },
-      permissions: membership.role.permissions.map((entry) => entry.permission.key).sort(),
+      role: {
+        id: membership.role.id,
+        key: membership.role.key,
+        name: membership.role.name,
+      },
+      permissions: membership.role.permissions
+        .map((entry) => entry.permission.key)
+        .sort(),
     };
   }
 }

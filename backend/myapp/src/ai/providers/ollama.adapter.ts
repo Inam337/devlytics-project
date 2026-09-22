@@ -24,21 +24,30 @@ export class OllamaAdapter implements AiProviderAdapter {
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: this.model,
-          system: request.systemPrompt,
-          prompt: request.userPrompt,
-          stream: false,
-          options: { temperature: request.temperature, num_predict: request.maxTokens },
-        }),
-      });
+      const response = await fetch(
+        `${this.baseUrl.replace(/\/$/, '')}/api/generate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: this.model,
+            system: request.systemPrompt,
+            prompt: request.userPrompt,
+            stream: false,
+            options: {
+              temperature: request.temperature,
+              num_predict: request.maxTokens,
+            },
+          }),
+        },
+      );
 
       if (!response.ok) {
-        throw new AiProviderError(`Ollama responded ${response.status}`, response.status >= 500);
+        throw new AiProviderError(
+          `Ollama responded ${response.status}`,
+          response.status >= 500,
+        );
       }
 
       const payload = (await response.json()) as OllamaGenerateResponse;

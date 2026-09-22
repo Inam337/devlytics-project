@@ -3,10 +3,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, SyncJobStatus, SyncJobType } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { AuditService } from '../audit/audit.service';
-import { PaginatedResult, PaginationQueryDto } from '../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+} from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
+import {
+  NotificationEvent,
+  SYNC_FAILURE_THRESHOLD,
+} from '../notifications/notification-events';
+import { NotificationsService } from '../notifications/notifications.service';
 import { QUEUE } from '../queue/queue.constants';
 import { safeEnqueue } from '../queue/queue.util';
 
@@ -31,6 +39,7 @@ export class SyncService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
     @InjectQueue(QUEUE.GIT_SYNC) private readonly gitSyncQueue: Queue,
   ) {}
 
@@ -40,7 +49,12 @@ export class SyncService {
     repositoryIds: string[],
     requestedBy?: string,
   ): Promise<SyncJobSummary[]> {
-    return this.queue(organizationId, repositoryIds, 'FULL_IMPORT', requestedBy);
+    return this.queue(
+      organizationId,
+      repositoryIds,
+      'FULL_IMPORT',
+      requestedBy,
+    );
   }
 
   /** Stage 6: incremental collection triggered by a webhook or the poll. */
@@ -49,14 +63,25 @@ export class SyncService {
     repositoryIds: string[],
     requestedBy?: string,
   ): Promise<SyncJobSummary[]> {
-    return this.queue(organizationId, repositoryIds, 'INCREMENTAL', requestedBy);
+    return this.queue(
+      organizationId,
+      repositoryIds,
+      'INCREMENTAL',
+      requestedBy,
+    );
   }
 
   /** Manual "sync now" from the repository detail screen. */
-  async syncRepository(organizationId: string, repositoryId: string, requestedBy: string) {
+  async syncRepository(
+    organizationId: string,
+    repositoryId: string,
+    requestedBy: string,
+  ) {
     const repository = await this.prisma.repository.findFirst({
       where: { id: repositoryId, organizationId },
-      include: { provider: { select: { id: true, status: true, displayName: true } } },
+      include: {
+        provider: { select: { id: true, status: true, displayName: true } },
+      },
     });
     if (!repository) throw AppException.notFound('Repository', repositoryId);
 
@@ -67,10 +92,16 @@ export class SyncService {
     }
 
     const inFlight = await this.prisma.syncJob.findFirst({
-      where: { organizationId, repositoryId, status: { in: ['QUEUED', 'RUNNING'] } },
+      where: {
+        organizationId,
+        repositoryId,
+        status: { in: ['QUEUED', 'RUNNING'] },
+      },
     });
     if (inFlight) {
-      throw AppException.conflict('A sync is already in progress for this repository');
+      throw AppException.conflict(
+        'A sync is already in progress for this repository',
+      );
     }
 
     const [job] = await this.queue(
@@ -145,14 +176,18 @@ export class SyncService {
           where: { id: job.id },
           data: {
             status: SyncJobStatus.FAILED,
-            errorMessage: 'Queue unavailable — the job was recorded but not dispatched',
+            errorMessage:
+              'Queue unavailable — the job was recorded but not dispatched',
             finishedAt: new Date(),
           },
         });
         // The repository keeps its previous values rather than being zeroed.
         await this.prisma.repository.update({
           where: { id: repository.id },
-          data: { syncStatus: 'FAILED', syncError: 'Background queue unavailable' },
+          data: {
+            syncStatus: 'FAILED',
+            syncError: 'Background queue unavailable',
+          },
         });
       }
 
@@ -187,7 +222,9 @@ export class SyncService {
         take: query.limit,
         include: {
           repository: { select: { id: true, name: true, fullName: true } },
-          provider: { select: { id: true, providerType: true, displayName: true } },
+          provider: {
+            select: { id: true, providerType: true, displayName: true },
+          },
         },
       }),
       this.prisma.syncJob.count({ where }),
@@ -201,11 +238,20 @@ export class SyncService {
     const [repositories, active] = await this.prisma.$transaction([
       this.prisma.repository.findMany({
         where: { organizationId },
-        select: { id: true, fullName: true, syncStatus: true, lastSyncAt: true, syncError: true },
+        select: {
+          id: true,
+          fullName: true,
+          syncStatus: true,
+          lastSyncAt: true,
+          syncError: true,
+        },
         orderBy: { fullName: 'asc' },
       }),
       this.prisma.syncJob.findMany({
-        where: { organizationId, status: { in: ['QUEUED', 'RUNNING', 'RETRYING'] } },
+        where: {
+          organizationId,
+          status: { in: ['QUEUED', 'RUNNING', 'RETRYING'] },
+        },
         select: {
           id: true,
           repositoryId: true,
@@ -218,14 +264,17 @@ export class SyncService {
     ]);
 
     const byRepository = new Map(active.map((job) => [job.repositoryId, job]));
-    const completed = repositories.filter((repo) => repo.syncStatus === 'SYNCED').length;
+    const completed = repositories.filter(
+      (repo) => repo.syncStatus === 'SYNCED',
+    ).length;
 
     return {
       total: repositories.length,
       completed,
       inProgress: active.length,
       // Partial results are never published as a ranking.
-      scoresWithheld: completed < repositories.length && repositories.length > 0,
+      scoresWithheld:
+        completed < repositories.length && repositories.length > 0,
       repositories: repositories.map((repository) => ({
         ...repository,
         job: byRepository.get(repository.id) ?? null,
@@ -236,17 +285,26 @@ export class SyncService {
   async markRunning(syncJobId: string): Promise<void> {
     await this.prisma.syncJob.update({
       where: { id: syncJobId },
-      data: { status: SyncJobStatus.RUNNING, startedAt: new Date(), attempts: { increment: 1 } },
+      data: {
+        status: SyncJobStatus.RUNNING,
+        startedAt: new Date(),
+        attempts: { increment: 1 },
+      },
     });
   }
 
-  async markProgress(syncJobId: string, processed: number, total: number): Promise<void> {
+  async markProgress(
+    syncJobId: string,
+    processed: number,
+    total: number,
+  ): Promise<void> {
     await this.prisma.syncJob.update({
       where: { id: syncJobId },
       data: {
         itemsProcessed: processed,
         itemsTotal: total,
-        progressPercent: total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0,
+        progressPercent:
+          total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0,
       },
     });
   }
@@ -264,8 +322,17 @@ export class SyncService {
     });
   }
 
-  async markFailed(syncJobId: string, message: string): Promise<void> {
-    await this.prisma.syncJob.update({
+  /**
+   * `isFinalAttempt` should be false while BullMQ still has retries left for
+   * this same job (queue.module.ts) — otherwise every retry of one failing
+   * job would re-trigger the consecutive-failure alert below.
+   */
+  async markFailed(
+    syncJobId: string,
+    message: string,
+    isFinalAttempt = true,
+  ): Promise<void> {
+    const job = await this.prisma.syncJob.update({
       where: { id: syncJobId },
       data: {
         status: SyncJobStatus.FAILED,
@@ -273,12 +340,65 @@ export class SyncService {
         errorMessage: message.slice(0, 1000),
       },
     });
+
+    if (!isFinalAttempt || !job.repositoryId) return;
+    const failures = await this.consecutiveFailures(
+      job.organizationId,
+      job.repositoryId,
+    );
+    if (failures < SYNC_FAILURE_THRESHOLD) return;
+
+    await this.alertAdminsOfSyncFailure(
+      job.organizationId,
+      job.repositoryId,
+      failures,
+      message,
+    );
+  }
+
+  private async alertAdminsOfSyncFailure(
+    organizationId: string,
+    repositoryId: string,
+    failures: number,
+    message: string,
+  ) {
+    const repository = await this.prisma.repository.findUnique({
+      where: { id: repositoryId },
+      select: { fullName: true },
+    });
+    const admins = await this.prisma.organizationUser.findMany({
+      where: {
+        organizationId,
+        role: { key: 'ORGANIZATION_ADMIN' },
+        status: 'ACTIVE',
+      },
+      select: { userId: true },
+    });
+
+    await this.notifications.notifyMany(
+      admins.map((admin) => ({
+        organizationId,
+        userId: admin.userId,
+        event: NotificationEvent.SYNC_FAILURE,
+        title: `Sync failing for ${repository?.fullName ?? 'a repository'}`,
+        body: `${failures} consecutive sync failures. Last error: ${message.slice(0, 200)}`,
+        channel: 'EMAIL' as const,
+        actionUrl: `/repositories/${repositoryId}`,
+      })),
+    );
   }
 
   /** Consecutive failures for a repository, used for the sync-failure alert. */
-  async consecutiveFailures(organizationId: string, repositoryId: string): Promise<number> {
+  async consecutiveFailures(
+    organizationId: string,
+    repositoryId: string,
+  ): Promise<number> {
     const recent = await this.prisma.syncJob.findMany({
-      where: { organizationId, repositoryId, status: { in: ['COMPLETED', 'FAILED'] } },
+      where: {
+        organizationId,
+        repositoryId,
+        status: { in: ['COMPLETED', 'FAILED'] },
+      },
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: { status: true },

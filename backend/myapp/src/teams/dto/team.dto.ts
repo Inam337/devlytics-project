@@ -22,7 +22,10 @@ export class CreateTeamDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   name: string;
 
-  @ApiProperty({ example: 'FE-CORE', description: 'Unique within the organization' })
+  @ApiProperty({
+    example: 'FE-CORE',
+    description: 'Unique within the organization',
+  })
   @IsString()
   @MaxLength(40)
   @Matches(/^[A-Za-z0-9][A-Za-z0-9-_]*$/, {
@@ -41,7 +44,10 @@ export class CreateTeamDto {
   @IsUUID('4')
   departmentId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Team lead (must be a member)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Team lead (must be a member)',
+  })
   @IsOptional()
   @IsUUID('4')
   teamLeadId?: string;
@@ -51,7 +57,9 @@ export class CreateTeamDto {
   @IsEnum(AvatarType)
   avatarType?: AvatarType;
 
-  @ApiPropertyOptional({ description: 'Required when avatarType is IMAGE or ICON' })
+  @ApiPropertyOptional({
+    description: 'Required when avatarType is IMAGE or ICON',
+  })
   @IsOptional()
   @IsUrl({ require_tld: false })
   @MaxLength(2000)

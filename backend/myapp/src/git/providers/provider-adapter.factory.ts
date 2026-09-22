@@ -35,13 +35,20 @@ export class ProviderAdapterFactory {
     token: string,
     baseUrl?: string,
   ): GitProviderAdapter {
-    return this.build(providerType, baseUrl ?? this.defaultBaseUrl(providerType), token);
+    return this.build(
+      providerType,
+      baseUrl ?? this.defaultBaseUrl(providerType),
+      token,
+    );
   }
 
   defaultBaseUrl(providerType: GitProvider['providerType']): string {
     return providerType === 'GITHUB'
       ? this.config.get<string>('git.github.apiUrl', 'https://api.github.com')
-      : this.config.get<string>('git.gitlab.apiUrl', 'https://gitlab.com/api/v4');
+      : this.config.get<string>(
+          'git.gitlab.apiUrl',
+          'https://gitlab.com/api/v4',
+        );
   }
 
   private build(
@@ -56,7 +63,9 @@ export class ProviderAdapterFactory {
       case 'GITLAB':
         return new GitlabAdapter(baseUrl, token, timeoutMs);
       default:
-        throw AppException.badRequest(`Unsupported Git provider: ${String(providerType)}`);
+        throw AppException.badRequest(
+          `Unsupported Git provider: ${String(providerType)}`,
+        );
     }
   }
 }

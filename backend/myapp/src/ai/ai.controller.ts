@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permission } from '../common/constants/permissions';
 import {
@@ -39,7 +51,9 @@ export class AiController {
 
   @Get('integrations')
   @RequirePermissions(Permission.AI_READ)
-  @ApiOperation({ summary: 'Configured AI integrations (API keys never returned)' })
+  @ApiOperation({
+    summary: 'Configured AI integrations (API keys never returned)',
+  })
   findIntegrations(@OrganizationId() organizationId: string) {
     return this.providers.findIntegrations(organizationId);
   }
@@ -47,14 +61,19 @@ export class AiController {
   @Post('integrations')
   @RequirePermissions(Permission.AI_WRITE)
   @ResponseMessage('AI integration created successfully')
-  @ApiOperation({ summary: 'Configure an AI integration (external providers are opt-in)' })
+  @ApiOperation({
+    summary: 'Configure an AI integration (external providers are opt-in)',
+  })
   createIntegration(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateAiIntegrationDto,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.providers.createIntegration(organizationId, dto, { actorId: userId, ...client });
+    return this.providers.createIntegration(organizationId, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Patch('integrations/:id')
@@ -68,7 +87,10 @@ export class AiController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.providers.updateIntegration(organizationId, id, dto, { actorId: userId, ...client });
+    return this.providers.updateIntegration(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Delete('integrations/:id')
@@ -82,13 +104,19 @@ export class AiController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.providers.removeIntegration(organizationId, id, { actorId: userId, ...client });
+    return this.providers.removeIntegration(organizationId, id, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Post('analysis')
   @RequirePermissions(Permission.AI_RUN)
   @ResponseMessage('AI analysis run started successfully')
-  @ApiOperation({ summary: 'Run deterministic analysis then AI interpretation for a repository' })
+  @ApiOperation({
+    summary:
+      'Run deterministic analysis then AI interpretation for a repository',
+  })
   triggerAnalysis(
     @OrganizationId() organizationId: string,
     @Body() dto: TriggerAnalysisDto,
@@ -104,34 +132,52 @@ export class AiController {
   @Get('analysis')
   @RequirePermissions(Permission.AI_READ)
   @ApiOperation({ summary: 'Analysis run history' })
-  findAll(@OrganizationId() organizationId: string, @Query() query: AnalysisQueryDto) {
+  findAll(
+    @OrganizationId() organizationId: string,
+    @Query() query: AnalysisQueryDto,
+  ) {
     return this.analysis.findAll(organizationId, query);
   }
 
   @Get('analysis/:id')
   @RequirePermissions(Permission.AI_READ)
-  @ApiOperation({ summary: 'Analysis run detail with its findings and recommendations' })
-  findOne(@OrganizationId() organizationId: string, @Param('id', uuid()) id: string) {
+  @ApiOperation({
+    summary: 'Analysis run detail with its findings and recommendations',
+  })
+  findOne(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+  ) {
     return this.analysis.findOne(organizationId, id);
   }
 
   @Post('analysis/:id/retry')
   @RequirePermissions(Permission.AI_RUN)
   @ResponseMessage('AI interpretation retried successfully')
-  @ApiOperation({ summary: 'Retry AI interpretation for findings still missing one' })
+  @ApiOperation({
+    summary: 'Retry AI interpretation for findings still missing one',
+  })
   retry(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.analysis.retry(organizationId, id, { actorId: userId, ...client });
+    return this.analysis.retry(organizationId, id, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get('usage')
   @RequirePermissions(Permission.AI_READ)
-  @ApiOperation({ summary: 'AI usage (informational only, never a ranking reward)' })
-  usage(@OrganizationId() organizationId: string, @Query() query: AiUsageQueryDto) {
+  @ApiOperation({
+    summary: 'AI usage (informational only, never a ranking reward)',
+  })
+  usage(
+    @OrganizationId() organizationId: string,
+    @Query() query: AiUsageQueryDto,
+  ) {
     return this.analysis.usage(organizationId, query);
   }
 }

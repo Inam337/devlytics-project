@@ -315,6 +315,29 @@ enum SyncJobStatus {
   RETRYING
 }
 
+enum ReportExportStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum ReportType {
+  DEVELOPERS
+  TEAMS
+  REPOSITORIES
+  QUALITY
+  RANKINGS
+  IMPROVEMENTS
+  TEAM_AI_ANALYSIS
+  INDIVIDUAL_AI_ANALYSIS
+}
+
+enum ReportFormat {
+  PDF
+  CSV
+}
+
 // Improvement Engine (docs/Interactive design .../DEVLYTICS-SPEC.md, improvement
 // engine addendum): MEASURE → DETECT → EXPLAIN → RECOMMEND → GOAL → EXPERIMENT →
 // RE-MEASURE → PROVE. Confidence is never asserted from AI output alone — see
@@ -424,6 +447,7 @@ model Organization {
   refreshTokens     RefreshToken[]
   experiments       EngineeringExperiment[]
   improvementProofs ImprovementProof[]
+  reportExports     ReportExport[]
 
   @@index([status])
   @@index([createdAt])
@@ -445,40 +469,42 @@ model User {
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  memberships           OrganizationUser[]
-  managedDepartments    Department[]              @relation("DepartmentManager")
-  ledTeams              Team[]                    @relation("TeamLead")
-  teamMemberships       TeamMember[]
-  ownedProjects         Project[]                 @relation("ProjectOwner")
-  projectMemberships    ProjectMember[]
-  gitAccounts           GitAccount[]
-  repoMemberships       RepositoryMember[]
-  connectedProviders    GitProvider[]             @relation("ProviderConnectedBy")
-  commits               Commit[]
-  pullRequests          PullRequest[]
-  reviews               PullRequestReview[]
-  createdIssues         Issue[]                   @relation("IssueCreator")
-  assignedIssues        Issue[]                   @relation("IssueAssignee")
-  dailyMetrics          DeveloperDailyMetric[]
-  scores                DeveloperScore[]
-  rankings              RankingHistory[]
-  createdScoringRules   ScoringRule[]             @relation("ScoringRuleAuthor")
-  aiUsage               AiUsage[]
-  requestedRuns         AiAnalysisRun[]           @relation("AnalysisRequestedBy")
-  assignedIssuesQuality CodeQualityIssue[]        @relation("QualityIssueAssignee")
-  selfEvaluations       SelfEvaluation[]          @relation("SelfEvaluationSubject")
-  reviewedEvaluations   SelfEvaluation[]          @relation("SelfEvaluationReviewer")
-  ownedGoals            ImprovementGoal[]         @relation("GoalOwner")
-  createdGoals          ImprovementGoal[]         @relation("GoalCreatedBy")
-  goalProgress          ImprovementGoalProgress[]
-  achievements          UserAchievement[]
-  notifications         Notification[]
-  auditLogs             AuditLog[]
-  refreshTokens         RefreshToken[]
-  passwordResets        PasswordResetToken[]
-  requestedSyncJobs     SyncJob[]                 @relation("SyncJobRequestedBy")
-  experiments           EngineeringExperiment[]   @relation("ExperimentOwner")
-  createdExperiments    EngineeringExperiment[]   @relation("ExperimentCreatedBy")
+  memberships             OrganizationUser[]
+  managedDepartments      Department[]              @relation("DepartmentManager")
+  ledTeams                Team[]                    @relation("TeamLead")
+  teamMemberships         TeamMember[]
+  ownedProjects           Project[]                 @relation("ProjectOwner")
+  projectMemberships      ProjectMember[]
+  gitAccounts             GitAccount[]
+  repoMemberships         RepositoryMember[]
+  connectedProviders      GitProvider[]             @relation("ProviderConnectedBy")
+  commits                 Commit[]
+  pullRequests            PullRequest[]
+  reviews                 PullRequestReview[]
+  createdIssues           Issue[]                   @relation("IssueCreator")
+  assignedIssues          Issue[]                   @relation("IssueAssignee")
+  dailyMetrics            DeveloperDailyMetric[]
+  scores                  DeveloperScore[]
+  rankings                RankingHistory[]
+  createdScoringRules     ScoringRule[]             @relation("ScoringRuleAuthor")
+  aiUsage                 AiUsage[]
+  requestedRuns           AiAnalysisRun[]           @relation("AnalysisRequestedBy")
+  assignedIssuesQuality   CodeQualityIssue[]        @relation("QualityIssueAssignee")
+  selfEvaluations         SelfEvaluation[]          @relation("SelfEvaluationSubject")
+  reviewedEvaluations     SelfEvaluation[]          @relation("SelfEvaluationReviewer")
+  ownedGoals              ImprovementGoal[]         @relation("GoalOwner")
+  createdGoals            ImprovementGoal[]         @relation("GoalCreatedBy")
+  goalProgress            ImprovementGoalProgress[]
+  achievements            UserAchievement[]
+  notifications           Notification[]
+  auditLogs               AuditLog[]
+  refreshTokens           RefreshToken[]
+  passwordResets          PasswordResetToken[]
+  requestedSyncJobs       SyncJob[]                 @relation("SyncJobRequestedBy")
+  experiments             EngineeringExperiment[]   @relation("ExperimentOwner")
+  createdExperiments      EngineeringExperiment[]   @relation("ExperimentCreatedBy")
+  requestedReportExports  ReportExport[]            @relation("ReportExportRequestedBy")
+  individualReportExports ReportExport[]            @relation("ReportExportTargetUser")
 
   @@index([status])
   @@index([lastActiveAt])
@@ -1093,8 +1119,9 @@ model CodeQualitySnapshot {
   project      Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
   analysisRun  AiAnalysisRun? @relation(fields: [analysisRunId], references: [id], onDelete: SetNull)
 
+  // repositoryId+snapshotDate is already covered by the unique constraint's
+  // backing index — no separate @@index needed for that column pair.
   @@unique([repositoryId, snapshotDate])
-  @@index([repositoryId, snapshotDate])
   @@index([organizationId, snapshotDate])
   @@map("tbl_code_quality_snapshot")
 }
@@ -1485,6 +1512,7 @@ model ImprovementRecommendation {
   @@index([organizationId, status])
   @@index([organizationId, category])
   @@index([qualityIssueId])
+  @@index([analysisRunId])
   @@map("tbl_improvement_recommendation")
 }
 
@@ -1726,9 +1754,49 @@ model SyncJob {
   requestedBy  User?        @relation("SyncJobRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status])
+  @@index([organizationId, createdAt])
   @@index([repositoryId, createdAt])
   @@index([organizationId, jobType])
   @@map("tbl_sync_job")
+}
+
+// ---------------------------------------------------------------------------
+// Reports
+// ---------------------------------------------------------------------------
+
+/**
+ * An async report generation request and its result. `analysisRunNumber`
+ * records which AiAnalysisRun the report snapshots — live figures may have
+ * moved on by the time someone opens an old export (devlytics.md §7).
+ * `targetUserId` is set for INDIVIDUAL_AI_ANALYSIS reports and is what the
+ * access-control check in ReportsService gates on (self, the target's team
+ * lead, or an org admin — never a peer developer).
+ */
+model ReportExport {
+  id                String             @id @default(uuid()) @db.Uuid
+  organizationId    String             @map("organization_id") @db.Uuid
+  requestedById     String?            @map("requested_by_id") @db.Uuid
+  targetUserId      String?            @map("target_user_id") @db.Uuid
+  reportType        ReportType         @map("report_type")
+  format            ReportFormat
+  status            ReportExportStatus @default(QUEUED)
+  filters           Json?
+  fileName          String?            @map("file_name") @db.VarChar(255)
+  mimeType          String?            @map("mime_type") @db.VarChar(120)
+  fileBytes         Bytes?             @map("file_bytes")
+  analysisRunNumber Int?               @map("analysis_run_number")
+  errorMessage      String?            @map("error_message") @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  finishedAt        DateTime?          @map("finished_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy  User?        @relation("ReportExportRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  targetUser   User?        @relation("ReportExportTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, requestedById])
+  @@map("tbl_report_export")
 }
 
 // ---------------------------------------------------------------------------

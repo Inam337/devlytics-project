@@ -57,16 +57,27 @@ describe('Teams & Projects (e2e)', () => {
     const response = await request(server())
       .post('/api/v1/projects')
       .set('Authorization', auth())
-      .send({ name: 'Payments Platform', code: `PAY-${stamp}`, teamIds: [teamId] })
+      .send({
+        name: 'Payments Platform',
+        code: `PAY-${stamp}`,
+        teamIds: [teamId],
+      })
       .expect(201);
     projectId = response.body.data.id;
     expect(response.body.data.teams[0].id).toBe(teamId);
   });
 
   it('lists teams with pagination envelope', async () => {
-    const response = await request(server()).get('/api/v1/teams?page=1&limit=10').set('Authorization', auth()).expect(200);
+    const response = await request(server())
+      .get('/api/v1/teams?page=1&limit=10')
+      .set('Authorization', auth())
+      .expect(200);
     expect(response.body.pagination).toEqual(
-      expect.objectContaining({ page: 1, limit: 10, total: expect.any(Number) }),
+      expect.objectContaining({
+        page: 1,
+        limit: 10,
+        total: expect.any(Number),
+      }),
     );
   });
 

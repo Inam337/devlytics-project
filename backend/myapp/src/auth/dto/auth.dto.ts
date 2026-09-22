@@ -48,7 +48,8 @@ export class RegisterDto {
 
   @ApiProperty({
     type: CreateOrganizationDto,
-    description: 'The organization created for this first user, who becomes its admin',
+    description:
+      'The organization created for this first user, who becomes its admin',
   })
   @ValidateNested()
   @Type(() => CreateOrganizationDto)
@@ -70,7 +71,8 @@ export class LoginDto {
 
   @ApiPropertyOptional({
     format: 'uuid',
-    description: 'Organization to sign in to when the account belongs to several',
+    description:
+      'Organization to sign in to when the account belongs to several',
   })
   @IsOptional()
   @IsUUID('4')
@@ -134,7 +136,10 @@ export class AcceptInvitationDto {
   @MaxLength(128)
   password: string;
 
-  @ApiProperty({ format: 'uuid', description: 'Organization the invitation was issued for' })
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Organization the invitation was issued for',
+  })
   @IsUUID('4')
   organizationId: string;
 }

@@ -69,13 +69,18 @@ export class RolesService {
       (key) => !permissions.some((permission) => permission.key === key),
     );
     if (unknown.length > 0) {
-      throw AppException.badRequest(`Unknown permission keys: ${unknown.join(', ')}`);
+      throw AppException.badRequest(
+        `Unknown permission keys: ${unknown.join(', ')}`,
+      );
     }
 
     await this.prisma.$transaction([
       this.prisma.rolePermission.deleteMany({ where: { roleId: id } }),
       this.prisma.rolePermission.createMany({
-        data: permissions.map((permission) => ({ roleId: id, permissionId: permission.id })),
+        data: permissions.map((permission) => ({
+          roleId: id,
+          permissionId: permission.id,
+        })),
         skipDuplicates: true,
       }),
     ]);

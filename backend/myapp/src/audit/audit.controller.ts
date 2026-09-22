@@ -13,14 +13,21 @@ export class AuditController {
 
   @Get()
   @RequirePermissions(Permission.AUDIT_READ)
-  @ApiOperation({ summary: 'List audit log entries (Organization Admin and Auditor)' })
-  findAll(@OrganizationId() organizationId: string, @Query() query: AuditLogQueryDto) {
+  @ApiOperation({
+    summary: 'List audit log entries (Organization Admin and Auditor)',
+  })
+  findAll(
+    @OrganizationId() organizationId: string,
+    @Query() query: AuditLogQueryDto,
+  ) {
     return this.auditService.findAll(organizationId, query);
   }
 
   @Get(':id')
   @RequirePermissions(Permission.AUDIT_READ)
-  @ApiOperation({ summary: 'Audit entry detail with before/after values and reason' })
+  @ApiOperation({
+    summary: 'Audit entry detail with before/after values and reason',
+  })
   findOne(
     @OrganizationId() organizationId: string,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

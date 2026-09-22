@@ -58,8 +58,13 @@ export class CryptoService {
     if (!plain) return null;
     const iv = randomBytes(IV_LENGTH);
     const cipher = createCipheriv(ALGORITHM, this.key, iv);
-    const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
-    return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString('base64');
+    const encrypted = Buffer.concat([
+      cipher.update(plain, 'utf8'),
+      cipher.final(),
+    ]);
+    return Buffer.concat([iv, cipher.getAuthTag(), encrypted]).toString(
+      'base64',
+    );
   }
 
   decrypt(payload: string | null | undefined): string | null {
@@ -71,9 +76,14 @@ export class CryptoService {
       const encrypted = buffer.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
       const decipher = createDecipheriv(ALGORITHM, this.key, iv);
       decipher.setAuthTag(authTag);
-      return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+      return Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final(),
+      ]).toString('utf8');
     } catch {
-      this.logger.error('Failed to decrypt stored credential — encryption key may have changed');
+      this.logger.error(
+        'Failed to decrypt stored credential — encryption key may have changed',
+      );
       return null;
     }
   }

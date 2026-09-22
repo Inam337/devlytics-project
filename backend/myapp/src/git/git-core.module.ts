@@ -18,6 +18,11 @@ import { RepositoriesRepository } from './repositories/repositories.repository';
     GitAccountsService,
     RepositoriesRepository,
   ],
-  exports: [ProviderAdapterFactory, GitProvidersService, GitAccountsService, RepositoriesRepository],
+  exports: [
+    ProviderAdapterFactory,
+    GitProvidersService,
+    GitAccountsService,
+    RepositoriesRepository,
+  ],
 })
 export class GitCoreModule {}

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
-import { PaginatedResult, PaginationQueryDto } from '../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+} from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
@@ -12,7 +15,15 @@ import { UpdateDepartmentDto } from './dto/update-department.dto';
 const SORTABLE = ['name', 'code', 'createdAt'] as const;
 
 const DETAIL_INCLUDE = {
-  manager: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+  manager: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      avatarUrl: true,
+    },
+  },
   _count: { select: { teams: true } },
 } satisfies Prisma.DepartmentInclude;
 
@@ -36,7 +47,12 @@ export class DepartmentsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.department.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'name'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'name',
+        ),
         skip: query.skip,
         take: query.limit,
         include: DETAIL_INCLUDE,
@@ -53,7 +69,13 @@ export class DepartmentsService {
       include: {
         ...DETAIL_INCLUDE,
         teams: {
-          select: { id: true, name: true, code: true, teamColor: true, status: true },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            teamColor: true,
+            status: true,
+          },
           orderBy: { name: 'asc' },
         },
       },
@@ -62,7 +84,11 @@ export class DepartmentsService {
     return { ...toView(department), teams: department.teams };
   }
 
-  async create(organizationId: string, dto: CreateDepartmentDto, actor: ActorContext) {
+  async create(
+    organizationId: string,
+    dto: CreateDepartmentDto,
+    actor: ActorContext,
+  ) {
     await this.assertManagerBelongsToOrg(organizationId, dto.managerId);
 
     const department = await this.prisma.department.create({
@@ -84,7 +110,11 @@ export class DepartmentsService {
       summary: `Department '${department.name}' created`,
       entityType: 'Department',
       entityId: department.id,
-      after: { name: department.name, code: department.code, managerId: department.managerId },
+      after: {
+        name: department.name,
+        code: department.code,
+        managerId: department.managerId,
+      },
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
     });
@@ -98,7 +128,9 @@ export class DepartmentsService {
     dto: UpdateDepartmentDto,
     actor: ActorContext,
   ) {
-    const existing = await this.prisma.department.findFirst({ where: { id, organizationId } });
+    const existing = await this.prisma.department.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('Department', id);
     await this.assertManagerBelongsToOrg(organizationId, dto.managerId);
 
@@ -121,8 +153,16 @@ export class DepartmentsService {
       summary: `Department '${department.name}' updated`,
       entityType: 'Department',
       entityId: id,
-      before: { name: existing.name, code: existing.code, managerId: existing.managerId },
-      after: { name: department.name, code: department.code, managerId: department.managerId },
+      before: {
+        name: existing.name,
+        code: existing.code,
+        managerId: existing.managerId,
+      },
+      after: {
+        name: department.name,
+        code: department.code,
+        managerId: department.managerId,
+      },
       reason: actor.reason,
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
@@ -162,19 +202,26 @@ export class DepartmentsService {
   }
 
   /** A manager must be a member of the same organization. */
-  private async assertManagerBelongsToOrg(organizationId: string, managerId?: string) {
+  private async assertManagerBelongsToOrg(
+    organizationId: string,
+    managerId?: string,
+  ) {
     if (!managerId) return;
     const membership = await this.prisma.organizationUser.findUnique({
       where: { organizationId_userId: { organizationId, userId: managerId } },
       select: { id: true },
     });
     if (!membership) {
-      throw AppException.unprocessable('The nominated manager is not a member of this organization');
+      throw AppException.unprocessable(
+        'The nominated manager is not a member of this organization',
+      );
     }
   }
 }
 
-function toView(department: Prisma.DepartmentGetPayload<{ include: typeof DETAIL_INCLUDE }>) {
+function toView(
+  department: Prisma.DepartmentGetPayload<{ include: typeof DETAIL_INCLUDE }>,
+) {
   const { _count, ...rest } = department;
   return { ...rest, teamCount: _count.teams };
 }

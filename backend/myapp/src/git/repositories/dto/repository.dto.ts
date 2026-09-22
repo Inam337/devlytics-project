@@ -1,7 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SyncStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsISO8601, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto';
 
 export class RepositoryQueryDto extends PaginationQueryDto {
@@ -39,12 +47,18 @@ export class RepositoryQueryDto extends PaginationQueryDto {
 }
 
 export class UpdateRepositoryDto {
-  @ApiPropertyOptional({ format: 'uuid', description: 'Project this repository belongs to' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Project this repository belongs to',
+  })
   @IsOptional()
   @IsUUID('4')
   projectId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Team that owns this repository' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Team that owns this repository',
+  })
   @IsOptional()
   @IsUUID('4')
   teamId?: string;
@@ -62,7 +76,10 @@ export class ActivityQueryDto extends PaginationQueryDto {
   @IsISO8601()
   to?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Restrict to one developer' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Restrict to one developer',
+  })
   @IsOptional()
   @IsUUID('4')
   userId?: string;
@@ -73,7 +90,9 @@ export class ActivityQueryDto extends PaginationQueryDto {
   @MaxLength(160)
   branch?: string;
 
-  @ApiPropertyOptional({ description: 'Provider status value, e.g. MERGED or CLOSED' })
+  @ApiPropertyOptional({
+    description: 'Provider status value, e.g. MERGED or CLOSED',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)

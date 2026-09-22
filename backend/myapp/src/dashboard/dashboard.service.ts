@@ -15,26 +15,45 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async overview(organizationId: string) {
-    const [developers, teams, projects, repositories, commitAgg, prAgg, reviewAgg, qualityAvg] =
-      await Promise.all([
-        this.prisma.organizationUser.count({ where: { organizationId, status: 'ACTIVE' } }),
-        this.prisma.team.count({ where: { organizationId, status: 'ACTIVE' } }),
-        this.prisma.project.count({ where: { organizationId } }),
-        this.prisma.repository.count({ where: { organizationId, isArchived: false } }),
-        this.prisma.commit.aggregate({
-          where: { organizationId, isBot: false },
-          _count: { _all: true },
-          _sum: { additions: true, deletions: true },
-        }),
-        this.prisma.pullRequest.count({ where: { organizationId } }),
-        this.prisma.pullRequestReview.count({ where: { organizationId } }),
-        this.prisma.codeQualitySnapshot.aggregate({
-          where: { organizationId },
-          _avg: { qualityScore: true },
-        }),
-      ]);
+    const [
+      developers,
+      teams,
+      projects,
+      repositories,
+      commitAgg,
+      prAgg,
+      reviewAgg,
+      qualityAvg,
+    ] = await Promise.all([
+      this.prisma.organizationUser.count({
+        where: { organizationId, status: 'ACTIVE' },
+      }),
+      this.prisma.team.count({ where: { organizationId, status: 'ACTIVE' } }),
+      this.prisma.project.count({ where: { organizationId } }),
+      this.prisma.repository.count({
+        where: { organizationId, isArchived: false },
+      }),
+      this.prisma.commit.aggregate({
+        where: { organizationId, isBot: false },
+        _count: { _all: true },
+        _sum: { additions: true, deletions: true },
+      }),
+      this.prisma.pullRequest.count({ where: { organizationId } }),
+      this.prisma.pullRequestReview.count({ where: { organizationId } }),
+      this.prisma.codeQualitySnapshot.aggregate({
+        where: { organizationId },
+        _avg: { qualityScore: true },
+      }),
+    ]);
 
-    const [podium, topTeams, activity, qualitySummary, rankingTrend, aiSummary] = await Promise.all([
+    const [
+      podium,
+      topTeams,
+      activity,
+      qualitySummary,
+      rankingTrend,
+      aiSummary,
+    ] = await Promise.all([
       this.developerPodium(organizationId),
       this.topTeams(organizationId),
       this.recentActivity(organizationId),
@@ -53,7 +72,8 @@ export class DashboardService {
         pullRequests: prAgg,
         reviews: reviewAgg,
         // Activity metric only — never part of a score.
-        linesOfCode: (commitAgg._sum.additions ?? 0) + (commitAgg._sum.deletions ?? 0),
+        linesOfCode:
+          (commitAgg._sum.additions ?? 0) + (commitAgg._sum.deletions ?? 0),
         qualityScore: NumberUtil.toNumber(qualityAvg._avg.qualityScore),
       },
       developerPodium: podium,
@@ -81,9 +101,15 @@ export class DashboardService {
         where: { organizationId, subjectType: 'DEVELOPER', userId },
         orderBy: { periodStart: 'desc' },
       }),
-      this.prisma.userAchievement.count({ where: { organizationId, userId, status: 'EARNED' } }),
+      this.prisma.userAchievement.count({
+        where: { organizationId, userId, status: 'EARNED' },
+      }),
       this.prisma.improvementGoal.findMany({
-        where: { organizationId, ownerUserId: userId, status: { in: ['ACTIVE', 'AT_RISK'] } },
+        where: {
+          organizationId,
+          ownerUserId: userId,
+          status: { in: ['ACTIVE', 'AT_RISK'] },
+        },
         take: 5,
       }),
     ]);
@@ -114,11 +140,16 @@ export class DashboardService {
   }
 
   async teamDashboard(organizationId: string, teamId: string) {
-    const team = await this.prisma.team.findFirst({ where: { id: teamId, organizationId } });
+    const team = await this.prisma.team.findFirst({
+      where: { id: teamId, organizationId },
+    });
     if (!team) throw AppException.notFound('Team', teamId);
 
     const [score, rank, memberCount, repoCount] = await Promise.all([
-      this.prisma.teamScore.findFirst({ where: { organizationId, teamId }, orderBy: { computedAt: 'desc' } }),
+      this.prisma.teamScore.findFirst({
+        where: { organizationId, teamId },
+        orderBy: { computedAt: 'desc' },
+      }),
       this.prisma.rankingHistory.findFirst({
         where: { organizationId, subjectType: 'TEAM', teamId },
         orderBy: { periodStart: 'desc' },
@@ -129,7 +160,12 @@ export class DashboardService {
 
     return {
       team,
-      score: score ? { total: NumberUtil.toNumber(score.totalScore), freshness: score.freshness } : null,
+      score: score
+        ? {
+            total: NumberUtil.toNumber(score.totalScore),
+            freshness: score.freshness,
+          }
+        : null,
       rank: rank?.rank ?? null,
       rankDelta: rank?.rankDelta ?? 0,
       memberCount,
@@ -163,16 +199,31 @@ export class DashboardService {
             snapshotDate: snapshot.snapshotDate,
           }
         : null,
-      isStale: ['FAILED', 'DISCONNECTED', 'PARTIAL'].includes(repository.syncStatus),
+      isStale: ['FAILED', 'DISCONNECTED', 'PARTIAL'].includes(
+        repository.syncStatus,
+      ),
     };
   }
 
   private async developerPodium(organizationId: string, take = 5) {
     const scores = await this.prisma.developerScore.findMany({
-      where: { organizationId, period: 'MONTHLY', periodStart: PeriodUtil.resolve('MONTHLY').start },
+      where: {
+        organizationId,
+        period: 'MONTHLY',
+        periodStart: PeriodUtil.resolve('MONTHLY').start,
+      },
       orderBy: { totalScore: 'desc' },
       take,
-      include: { user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
+      },
     });
     return scores.map((score) => ({
       user: score.user,
@@ -182,12 +233,21 @@ export class DashboardService {
 
   private async topTeams(organizationId: string, take = 5) {
     const scores = await this.prisma.teamScore.findMany({
-      where: { organizationId, period: 'MONTHLY', periodStart: PeriodUtil.resolve('MONTHLY').start },
+      where: {
+        organizationId,
+        period: 'MONTHLY',
+        periodStart: PeriodUtil.resolve('MONTHLY').start,
+      },
       orderBy: { totalScore: 'desc' },
       take,
-      include: { team: { select: { id: true, name: true, code: true, teamColor: true } } },
+      include: {
+        team: { select: { id: true, name: true, code: true, teamColor: true } },
+      },
     });
-    return scores.map((score) => ({ team: score.team, totalScore: NumberUtil.toNumber(score.totalScore) }));
+    return scores.map((score) => ({
+      team: score.team,
+      totalScore: NumberUtil.toNumber(score.totalScore),
+    }));
   }
 
   private async recentActivity(organizationId: string, take = 15) {
@@ -196,7 +256,14 @@ export class DashboardService {
       orderBy: { committedAt: 'desc' },
       take,
       include: {
-        author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        author: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
         repository: { select: { id: true, name: true } },
       },
     });
@@ -223,8 +290,12 @@ export class DashboardService {
     });
 
     return {
-      averageQuality: NumberUtil.average(latest.map((s) => NumberUtil.toNumber(s.qualityScore))),
-      averageCoverage: NumberUtil.average(latest.map((s) => NumberUtil.toNumber(s.coveragePercent))),
+      averageQuality: NumberUtil.average(
+        latest.map((s) => NumberUtil.toNumber(s.qualityScore)),
+      ),
+      averageCoverage: NumberUtil.average(
+        latest.map((s) => NumberUtil.toNumber(s.coveragePercent)),
+      ),
       totalBugs: NumberUtil.sum(latest.map((s) => s.bugs)),
     };
   }
@@ -245,7 +316,10 @@ export class DashboardService {
     return [...byPeriod.entries()]
       .slice(0, periods)
       .reverse()
-      .map(([period, scores]) => ({ period, averageScore: NumberUtil.average(scores) }));
+      .map(([period, scores]) => ({
+        period,
+        averageScore: NumberUtil.average(scores),
+      }));
   }
 
   private async aiSummary(organizationId: string) {
@@ -263,7 +337,10 @@ export class DashboardService {
 
     return {
       totalRequests: usage._sum.requestCount ?? 0,
-      byTool: byTool.map((row) => ({ tool: row.toolName, requests: row._sum.requestCount ?? 0 })),
+      byTool: byTool.map((row) => ({
+        tool: row.toolName,
+        requests: row._sum.requestCount ?? 0,
+      })),
       // Explicitly excluded from scoring, as required.
       note: 'AI analytics is informational only and is excluded from scoring.',
     };

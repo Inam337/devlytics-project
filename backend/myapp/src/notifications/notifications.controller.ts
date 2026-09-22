@@ -1,7 +1,19 @@
-import { Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permission } from '../common/constants/permissions';
-import { CurrentUser, OrganizationId, RequirePermissions, ResponseMessage } from '../common/decorators';
+import {
+  CurrentUser,
+  OrganizationId,
+  RequirePermissions,
+  ResponseMessage,
+} from '../common/decorators';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationsService } from './notifications.service';
 

@@ -25,15 +25,27 @@ export class SelfEvaluationsService {
     private readonly audit: AuditService,
   ) {}
 
-  async create(organizationId: string, userId: string, dto: CreateSelfEvaluationDto, actor: ActorContext) {
+  async create(
+    organizationId: string,
+    userId: string,
+    dto: CreateSelfEvaluationDto,
+    actor: ActorContext,
+  ) {
     const periodStart = new Date(dto.periodStart);
     const periodEnd = new Date(dto.periodEnd);
     if (periodStart > periodEnd) {
-      throw AppException.badRequest('periodStart must be on or before periodEnd');
+      throw AppException.badRequest(
+        'periodStart must be on or before periodEnd',
+      );
     }
 
     const measured = await this.prisma.developerScore.findFirst({
-      where: { organizationId, userId, periodStart: { lte: periodEnd }, periodEnd: { gte: periodStart } },
+      where: {
+        organizationId,
+        userId,
+        periodStart: { lte: periodEnd },
+        periodEnd: { gte: periodStart },
+      },
       orderBy: { computedAt: 'desc' },
     });
 
@@ -54,7 +66,9 @@ export class SelfEvaluationsService {
             category: item.category,
             selfRating: item.selfRating,
             comment: item.comment,
-            measuredScore: measured ? new Prisma.Decimal(scoreForCategory(measured, item.category)) : undefined,
+            measuredScore: measured
+              ? new Prisma.Decimal(scoreForCategory(measured, item.category))
+              : undefined,
           })),
         },
       },
@@ -83,7 +97,9 @@ export class SelfEvaluationsService {
   ) {
     const where: Prisma.SelfEvaluationWhereInput = {
       organizationId,
-      ...(scopeToUserId ? { userId: scopeToUserId } : QueryUtil.compact({ userId: query.userId })),
+      ...(scopeToUserId
+        ? { userId: scopeToUserId }
+        : QueryUtil.compact({ userId: query.userId })),
       ...QueryUtil.compact({ status: query.status }),
     };
 
@@ -93,7 +109,10 @@ export class SelfEvaluationsService {
         orderBy: { periodStart: 'desc' },
         skip: query.skip,
         take: query.limit,
-        include: { items: true, user: { select: { id: true, firstName: true, lastName: true } } },
+        include: {
+          items: true,
+          user: { select: { id: true, firstName: true, lastName: true } },
+        },
       }),
       this.prisma.selfEvaluation.count({ where }),
     ]);
@@ -121,24 +140,37 @@ export class SelfEvaluationsService {
     actor: ActorContext,
     isReviewer: boolean,
   ) {
-    const existing = await this.prisma.selfEvaluation.findFirst({ where: { id, organizationId } });
+    const existing = await this.prisma.selfEvaluation.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('Self evaluation', id);
 
     if (dto.status === 'REVIEWED' && !isReviewer) {
-      throw AppException.forbidden('Only a reviewer can mark a self-evaluation reviewed');
+      throw AppException.forbidden(
+        'Only a reviewer can mark a self-evaluation reviewed',
+      );
     }
     if (existing.status === 'REVIEWED' && !isReviewer) {
-      throw AppException.forbidden('This self-evaluation has already been reviewed');
+      throw AppException.forbidden(
+        'This self-evaluation has already been reviewed',
+      );
     }
 
     const updated = await this.prisma.selfEvaluation.update({
       where: { id },
       data: {
-        ...QueryUtil.compact({ summary: dto.summary, overallRating: dto.overallRating }),
+        ...QueryUtil.compact({
+          summary: dto.summary,
+          overallRating: dto.overallRating,
+        }),
         ...(dto.status ? { status: dto.status } : {}),
         ...(dto.status === 'SUBMITTED' ? { submittedAt: new Date() } : {}),
         ...(dto.status === 'REVIEWED'
-          ? { reviewedAt: new Date(), reviewerId: actor.actorId, reviewerNotes: dto.reviewerNotes }
+          ? {
+              reviewedAt: new Date(),
+              reviewerId: actor.actorId,
+              reviewerNotes: dto.reviewerNotes,
+            }
           : {}),
       },
       include: { items: true },
@@ -196,7 +228,10 @@ function toView(evaluation: {
     ...evaluation,
     items: evaluation.items.map((item) => ({
       ...item,
-      measuredScore: item.measuredScore !== null ? NumberUtil.toNumber(item.measuredScore) : null,
+      measuredScore:
+        item.measuredScore !== null
+          ? NumberUtil.toNumber(item.measuredScore)
+          : null,
     })),
   };
 }

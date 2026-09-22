@@ -27,7 +27,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (err || !user) {
       const reason = (info as Error | undefined)?.name;
       if (reason === 'TokenExpiredError') {
-        throw new AppException('Access token has expired', ErrorCode.TOKEN_EXPIRED, 401);
+        throw new AppException(
+          'Access token has expired',
+          ErrorCode.TOKEN_EXPIRED,
+          401,
+        );
       }
       throw AppException.unauthorized('Missing or invalid access token');
     }

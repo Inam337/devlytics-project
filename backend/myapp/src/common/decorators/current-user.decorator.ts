@@ -1,4 +1,8 @@
-import { ExecutionContext, UnauthorizedException, createParamDecorator } from '@nestjs/common';
+import {
+  ExecutionContext,
+  UnauthorizedException,
+  createParamDecorator,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '../types/request-context';
 
 /**
@@ -7,7 +11,9 @@ import type { AuthenticatedUser } from '../types/request-context';
  */
 export const CurrentUser = createParamDecorator(
   (field: keyof AuthenticatedUser | undefined, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest<{ user?: AuthenticatedUser }>();
+    const request = ctx
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUser }>();
     const user = request.user;
     if (!user) {
       throw new UnauthorizedException('Missing authenticated user');
@@ -17,11 +23,15 @@ export const CurrentUser = createParamDecorator(
 );
 
 /** Shorthand for the tenant boundary, which almost every service method needs. */
-export const OrganizationId = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest<{ user?: AuthenticatedUser }>();
-  const organizationId = request.user?.organizationId;
-  if (!organizationId) {
-    throw new UnauthorizedException('Missing organization context');
-  }
-  return organizationId;
-});
+export const OrganizationId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext) => {
+    const request = ctx
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUser }>();
+    const organizationId = request.user?.organizationId;
+    if (!organizationId) {
+      throw new UnauthorizedException('Missing organization context');
+    }
+    return organizationId;
+  },
+);

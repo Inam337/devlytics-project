@@ -46,6 +46,8 @@ export const NumberUtil = {
   },
 
   average(values: number[]): number {
-    return values.length ? NumberUtil.round(NumberUtil.sum(values) / values.length) : 0;
+    return values.length
+      ? NumberUtil.round(NumberUtil.sum(values) / values.length)
+      : 0;
   },
 };

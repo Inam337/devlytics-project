@@ -1,10 +1,12 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { Queue } from 'bullmq';
 import { createHmac } from 'node:crypto';
-import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { CryptoService } from '../common/services/crypto.service';
 import { PrismaService } from '../database/prisma.service';
-import { SyncService } from '../sync/sync.service';
+import { QUEUE } from '../queue/queue.constants';
+import { safeEnqueue } from '../queue/queue.util';
 
 interface WebhookMatch {
   organizationId: string;
@@ -13,11 +15,15 @@ interface WebhookMatch {
 }
 
 /**
- * Stage 6 (Stay current) inbound side: validates the provider's signature,
- * resolves which repository the event belongs to, and queues a fast
- * incremental sync. Webhook bodies are a trigger, not a data source — the
- * actual data is re-fetched through the same provider adapter used everywhere
- * else, so there is exactly one code path that writes commits/PRs/etc.
+ * Stage 6 (Stay current) inbound side: validates the provider's signature and
+ * resolves which repository the event belongs to (both fast, DB-read-bound —
+ * stays synchronous so the response comes back well within the provider's
+ * delivery timeout). Everything after verification (audit + queuing the
+ * incremental sync) moves onto the `webhook-processing` queue
+ * (`WebhookProcessingProcessor`), per requirements §12. Webhook bodies are a
+ * trigger, not a data source — the actual data is re-fetched through the same
+ * provider adapter used everywhere else, so there is exactly one code path
+ * that writes commits/PRs/etc.
  */
 @Injectable()
 export class WebhooksService {
@@ -26,12 +32,18 @@ export class WebhooksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
-    private readonly sync: SyncService,
-    private readonly audit: AuditService,
+    @InjectQueue(QUEUE.WEBHOOK_PROCESSING)
+    private readonly webhookQueue: Queue,
   ) {}
 
-  async handleGithub(rawBody: Buffer, signatureHeader: string | undefined, event: string, fullName: string | undefined) {
-    if (!fullName) throw AppException.badRequest('Payload is missing repository.full_name');
+  async handleGithub(
+    rawBody: Buffer,
+    signatureHeader: string | undefined,
+    event: string,
+    fullName: string | undefined,
+  ) {
+    if (!fullName)
+      throw AppException.badRequest('Payload is missing repository.full_name');
     if (!signatureHeader?.startsWith('sha256=')) {
       throw AppException.unauthorized('Missing X-Hub-Signature-256 header');
     }
@@ -44,9 +56,17 @@ export class WebhooksService {
     return this.acceptEvent(match, `github:${event}`);
   }
 
-  async handleGitlab(tokenHeader: string | undefined, event: string, fullName: string | undefined) {
-    if (!fullName) throw AppException.badRequest('Payload is missing project.path_with_namespace');
-    if (!tokenHeader) throw AppException.unauthorized('Missing X-Gitlab-Token header');
+  async handleGitlab(
+    tokenHeader: string | undefined,
+    event: string,
+    fullName: string | undefined,
+  ) {
+    if (!fullName)
+      throw AppException.badRequest(
+        'Payload is missing project.path_with_namespace',
+      );
+    if (!tokenHeader)
+      throw AppException.unauthorized('Missing X-Gitlab-Token header');
 
     const match = await this.resolveAndVerify('GITLAB', fullName, (secret) =>
       this.crypto.safeEqual(tokenHeader, secret),
@@ -62,11 +82,15 @@ export class WebhooksService {
   ): Promise<WebhookMatch> {
     const candidates = await this.prisma.repository.findMany({
       where: { fullName, provider: { providerType } },
-      include: { provider: { select: { id: true, webhookSecretEncrypted: true } } },
+      include: {
+        provider: { select: { id: true, webhookSecretEncrypted: true } },
+      },
     });
 
     for (const candidate of candidates) {
-      const secret = this.crypto.decrypt(candidate.provider.webhookSecretEncrypted);
+      const secret = this.crypto.decrypt(
+        candidate.provider.webhookSecretEncrypted,
+      );
       if (secret && verify(secret)) {
         return {
           organizationId: candidate.organizationId,
@@ -76,22 +100,25 @@ export class WebhooksService {
       }
     }
 
-    this.logger.warn(`Webhook signature validation failed for ${providerType} repository ${fullName}`);
+    this.logger.warn(
+      `Webhook signature validation failed for ${providerType} repository ${fullName}`,
+    );
     throw AppException.unauthorized('Webhook signature validation failed');
   }
 
   private async acceptEvent(match: WebhookMatch, eventKey: string) {
-    const jobs = await this.sync.queueIncremental(match.organizationId, [match.repositoryId]);
+    const queued = await safeEnqueue(
+      this.webhookQueue,
+      'process-event',
+      {
+        organizationId: match.organizationId,
+        repositoryId: match.repositoryId,
+        fullName: match.fullName,
+        eventKey,
+      },
+      this.logger,
+    );
 
-    await this.audit.record({
-      organizationId: match.organizationId,
-      category: 'INTEGRATION',
-      action: 'webhook.received',
-      summary: `Webhook '${eventKey}' received for ${match.fullName}`,
-      entityType: 'Repository',
-      entityId: match.repositoryId,
-    });
-
-    return { received: true, repositoryId: match.repositoryId, queued: jobs.length > 0 };
+    return { received: true, repositoryId: match.repositoryId, queued };
   }
 }

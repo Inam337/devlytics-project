@@ -30,7 +30,9 @@ export class CreateAiIntegrationDto {
   @MaxLength(120)
   model: string;
 
-  @ApiPropertyOptional({ description: 'Required for external providers, stored encrypted' })
+  @ApiPropertyOptional({
+    description: 'Required for external providers, stored encrypted',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -47,13 +49,18 @@ export class CreateAiIntegrationDto {
   @IsBoolean()
   isDefault?: boolean;
 
-  @ApiPropertyOptional({ default: true, description: 'Route context through the sanitizer' })
+  @ApiPropertyOptional({
+    default: true,
+    description: 'Route context through the sanitizer',
+  })
   @IsOptional()
   @IsBoolean()
   sanitizeContext?: boolean;
 }
 
-export class UpdateAiIntegrationDto extends PartialType(CreateAiIntegrationDto) {
+export class UpdateAiIntegrationDto extends PartialType(
+  CreateAiIntegrationDto,
+) {
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()

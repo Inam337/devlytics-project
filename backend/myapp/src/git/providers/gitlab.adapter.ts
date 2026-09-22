@@ -150,10 +150,15 @@ export class GitlabAdapter implements GitProviderAdapter {
   }
 
   async getRepository(ref: RepositoryRef): Promise<ProviderRepository> {
-    return toRepository(await this.http.get<GlProject>(`/projects/${ref.externalId}`));
+    return toRepository(
+      await this.http.get<GlProject>(`/projects/${ref.externalId}`),
+    );
   }
 
-  async getCommits(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderCommit[]> {
+  async getCommits(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderCommit[]> {
     const commits = await this.http.getPaged<GlCommit>(
       `/projects/${ref.externalId}/repository/commits`,
       {
@@ -193,7 +198,9 @@ export class GitlabAdapter implements GitProviderAdapter {
         message: commit.message ?? commit.title ?? '',
         authorName: commit.author_name,
         authorEmail: commit.author_email,
-        committedAt: new Date(commit.committed_date ?? commit.created_at ?? Date.now()),
+        committedAt: new Date(
+          commit.committed_date ?? commit.created_at ?? Date.now(),
+        ),
         additions: commit.stats?.additions ?? 0,
         deletions: commit.stats?.deletions ?? 0,
         changedFiles: files?.length ?? 0,
@@ -211,7 +218,11 @@ export class GitlabAdapter implements GitProviderAdapter {
   ): Promise<ProviderPullRequest[]> {
     const merges = await this.http.getPaged<GlMergeRequest>(
       `/projects/${ref.externalId}/merge_requests`,
-      { state: 'all', created_after: window.since.toISOString(), order_by: 'updated_at' },
+      {
+        state: 'all',
+        created_after: window.since.toISOString(),
+        order_by: 'updated_at',
+      },
       100,
       window.maxPages ?? 5,
     );
@@ -243,7 +254,10 @@ export class GitlabAdapter implements GitProviderAdapter {
     }));
   }
 
-  async getReviews(ref: RepositoryRef, pullRequestNumbers: number[]): Promise<ProviderReview[]> {
+  async getReviews(
+    ref: RepositoryRef,
+    pullRequestNumbers: number[],
+  ): Promise<ProviderReview[]> {
     const reviews: ProviderReview[] = [];
 
     for (const iid of pullRequestNumbers) {
@@ -290,7 +304,10 @@ export class GitlabAdapter implements GitProviderAdapter {
     return reviews;
   }
 
-  async getIssues(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderIssue[]> {
+  async getIssues(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderIssue[]> {
     const issues = await this.http.getPaged<GlIssue>(
       `/projects/${ref.externalId}/issues`,
       { created_after: window.since.toISOString(), scope: 'all' },
@@ -305,7 +322,8 @@ export class GitlabAdapter implements GitProviderAdapter {
       description: issue.description ?? undefined,
       creatorUsername: issue.author?.username,
       assigneeUsername: issue.assignee?.username,
-      status: issue.state === 'closed' ? ('CLOSED' as const) : ('OPEN' as const),
+      status:
+        issue.state === 'closed' ? ('CLOSED' as const) : ('OPEN' as const),
       labels: issue.labels ?? [],
       createdAt: new Date(issue.created_at),
       closedAt: issue.closed_at ? new Date(issue.closed_at) : undefined,
@@ -313,7 +331,10 @@ export class GitlabAdapter implements GitProviderAdapter {
     }));
   }
 
-  async getPipelines(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderPipeline[]> {
+  async getPipelines(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderPipeline[]> {
     const pipelines = await this.http.getPaged<GlPipeline>(
       `/projects/${ref.externalId}/pipelines`,
       { updated_after: window.since.toISOString() },
@@ -327,8 +348,12 @@ export class GitlabAdapter implements GitProviderAdapter {
       branch: pipeline.ref,
       commitHash: pipeline.sha,
       status: mapPipelineStatus(pipeline.status),
-      startedAt: pipeline.created_at ? new Date(pipeline.created_at) : undefined,
-      finishedAt: pipeline.updated_at ? new Date(pipeline.updated_at) : undefined,
+      startedAt: pipeline.created_at
+        ? new Date(pipeline.created_at)
+        : undefined,
+      finishedAt: pipeline.updated_at
+        ? new Date(pipeline.updated_at)
+        : undefined,
       durationSeconds: pipeline.duration ?? undefined,
       url: pipeline.web_url,
     }));
@@ -340,7 +365,11 @@ export class GitlabAdapter implements GitProviderAdapter {
   ): Promise<ProviderDeployment[]> {
     const deployments = await this.http.getPaged<GlDeployment>(
       `/projects/${ref.externalId}/deployments`,
-      { updated_after: window.since.toISOString(), order_by: 'created_at', sort: 'desc' },
+      {
+        updated_after: window.since.toISOString(),
+        order_by: 'created_at',
+        sort: 'desc',
+      },
       100,
       window.maxPages ?? 2,
     );
@@ -375,7 +404,10 @@ function toRepository(project: GlProject): ProviderRepository {
 }
 
 /** GitLab returns a unified diff rather than counts, so lines are tallied here. */
-function countDiffLines(diff?: string): { additions: number; deletions: number } {
+function countDiffLines(diff?: string): {
+  additions: number;
+  deletions: number;
+} {
   if (!diff) return { additions: 0, deletions: 0 };
   let additions = 0;
   let deletions = 0;

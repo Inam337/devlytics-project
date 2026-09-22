@@ -1,8 +1,20 @@
-import { Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SyncJobStatus } from '@prisma/client';
 import { Permission } from '../common/constants/permissions';
-import { CurrentUser, OrganizationId, RequirePermissions, ResponseMessage } from '../common/decorators';
+import {
+  CurrentUser,
+  OrganizationId,
+  RequirePermissions,
+  ResponseMessage,
+} from '../common/decorators';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { SyncService } from './sync.service';
 
@@ -35,7 +47,12 @@ export class SyncController {
     @Query('status') status?: SyncJobStatus,
     @Query('repositoryId') repositoryId?: string,
   ) {
-    return this.syncService.findJobs(organizationId, query, status, repositoryId);
+    return this.syncService.findJobs(
+      organizationId,
+      query,
+      status,
+      repositoryId,
+    );
   }
 
   @Get('sync/progress')

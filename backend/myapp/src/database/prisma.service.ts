@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, PrismaClient } from '@prisma/client';
 
@@ -7,7 +12,10 @@ import { Prisma, PrismaClient } from '@prisma/client';
  * `DATABASE_URL` only — nothing here is hardcoded.
  */
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(config: ConfigService) {
@@ -15,7 +23,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       datasources: { db: { url: config.getOrThrow<string>('database.url') } },
       log:
         config.get<string>('app.env') === 'development'
-          ? [{ emit: 'event', level: 'warn' }, { emit: 'event', level: 'error' }]
+          ? [
+              { emit: 'event', level: 'warn' },
+              { emit: 'event', level: 'error' },
+            ]
           : [{ emit: 'event', level: 'error' }],
     });
   }
@@ -52,7 +63,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       Prisma.sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename LIKE 'tbl_%'`,
     );
     if (tables.length === 0) return;
-    const list = tables.map(({ tablename }) => `"public"."${tablename}"`).join(', ');
-    await this.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+    const list = tables
+      .map(({ tablename }) => `"public"."${tablename}"`)
+      .join(', ');
+    await this.$executeRawUnsafe(
+      `TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`,
+    );
   }
 }

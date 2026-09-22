@@ -31,9 +31,14 @@ export class RepositoryImportService {
     dto: ImportRepositoriesDto,
     actor: ActorContext,
   ) {
-    const provider = await this.providers.findOneOrFail(organizationId, providerId);
+    const provider = await this.providers.findOneOrFail(
+      organizationId,
+      providerId,
+    );
     if (provider.status === 'DISCONNECTED') {
-      throw AppException.unprocessable('Reconnect this provider before importing repositories');
+      throw AppException.unprocessable(
+        'Reconnect this provider before importing repositories',
+      );
     }
 
     const adapter = this.adapters.create(provider);
@@ -41,9 +46,14 @@ export class RepositoryImportService {
 
     for (const entry of dto.repositories) {
       const details = await adapter
-        .getRepository({ fullName: entry.fullName, externalId: entry.externalRepositoryId })
+        .getRepository({
+          fullName: entry.fullName,
+          externalId: entry.externalRepositoryId,
+        })
         .catch((error: Error) => {
-          this.logger.warn(`Could not read ${entry.fullName}: ${error.message}`);
+          this.logger.warn(
+            `Could not read ${entry.fullName}: ${error.message}`,
+          );
           return null;
         });
 

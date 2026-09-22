@@ -39,7 +39,10 @@ export const EXPERIMENT_METRIC_KEYS = [
 export type ExperimentMetricKey = (typeof EXPERIMENT_METRIC_KEYS)[number];
 
 /** Manual transitions allowed through PATCH; every other status change goes through a lifecycle endpoint. */
-export const MANUAL_STATUS_TARGETS: ExperimentStatus[] = ['PLANNED', 'CANCELLED'];
+export const MANUAL_STATUS_TARGETS: ExperimentStatus[] = [
+  'PLANNED',
+  'CANCELLED',
+];
 
 export class CreateExperimentDto {
   @ApiProperty({ example: 'Reduce PR Review Time' })
@@ -48,7 +51,9 @@ export class CreateExperimentDto {
   @MaxLength(255)
   title: string;
 
-  @ApiPropertyOptional({ example: 'Improve review efficiency by reducing PR size.' })
+  @ApiPropertyOptional({
+    example: 'Improve review efficiency by reducing PR size.',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
@@ -64,12 +69,18 @@ export class CreateExperimentDto {
   @MaxLength(2000)
   hypothesis: string;
 
-  @ApiProperty({ example: 'Encourage smaller PRs and improve reviewer distribution.' })
+  @ApiProperty({
+    example: 'Encourage smaller PRs and improve reviewer distribution.',
+  })
   @IsString()
   @MaxLength(2000)
   intervention: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Owning developer; defaults to the creator when no other scope is given' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description:
+      'Owning developer; defaults to the creator when no other scope is given',
+  })
   @IsOptional()
   @IsUUID('4')
   userId?: string;
@@ -147,7 +158,8 @@ export class UpdateExperimentDto {
 
   @ApiPropertyOptional({
     enum: MANUAL_STATUS_TARGETS,
-    description: 'Only PLANNED (schedule from DRAFT) and CANCELLED can be set manually; use the lifecycle endpoints otherwise',
+    description:
+      'Only PLANNED (schedule from DRAFT) and CANCELLED can be set manually; use the lifecycle endpoints otherwise',
   })
   @IsOptional()
   @IsEnum(ExperimentStatus)
@@ -207,7 +219,8 @@ export class CreateExperimentMetricDto {
 
   @ApiPropertyOptional({
     example: 8.4,
-    description: 'Baseline value; when omitted the backend calculates it from stored activity for the period before startDate',
+    description:
+      'Baseline value; when omitted the backend calculates it from stored activity for the period before startDate',
   })
   @IsOptional()
   @Type(() => Number)

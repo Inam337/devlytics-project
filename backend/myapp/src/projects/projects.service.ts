@@ -16,11 +16,23 @@ import {
   UpdateProjectDto,
 } from './dto/project.dto';
 
-const SORTABLE = ['name', 'code', 'status', 'createdAt', 'progressPercent'] as const;
+const SORTABLE = [
+  'name',
+  'code',
+  'status',
+  'createdAt',
+  'progressPercent',
+] as const;
 
 const LIST_INCLUDE = {
-  owner: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
-  teams: { include: { team: { select: { id: true, name: true, code: true, teamColor: true } } } },
+  owner: {
+    select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+  },
+  teams: {
+    include: {
+      team: { select: { id: true, name: true, code: true, teamColor: true } },
+    },
+  },
   _count: { select: { members: true, repositories: true } },
 } satisfies Prisma.ProjectInclude;
 
@@ -43,7 +55,12 @@ export class ProjectsService {
     const [projects, total] = await this.prisma.$transaction([
       this.prisma.project.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'name'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'name',
+        ),
         skip: query.skip,
         take: query.limit,
         include: LIST_INCLUDE,
@@ -71,7 +88,13 @@ export class ProjectsService {
         members: {
           include: {
             user: {
-              select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                avatarUrl: true,
+              },
             },
           },
         },
@@ -102,7 +125,11 @@ export class ProjectsService {
     };
   }
 
-  async create(organizationId: string, dto: CreateProjectDto, actor: ActorContext) {
+  async create(
+    organizationId: string,
+    dto: CreateProjectDto,
+    actor: ActorContext,
+  ) {
     const code = dto.code.toUpperCase();
     const clash = await this.prisma.project.findUnique({
       where: { organizationId_code: { organizationId, code } },
@@ -153,8 +180,15 @@ export class ProjectsService {
     return this.findOne(organizationId, project.id);
   }
 
-  async update(organizationId: string, id: string, dto: UpdateProjectDto, actor: ActorContext) {
-    const existing = await this.prisma.project.findFirst({ where: { id, organizationId } });
+  async update(
+    organizationId: string,
+    id: string,
+    dto: UpdateProjectDto,
+    actor: ActorContext,
+  ) {
+    const existing = await this.prisma.project.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('Project', id);
 
     const code = dto.code?.toUpperCase();
@@ -215,8 +249,16 @@ export class ProjectsService {
       summary: `Project '${existing.name}' updated`,
       entityType: 'Project',
       entityId: id,
-      before: { name: existing.name, status: existing.status, ownerId: existing.ownerId },
-      after: QueryUtil.compact({ name: dto.name, status: dto.status, ownerId: dto.ownerId }),
+      before: {
+        name: existing.name,
+        status: existing.status,
+        ownerId: existing.ownerId,
+      },
+      after: QueryUtil.compact({
+        name: dto.name,
+        status: dto.status,
+        ownerId: dto.ownerId,
+      }),
       reason: dto.reason ?? actor.reason,
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
@@ -275,7 +317,10 @@ export class ProjectsService {
 
     await this.prisma.projectMember.upsert({
       where: { projectId_userId: { projectId, userId: dto.userId } },
-      update: { roleLabel: dto.roleLabel, allocationPercent: dto.allocationPercent ?? 100 },
+      update: {
+        roleLabel: dto.roleLabel,
+        allocationPercent: dto.allocationPercent ?? 100,
+      },
       create: {
         organizationId,
         projectId,
@@ -345,8 +390,14 @@ export class ProjectsService {
    * Latest quality snapshot per project, aggregated across its repositories.
    * Read from stored snapshots — this never recomputes quality.
    */
-  private async attachQualityScores(organizationId: string, projectIds: string[]) {
-    const result = new Map<string, { qualityScore: number; coveragePercent: number; locTotal: number }>();
+  private async attachQualityScores(
+    organizationId: string,
+    projectIds: string[],
+  ) {
+    const result = new Map<
+      string,
+      { qualityScore: number; coveragePercent: number; locTotal: number }
+    >();
     if (projectIds.length === 0) return result;
 
     const snapshots = await this.prisma.codeQualitySnapshot.findMany({
@@ -359,7 +410,9 @@ export class ProjectsService {
       if (!snapshot.projectId) continue;
       const bucket = seen.get(snapshot.projectId) ?? [];
       // Keep only the newest snapshot per repository within each project.
-      if (!bucket.some((entry) => entry.repositoryId === snapshot.repositoryId)) {
+      if (
+        !bucket.some((entry) => entry.repositoryId === snapshot.repositoryId)
+      ) {
         bucket.push(snapshot);
         seen.set(snapshot.projectId, bucket);
       }
@@ -380,7 +433,11 @@ export class ProjectsService {
     return result;
   }
 
-  private async announceCompletion(organizationId: string, projectId: string, name: string) {
+  private async announceCompletion(
+    organizationId: string,
+    projectId: string,
+    name: string,
+  ) {
     const members = await this.prisma.projectMember.findMany({
       where: { organizationId, projectId },
       select: { userId: true },
@@ -403,7 +460,9 @@ export class ProjectsService {
       select: { status: true },
     });
     if (!membership || membership.status === 'REMOVED') {
-      throw AppException.unprocessable('That user is not a member of this organization');
+      throw AppException.unprocessable(
+        'That user is not a member of this organization',
+      );
     }
   }
 
@@ -413,7 +472,9 @@ export class ProjectsService {
       where: { organizationId, id: { in: teamIds } },
     });
     if (found !== teamIds.length) {
-      throw AppException.unprocessable('One or more teams do not belong to this organization');
+      throw AppException.unprocessable(
+        'One or more teams do not belong to this organization',
+      );
     }
   }
 }
@@ -428,7 +489,10 @@ function toView(
     progressPercent: NumberUtil.toNumber(project.progressPercent),
     memberCount: _count.members,
     repositoryCount: _count.repositories,
-    teams: teams.map((entry) => ({ ...entry.team, isPrimary: entry.isPrimary })),
+    teams: teams.map((entry) => ({
+      ...entry.team,
+      isPrimary: entry.isPrimary,
+    })),
     qualityScore: quality?.qualityScore ?? null,
     coveragePercent: quality?.coveragePercent ?? null,
     // LOC is activity only and carries no scoring weight.

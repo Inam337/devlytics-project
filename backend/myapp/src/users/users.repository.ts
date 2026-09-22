@@ -47,7 +47,9 @@ export class UsersRepository {
   }
 
   /** The membership used to issue a token when the caller did not name an organization. */
-  findPrimaryMembership(userId: string): Promise<MembershipWithRelations | null> {
+  findPrimaryMembership(
+    userId: string,
+  ): Promise<MembershipWithRelations | null> {
     return this.prisma.organizationUser.findFirst({
       where: { userId, status: { in: ['ACTIVE', 'INVITED'] } },
       include: MEMBERSHIP_INCLUDE,
@@ -60,7 +62,9 @@ export class UsersRepository {
       organizationId,
       ...(query.status ? { status: query.status } : {}),
       ...(query.roleKey ? { role: { key: query.roleKey } } : {}),
-      ...(query.teamId ? { user: { teamMemberships: { some: { teamId: query.teamId } } } } : {}),
+      ...(query.teamId
+        ? { user: { teamMemberships: { some: { teamId: query.teamId } } } }
+        : {}),
       ...(query.search
         ? {
             user: {
@@ -75,11 +79,14 @@ export class UsersRepository {
         : {}),
     };
 
-    const orderBy: Prisma.OrganizationUserOrderByWithRelationInput = SORTABLE_COLUMNS.includes(
-      query.sortBy as (typeof SORTABLE_COLUMNS)[number],
-    )
-      ? ({ [query.sortBy as string]: query.sortOrder } as Prisma.OrganizationUserOrderByWithRelationInput)
-      : { user: { firstName: query.sortOrder } };
+    const orderBy: Prisma.OrganizationUserOrderByWithRelationInput =
+      SORTABLE_COLUMNS.includes(
+        query.sortBy as (typeof SORTABLE_COLUMNS)[number],
+      )
+        ? ({
+            [query.sortBy as string]: query.sortOrder,
+          } as Prisma.OrganizationUserOrderByWithRelationInput)
+        : { user: { firstName: query.sortOrder } };
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.organizationUser.findMany({
@@ -106,7 +113,10 @@ export class UsersRepository {
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  createMembership(data: Prisma.OrganizationUserUncheckedCreateInput, tx?: Prisma.TransactionClient) {
+  createMembership(
+    data: Prisma.OrganizationUserUncheckedCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
     return (tx ?? this.prisma).organizationUser.create({ data });
   }
 

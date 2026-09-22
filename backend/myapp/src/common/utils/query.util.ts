@@ -20,7 +20,10 @@ export const QueryUtil = {
     return { [sortBy ?? fallback]: sortOrder };
   },
 
-  search(term: string | undefined, fields: readonly string[]): Record<string, unknown> | undefined {
+  search(
+    term: string | undefined,
+    fields: readonly string[],
+  ): Record<string, unknown> | undefined {
     if (!term) return undefined;
     return {
       OR: fields.map((field) => ({
@@ -32,7 +35,9 @@ export const QueryUtil = {
   /** Drops undefined entries so optional filters never widen a Prisma `where`. */
   compact<T extends Record<string, unknown>>(input: T): Partial<T> {
     return Object.fromEntries(
-      Object.entries(input).filter(([, value]) => value !== undefined && value !== null),
+      Object.entries(input).filter(
+        ([, value]) => value !== undefined && value !== null,
+      ),
     ) as Partial<T>;
   },
 };

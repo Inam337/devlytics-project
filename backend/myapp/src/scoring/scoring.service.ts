@@ -5,20 +5,22 @@ import { AppException } from '../common/exceptions/app.exception';
 import { NumberUtil } from '../common/utils/number.util';
 import { PeriodUtil } from '../common/utils/period.util';
 import { PrismaService } from '../database/prisma.service';
-import { MetricsAggregationService, MetricTotals } from '../metrics/metrics-aggregation.service';
+import {
+  MetricsAggregationService,
+  MetricTotals,
+} from '../metrics/metrics-aggregation.service';
 import { NotificationEvent } from '../notifications/notification-events';
 import { NotificationsService } from '../notifications/notifications.service';
 import type { ActorContext } from '../organizations/organizations.service';
 import {
   REQUIRED_WEIGHT_TOTAL,
   SCORE_CATEGORIES,
-  SCORE_COLUMN,
   SCORE_REFERENCE,
   WEIGHT_TOTAL_EPSILON,
 } from './scoring.constants';
 import { SetScoringWeightsDto } from './dto/scoring.dto';
 
-export interface CategoryScores extends Record<ScoreCategory, number> {}
+export type CategoryScores = Record<ScoreCategory, number>;
 
 /**
  * The scoring engine (docs/devlytics.md §5, requirements §10).
@@ -48,13 +50,18 @@ export class ScoringService {
     });
 
     const rules = await this.prisma.scoringRule.findMany({
-      where: { organizationId, weightVersion: organization.activeWeightVersion },
+      where: {
+        organizationId,
+        weightVersion: organization.activeWeightVersion,
+      },
       orderBy: { category: 'asc' },
     });
 
     return {
       weightVersion: organization.activeWeightVersion,
-      total: NumberUtil.sum(rules.map((rule) => NumberUtil.toNumber(rule.weightPercent))),
+      total: NumberUtil.sum(
+        rules.map((rule) => NumberUtil.toNumber(rule.weightPercent)),
+      ),
       categories: rules.map((rule) => ({
         category: rule.category,
         weightPercent: NumberUtil.toNumber(rule.weightPercent),
@@ -67,8 +74,14 @@ export class ScoringService {
    * a blocking validation error, matching the UI's blocking state. Existing
    * rankings keep referencing their original version; nothing is rewritten.
    */
-  async setWeights(organizationId: string, dto: SetScoringWeightsDto, actor: ActorContext) {
-    const total = NumberUtil.sum(dto.categories.map((entry) => entry.weightPercent));
+  async setWeights(
+    organizationId: string,
+    dto: SetScoringWeightsDto,
+    actor: ActorContext,
+  ) {
+    const total = NumberUtil.sum(
+      dto.categories.map((entry) => entry.weightPercent),
+    );
     if (Math.abs(total - REQUIRED_WEIGHT_TOTAL) > WEIGHT_TOTAL_EPSILON) {
       throw AppException.unprocessable(
         `Scoring weights must total exactly 100%. Received ${NumberUtil.round(total)}%.`,
@@ -144,7 +157,12 @@ export class ScoringService {
     freshness: 'LIVE' | 'PARTIAL' | 'STALE' = 'LIVE',
   ) {
     const weights = await this.findWeights(organizationId);
-    const totals = await this.metrics.developerTotals(organizationId, userId, period.start, period.end);
+    const totals = await this.metrics.developerTotals(
+      organizationId,
+      userId,
+      period.start,
+      period.end,
+    );
     const quality = await this.developerQualityScore(organizationId, userId);
 
     const categoryScores = this.deriveCategoryScores(totals, quality);
@@ -248,12 +266,17 @@ export class ScoringService {
         period.start,
         period.end,
       );
-      const quality = await this.developerQualityScore(organizationId, member.userId);
+      const quality = await this.developerQualityScore(
+        organizationId,
+        member.userId,
+      );
       memberScores.push(this.deriveCategoryScores(totals, quality));
     }
 
     const averaged = SCORE_CATEGORIES.reduce((acc, category) => {
-      acc[category] = NumberUtil.average(memberScores.map((score) => score[category]));
+      acc[category] = NumberUtil.average(
+        memberScores.map((score) => score[category]),
+      );
       return acc;
     }, {} as CategoryScores);
 
@@ -315,11 +338,19 @@ export class ScoringService {
         where: { organizationId, status: 'ACTIVE' },
         select: { userId: true },
       }),
-      this.prisma.team.findMany({ where: { organizationId, status: 'ACTIVE' }, select: { id: true } }),
+      this.prisma.team.findMany({
+        where: { organizationId, status: 'ACTIVE' },
+        select: { id: true },
+      }),
     ]);
 
     for (const member of members) {
-      await this.computeDeveloperScore(organizationId, member.userId, period, freshness);
+      await this.computeDeveloperScore(
+        organizationId,
+        member.userId,
+        period,
+        freshness,
+      );
     }
     for (const team of teams) {
       await this.computeTeamScore(organizationId, team.id, period, freshness);
@@ -329,10 +360,16 @@ export class ScoringService {
   }
 
   /** Category formula shared by developers and teams. LOC never appears here. */
-  private deriveCategoryScores(totals: MetricTotals, qualityScore: number | null): CategoryScores {
+  private deriveCategoryScores(
+    totals: MetricTotals,
+    qualityScore: number | null,
+  ): CategoryScores {
     const reviewParticipation = totals.prsCreated
       ? NumberUtil.normalize(totals.prsReviewed, totals.prsCreated * 2)
-      : NumberUtil.normalize(totals.reviewsGiven, SCORE_REFERENCE.REVIEWS_GIVEN);
+      : NumberUtil.normalize(
+          totals.reviewsGiven,
+          SCORE_REFERENCE.REVIEWS_GIVEN,
+        );
 
     const reliability = totals.builds
       ? NumberUtil.percent(totals.successfulBuilds, totals.builds)
@@ -345,17 +382,29 @@ export class ScoringService {
         NumberUtil.normalize(totals.commits, SCORE_REFERENCE.COMMITS),
       ]),
       CODE_REVIEW: NumberUtil.average([
-        NumberUtil.normalize(totals.reviewsGiven, SCORE_REFERENCE.REVIEWS_GIVEN),
+        NumberUtil.normalize(
+          totals.reviewsGiven,
+          SCORE_REFERENCE.REVIEWS_GIVEN,
+        ),
         reviewParticipation,
       ]),
-      TESTING: NumberUtil.normalize(totals.testsAdded + totals.testsChanged, SCORE_REFERENCE.TEST_CHANGES),
+      TESTING: NumberUtil.normalize(
+        totals.testsAdded + totals.testsChanged,
+        SCORE_REFERENCE.TEST_CHANGES,
+      ),
       RELIABILITY: NumberUtil.clampScore(reliability),
       COLLABORATION: NumberUtil.normalize(
         totals.reviewsGiven + totals.prsReviewed,
         SCORE_REFERENCE.COLLABORATION_EVENTS,
       ),
-      DOCUMENTATION: NumberUtil.normalize(totals.docsChanged, SCORE_REFERENCE.DOC_CHANGES),
-      PROJECT_IMPACT: NumberUtil.normalize(totals.issuesResolved, SCORE_REFERENCE.ISSUES_RESOLVED),
+      DOCUMENTATION: NumberUtil.normalize(
+        totals.docsChanged,
+        SCORE_REFERENCE.DOC_CHANGES,
+      ),
+      PROJECT_IMPACT: NumberUtil.normalize(
+        totals.issuesResolved,
+        SCORE_REFERENCE.ISSUES_RESOLVED,
+      ),
     };
   }
 
@@ -364,14 +413,18 @@ export class ScoringService {
     weights: { category: ScoreCategory; weightPercent: number }[],
   ): number {
     const total = weights.reduce(
-      (sum, weight) => sum + (scores[weight.category] ?? 0) * (weight.weightPercent / 100),
+      (sum, weight) =>
+        sum + (scores[weight.category] ?? 0) * (weight.weightPercent / 100),
       0,
     );
     return NumberUtil.clampScore(total);
   }
 
   /** Average of the developer's own repositories' latest quality scores. */
-  private async developerQualityScore(organizationId: string, userId: string): Promise<number | null> {
+  private async developerQualityScore(
+    organizationId: string,
+    userId: string,
+  ): Promise<number | null> {
     const repoIds = await this.prisma.repositoryMember.findMany({
       where: { organizationId, userId },
       select: { repositoryId: true },
@@ -379,21 +432,35 @@ export class ScoringService {
     if (repoIds.length === 0) return null;
 
     const snapshots = await this.prisma.codeQualitySnapshot.findMany({
-      where: { organizationId, repositoryId: { in: repoIds.map((r) => r.repositoryId) } },
+      where: {
+        organizationId,
+        repositoryId: { in: repoIds.map((r) => r.repositoryId) },
+      },
       orderBy: { snapshotDate: 'desc' },
     });
 
     const latestByRepo = new Map<string, (typeof snapshots)[number]>();
     for (const snapshot of snapshots) {
-      if (!latestByRepo.has(snapshot.repositoryId)) latestByRepo.set(snapshot.repositoryId, snapshot);
+      if (!latestByRepo.has(snapshot.repositoryId))
+        latestByRepo.set(snapshot.repositoryId, snapshot);
     }
-    const values = [...latestByRepo.values()].map((s) => NumberUtil.toNumber(s.qualityScore));
+    const values = [...latestByRepo.values()].map((s) =>
+      NumberUtil.toNumber(s.qualityScore),
+    );
     return values.length ? NumberUtil.average(values) : null;
   }
 
-  private async notifyAdmins(organizationId: string, weightVersion: number, reason?: string) {
+  private async notifyAdmins(
+    organizationId: string,
+    weightVersion: number,
+    reason?: string,
+  ) {
     const admins = await this.prisma.organizationUser.findMany({
-      where: { organizationId, role: { key: 'ORGANIZATION_ADMIN' }, status: 'ACTIVE' },
+      where: {
+        organizationId,
+        role: { key: 'ORGANIZATION_ADMIN' },
+        status: 'ACTIVE',
+      },
       select: { userId: true },
     });
     await this.notifications.notifyMany(

@@ -47,7 +47,9 @@ export class GitController {
 
   @Get('providers')
   @RequirePermissions(Permission.INTEGRATION_READ)
-  @ApiOperation({ summary: 'Connected Git providers with state and repository counts' })
+  @ApiOperation({
+    summary: 'Connected Git providers with state and repository counts',
+  })
   findProviders(@OrganizationId() organizationId: string) {
     return this.providers.findAll(organizationId);
   }
@@ -55,40 +57,59 @@ export class GitController {
   @Post('github/connect')
   @RequirePermissions(Permission.INTEGRATION_WRITE)
   @ResponseMessage('GitHub connected successfully')
-  @ApiOperation({ summary: 'Connect GitHub with a read-only token (verified before it is stored)' })
+  @ApiOperation({
+    summary:
+      'Connect GitHub with a read-only token (verified before it is stored)',
+  })
   connectGithub(
     @OrganizationId() organizationId: string,
     @Body() dto: ConnectProviderDto,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.providers.connect(organizationId, 'GITHUB', dto, { actorId: userId, ...client });
+    return this.providers.connect(organizationId, 'GITHUB', dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Post('gitlab/connect')
   @RequirePermissions(Permission.INTEGRATION_WRITE)
   @ResponseMessage('GitLab connected successfully')
-  @ApiOperation({ summary: 'Connect GitLab with a read-only token (verified before it is stored)' })
+  @ApiOperation({
+    summary:
+      'Connect GitLab with a read-only token (verified before it is stored)',
+  })
   connectGitlab(
     @OrganizationId() organizationId: string,
     @Body() dto: ConnectProviderDto,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.providers.connect(organizationId, 'GITLAB', dto, { actorId: userId, ...client });
+    return this.providers.connect(organizationId, 'GITLAB', dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get('providers/:id/discover')
   @RequirePermissions(Permission.INTEGRATION_READ)
-  @ApiOperation({ summary: 'Repositories visible to the connection, before any collection' })
-  discover(@OrganizationId() organizationId: string, @Param('id', uuid()) id: string) {
+  @ApiOperation({
+    summary: 'Repositories visible to the connection, before any collection',
+  })
+  discover(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+  ) {
     return this.providers.discoverRepositories(organizationId, id);
   }
 
   @Post('providers/:id/import')
   @RequirePermissions(Permission.INTEGRATION_WRITE)
   @ResponseMessage('Repositories imported successfully')
-  @ApiOperation({ summary: 'Import selected repositories and queue their history backfill' })
+  @ApiOperation({
+    summary: 'Import selected repositories and queue their history backfill',
+  })
   importRepositories(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,
@@ -106,14 +127,19 @@ export class GitController {
   @HttpCode(HttpStatus.OK)
   @RequirePermissions(Permission.INTEGRATION_WRITE)
   @ResponseMessage('Git provider disconnected successfully')
-  @ApiOperation({ summary: 'Disconnect a provider (repositories and history are retained)' })
+  @ApiOperation({
+    summary: 'Disconnect a provider (repositories and history are retained)',
+  })
   disconnect(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.providers.disconnect(organizationId, id, { actorId: userId, ...client });
+    return this.providers.disconnect(organizationId, id, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get('identities')
@@ -129,7 +155,9 @@ export class GitController {
 
   @Get('identities/review-queue')
   @RequirePermissions(Permission.INTEGRATION_READ)
-  @ApiOperation({ summary: 'Unmatched identities awaiting review (they score nothing)' })
+  @ApiOperation({
+    summary: 'Unmatched identities awaiting review (they score nothing)',
+  })
   reviewQueue(@OrganizationId() organizationId: string) {
     return this.accounts.reviewQueue(organizationId);
   }
@@ -137,7 +165,9 @@ export class GitController {
   @Patch('identities/:id/link')
   @RequirePermissions(Permission.INTEGRATION_WRITE)
   @ResponseMessage('Git identity linked successfully')
-  @ApiOperation({ summary: 'Attach a Git identity to a member and re-attribute its history' })
+  @ApiOperation({
+    summary: 'Attach a Git identity to a member and re-attribute its history',
+  })
   linkIdentity(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,
@@ -145,13 +175,19 @@ export class GitController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.accounts.link(organizationId, id, dto, { actorId: userId, ...client });
+    return this.accounts.link(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Patch('identities/:id/classify')
   @RequirePermissions(Permission.INTEGRATION_WRITE)
   @ResponseMessage('Git identity reclassified successfully')
-  @ApiOperation({ summary: 'Mark an identity as an automation account (excluded from scoring)' })
+  @ApiOperation({
+    summary:
+      'Mark an identity as an automation account (excluded from scoring)',
+  })
   classifyIdentity(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,
@@ -159,6 +195,9 @@ export class GitController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.accounts.classify(organizationId, id, dto, { actorId: userId, ...client });
+    return this.accounts.classify(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 }

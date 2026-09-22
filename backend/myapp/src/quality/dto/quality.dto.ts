@@ -1,5 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IssueSeverity, QualityCategory, QualityIssueStatus } from '@prisma/client';
+import {
+  IssueSeverity,
+  QualityCategory,
+  QualityIssueStatus,
+} from '@prisma/client';
 import { IsEnum, IsOptional, IsUUID, IsISO8601 } from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 

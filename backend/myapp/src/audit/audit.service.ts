@@ -94,11 +94,18 @@ export class AuditService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.auditLog.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'createdAt'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'createdAt',
+        ),
         skip: query.skip,
         take: query.limit,
         include: {
-          actor: { select: { id: true, firstName: true, lastName: true, email: true } },
+          actor: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
         },
       }),
       this.prisma.auditLog.count({ where }),
@@ -111,7 +118,9 @@ export class AuditService {
     const entry = await this.prisma.auditLog.findFirst({
       where: { id, organizationId },
       include: {
-        actor: { select: { id: true, firstName: true, lastName: true, email: true } },
+        actor: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
       },
     });
     if (!entry) throw AppException.notFound('Audit log', id);

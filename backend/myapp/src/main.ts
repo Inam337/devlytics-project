@@ -16,7 +16,10 @@ const DEFAULT_CORS_ORIGINS = [
 ];
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+    rawBody: true,
+  });
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
@@ -30,7 +33,12 @@ async function bootstrap(): Promise<void> {
     origin: corsOrigins.length ? corsOrigins : DEFAULT_CORS_ORIGINS,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Hub-Signature-256', 'X-Gitlab-Token'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Hub-Signature-256',
+      'X-Gitlab-Token',
+    ],
   });
 
   app.useGlobalPipes(
@@ -62,11 +70,18 @@ async function bootstrap(): Promise<void> {
   SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
     swaggerOptions: { persistAuthorization: true },
   });
-  app.use(`/${apiPrefix}/openapi.json`, (_req: Request, res: Response) => res.json(document));
-  app.use(`/${apiPrefix}/reference`, apiReference({ url: `/${apiPrefix}/openapi.json` }));
+  app.use(`/${apiPrefix}/openapi.json`, (_req: Request, res: Response) =>
+    res.json(document),
+  );
+  app.use(
+    `/${apiPrefix}/reference`,
+    apiReference({ url: `/${apiPrefix}/openapi.json` }),
+  );
 
   await app.listen(port, '0.0.0.0');
-  logger.log(`Devlytics API listening on http://localhost:${port}/${apiPrefix}`);
+  logger.log(
+    `Devlytics API listening on http://localhost:${port}/${apiPrefix}`,
+  );
   logger.log(`OpenAPI docs at http://localhost:${port}/${apiPrefix}/docs`);
 }
 

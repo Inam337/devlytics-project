@@ -27,7 +27,9 @@ export class MetricsAggregationService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Recomputes developer and team metrics for a window. Idempotent. */
-  async rebuild(window: AggregationWindow): Promise<{ developerRows: number; teamRows: number }> {
+  async rebuild(
+    window: AggregationWindow,
+  ): Promise<{ developerRows: number; teamRows: number }> {
     const developerRows = await this.rebuildDeveloperMetrics(window);
     const teamRows = await this.rebuildTeamMetrics(window);
 
@@ -46,7 +48,9 @@ export class MetricsAggregationService {
     return this.rebuild({ organizationId, start, end });
   }
 
-  private async rebuildDeveloperMetrics(window: AggregationWindow): Promise<number> {
+  private async rebuildDeveloperMetrics(
+    window: AggregationWindow,
+  ): Promise<number> {
     const { organizationId, start, end } = window;
 
     return this.prisma.$executeRaw`
@@ -264,7 +268,12 @@ export class MetricsAggregationService {
   }
 
   /** Summed raw metrics for one developer over a period. */
-  async developerTotals(organizationId: string, userId: string, start: Date, end: Date) {
+  async developerTotals(
+    organizationId: string,
+    userId: string,
+    start: Date,
+    end: Date,
+  ) {
     const [totals] = await this.prisma.developerDailyMetric.groupBy({
       by: ['userId'],
       where: { organizationId, userId, metricDate: { gte: start, lte: end } },
@@ -301,7 +310,12 @@ export class MetricsAggregationService {
     return result;
   }
 
-  async teamTotals(organizationId: string, teamId: string, start: Date, end: Date) {
+  async teamTotals(
+    organizationId: string,
+    teamId: string,
+    start: Date,
+    end: Date,
+  ) {
     const [totals] = await this.prisma.teamDailyMetric.groupBy({
       by: ['teamId'],
       where: { organizationId, teamId, metricDate: { gte: start, lte: end } },

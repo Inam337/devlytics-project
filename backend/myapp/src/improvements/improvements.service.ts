@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, RecommendationStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
-import { PaginatedResult, PaginationQueryDto } from '../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+} from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
 import { NumberUtil } from '../common/utils/number.util';
 import { QueryUtil } from '../common/utils/query.util';
@@ -26,13 +29,17 @@ export class ImprovementsService {
 
   async findAll(
     organizationId: string,
-    query: PaginationQueryDto & { status?: RecommendationStatus; category?: string },
+    query: PaginationQueryDto & {
+      status?: RecommendationStatus;
+      category?: string;
+    },
   ) {
     const where: Prisma.ImprovementRecommendationWhereInput = {
       organizationId,
       ...QueryUtil.compact({
         status: query.status,
-        category: query.category as Prisma.ImprovementRecommendationWhereInput['category'],
+        category:
+          query.category as Prisma.ImprovementRecommendationWhereInput['category'],
       }),
       ...QueryUtil.search(query.search, ['title', 'recommendation']),
     };
@@ -40,12 +47,23 @@ export class ImprovementsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.improvementRecommendation.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'priority'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'priority',
+        ),
         skip: query.skip,
         take: query.limit,
         include: {
           qualityIssue: {
-            select: { id: true, title: true, observedFact: true, severity: true, repositoryId: true },
+            select: {
+              id: true,
+              title: true,
+              observedFact: true,
+              severity: true,
+              repositoryId: true,
+            },
           },
         },
       }),
@@ -56,13 +74,14 @@ export class ImprovementsService {
   }
 
   async findOne(organizationId: string, id: string) {
-    const recommendation = await this.prisma.improvementRecommendation.findFirst({
-      where: { id, organizationId },
-      include: {
-        qualityIssue: true,
-        goals: { select: { id: true, status: true, title: true } },
-      },
-    });
+    const recommendation =
+      await this.prisma.improvementRecommendation.findFirst({
+        where: { id, organizationId },
+        include: {
+          qualityIssue: true,
+          goals: { select: { id: true, status: true, title: true } },
+        },
+      });
     if (!recommendation) throw AppException.notFound('Recommendation', id);
     return toView(recommendation);
   }
@@ -101,9 +120,15 @@ export class ImprovementsService {
   }
 }
 
-function toView(recommendation: Prisma.ImprovementRecommendationGetPayload<Record<string, never>>) {
+function toView(
+  recommendation: Prisma.ImprovementRecommendationGetPayload<
+    Record<string, never>
+  >,
+) {
   return {
     ...recommendation,
-    aiConfidence: recommendation.aiConfidence ? NumberUtil.toNumber(recommendation.aiConfidence) : null,
+    aiConfidence: recommendation.aiConfidence
+      ? NumberUtil.toNumber(recommendation.aiConfidence)
+      : null,
   };
 }

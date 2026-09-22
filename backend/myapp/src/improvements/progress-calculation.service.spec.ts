@@ -45,19 +45,37 @@ describe('ProgressCalculationService', () => {
 
     it('is NOT_STARTED when there is no baseline or current measurement yet', () => {
       expect(
-        service.status({ direction: 'DECREASE', baseline: null, target: 5, current: null, startDate }),
+        service.status({
+          direction: 'DECREASE',
+          baseline: null,
+          target: 5,
+          current: null,
+          startDate,
+        }),
       ).toBe('NOT_STARTED');
     });
 
     it('is TARGET_REACHED once the metric achieves its target', () => {
       expect(
-        service.status({ direction: 'DECREASE', baseline: 8.4, target: 5, current: 4.9, startDate }),
+        service.status({
+          direction: 'DECREASE',
+          baseline: 8.4,
+          target: 5,
+          current: 4.9,
+          startDate,
+        }),
       ).toBe('TARGET_REACHED');
     });
 
     it('is OFF_TRACK when the metric has moved away from the target', () => {
       expect(
-        service.status({ direction: 'DECREASE', baseline: 8.4, target: 5, current: 9.5, startDate }),
+        service.status({
+          direction: 'DECREASE',
+          baseline: 8.4,
+          target: 5,
+          current: 9.5,
+          startDate,
+        }),
       ).toBe('OFF_TRACK');
     });
 
@@ -65,13 +83,27 @@ describe('ProgressCalculationService', () => {
       const endDate = new Date('2026-09-10T00:00:00.000Z'); // 9-day window
       const now = new Date('2026-09-09T00:00:00.000Z'); // 89% elapsed
       expect(
-        service.status({ direction: 'DECREASE', baseline: 8.4, target: 5, current: 8.0, startDate, endDate, now }),
+        service.status({
+          direction: 'DECREASE',
+          baseline: 8.4,
+          target: 5,
+          current: 8.0,
+          startDate,
+          endDate,
+          now,
+        }),
       ).toBe('AT_RISK');
     });
 
     it('is ON_TRACK when progress is past the halfway point', () => {
       expect(
-        service.status({ direction: 'DECREASE', baseline: 8.4, target: 5, current: 5.7, startDate }),
+        service.status({
+          direction: 'DECREASE',
+          baseline: 8.4,
+          target: 5,
+          current: 5.7,
+          startDate,
+        }),
       ).toBe('ON_TRACK');
     });
   });

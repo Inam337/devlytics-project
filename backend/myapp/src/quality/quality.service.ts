@@ -2,6 +2,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
+import { randomUUID } from 'crypto';
 import { AuditService } from '../audit/audit.service';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
@@ -29,18 +30,29 @@ export class QualityService {
   ) {}
 
   /** Queues a fresh deterministic analysis run rather than blocking the request. */
-  async triggerScan(organizationId: string, dto: TriggerScanDto, actor: ActorContext) {
+  async triggerScan(
+    organizationId: string,
+    dto: TriggerScanDto,
+    actor: ActorContext,
+  ) {
     const repository = await this.prisma.repository.findFirst({
       where: { id: dto.repositoryId, organizationId },
       select: { id: true, fullName: true },
     });
-    if (!repository) throw AppException.notFound('Repository', dto.repositoryId);
+    if (!repository)
+      throw AppException.notFound('Repository', dto.repositoryId);
 
+    const jobId = randomUUID();
     const queued = await safeEnqueue(
       this.qualityQueue,
       'analyze-repository',
-      { organizationId, repositoryId: dto.repositoryId, requestedBy: actor.actorId },
+      {
+        organizationId,
+        repositoryId: dto.repositoryId,
+        requestedBy: actor.actorId,
+      },
       this.logger,
+      { jobId },
     );
 
     await this.audit.record({
@@ -53,13 +65,16 @@ export class QualityService {
       entityId: dto.repositoryId,
     });
 
-    return { repositoryId: dto.repositoryId, queued };
+    return { repositoryId: dto.repositoryId, queued, jobId };
   }
 
   async findSnapshots(organizationId: string, query: QualitySnapshotQueryDto) {
     const where: Prisma.CodeQualitySnapshotWhereInput = {
       organizationId,
-      ...QueryUtil.compact({ repositoryId: query.repositoryId, projectId: query.projectId }),
+      ...QueryUtil.compact({
+        repositoryId: query.repositoryId,
+        projectId: query.projectId,
+      }),
       ...(query.from || query.to
         ? {
             snapshotDate: {
@@ -76,7 +91,9 @@ export class QualityService {
         orderBy: { snapshotDate: 'desc' },
         skip: query.skip,
         take: query.limit,
-        include: { repository: { select: { id: true, name: true, fullName: true } } },
+        include: {
+          repository: { select: { id: true, name: true, fullName: true } },
+        },
       }),
       this.prisma.codeQualitySnapshot.count({ where }),
     ]);
@@ -87,7 +104,11 @@ export class QualityService {
   /** Eight-KPI summary for the Code Quality screen, latest snapshot per repository. */
   async summary(organizationId: string, projectId?: string) {
     const repositories = await this.prisma.repository.findMany({
-      where: { organizationId, isArchived: false, ...(projectId ? { projectId } : {}) },
+      where: {
+        organizationId,
+        isArchived: false,
+        ...(projectId ? { projectId } : {}),
+      },
       select: { id: true, name: true },
     });
     const repoIds = repositories.map((repo) => repo.id);
@@ -112,26 +133,39 @@ export class QualityService {
     });
     const latest = new Map<string, (typeof snapshots)[number]>();
     for (const snapshot of snapshots) {
-      if (!latest.has(snapshot.repositoryId)) latest.set(snapshot.repositoryId, snapshot);
+      if (!latest.has(snapshot.repositoryId))
+        latest.set(snapshot.repositoryId, snapshot);
     }
     const values = [...latest.values()];
 
     const severityBreakdown = await this.prisma.codeQualityIssue.groupBy({
       by: ['severity'],
-      where: { organizationId, repositoryId: { in: repoIds }, status: { not: 'RESOLVED' } },
+      where: {
+        organizationId,
+        repositoryId: { in: repoIds },
+        status: { not: 'RESOLVED' },
+      },
       _count: { _all: true },
     });
 
     return {
-      qualityScore: NumberUtil.average(values.map((v) => NumberUtil.toNumber(v.qualityScore))),
+      qualityScore: NumberUtil.average(
+        values.map((v) => NumberUtil.toNumber(v.qualityScore)),
+      ),
       bugs: NumberUtil.sum(values.map((v) => v.bugs)),
       codeSmells: NumberUtil.sum(values.map((v) => v.codeSmells)),
-      securityIssues: NumberUtil.sum(values.map((v) => v.vulnerabilities + v.securityHotspots)),
-      coveragePercent: NumberUtil.average(values.map((v) => NumberUtil.toNumber(v.coveragePercent))),
+      securityIssues: NumberUtil.sum(
+        values.map((v) => v.vulnerabilities + v.securityHotspots),
+      ),
+      coveragePercent: NumberUtil.average(
+        values.map((v) => NumberUtil.toNumber(v.coveragePercent)),
+      ),
       duplicationPercent: NumberUtil.average(
         values.map((v) => NumberUtil.toNumber(v.duplicationPercent)),
       ),
-      complexity: NumberUtil.average(values.map((v) => NumberUtil.toNumber(v.complexity))),
+      complexity: NumberUtil.average(
+        values.map((v) => NumberUtil.toNumber(v.complexity)),
+      ),
       maintainabilityScore: NumberUtil.average(
         values.map((v) => NumberUtil.toNumber(v.maintainabilityScore)),
       ),
@@ -140,7 +174,9 @@ export class QualityService {
         return {
           repository: repo,
           qualityScore: snap ? NumberUtil.toNumber(snap.qualityScore) : null,
-          coveragePercent: snap ? NumberUtil.toNumber(snap.coveragePercent) : null,
+          coveragePercent: snap
+            ? NumberUtil.toNumber(snap.coveragePercent)
+            : null,
         };
       }),
       severityBreakdown: severityBreakdown.map((row) => ({
@@ -199,7 +235,9 @@ export class QualityService {
     dto: UpdateQualityIssueStatusDto,
     actor: ActorContext,
   ) {
-    const issue = await this.prisma.codeQualityIssue.findFirst({ where: { id, organizationId } });
+    const issue = await this.prisma.codeQualityIssue.findFirst({
+      where: { id, organizationId },
+    });
     if (!issue) throw AppException.notFound('Quality issue', id);
 
     const updated = await this.prisma.codeQualityIssue.update({
@@ -228,7 +266,11 @@ export class QualityService {
   }
 }
 
-function toSnapshotView(snapshot: Prisma.CodeQualitySnapshotGetPayload<{ include: { repository: true } }>) {
+function toSnapshotView(
+  snapshot: Prisma.CodeQualitySnapshotGetPayload<{
+    include: { repository: true };
+  }>,
+) {
   return {
     ...snapshot,
     qualityScore: NumberUtil.toNumber(snapshot.qualityScore),
@@ -239,10 +281,16 @@ function toSnapshotView(snapshot: Prisma.CodeQualitySnapshotGetPayload<{ include
   };
 }
 
-function toIssueView(issue: Prisma.CodeQualityIssueGetPayload<Record<string, never>>) {
+function toIssueView(
+  issue: Prisma.CodeQualityIssueGetPayload<Record<string, never>>,
+) {
   return {
     ...issue,
-    aiConfidence: issue.aiConfidence ? NumberUtil.toNumber(issue.aiConfidence) : null,
-    measuredValue: issue.measuredValue ? NumberUtil.toNumber(issue.measuredValue) : null,
+    aiConfidence: issue.aiConfidence
+      ? NumberUtil.toNumber(issue.aiConfidence)
+      : null,
+    measuredValue: issue.measuredValue
+      ? NumberUtil.toNumber(issue.measuredValue)
+      : null,
   };
 }

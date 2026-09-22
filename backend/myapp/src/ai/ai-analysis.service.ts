@@ -1,11 +1,16 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { Queue } from 'bullmq';
+import { randomUUID } from 'crypto';
 import { AppException } from '../common/exceptions/app.exception';
 import { NumberUtil } from '../common/utils/number.util';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { PrismaService } from '../database/prisma.service';
 import { QualityAnalysisService } from '../quality/quality-analysis.service';
 import type { ActorContext } from '../organizations/organizations.service';
+import { QUEUE } from '../queue/queue.constants';
+import { safeEnqueue } from '../queue/queue.util';
 import { AiProvidersService } from './ai-providers.service';
 import { sanitizeForAi } from './context-sanitizer';
 import { AiProviderError } from './providers/ai-provider.adapter';
@@ -40,9 +45,20 @@ export class AiAnalysisService {
     private readonly prisma: PrismaService,
     private readonly providers: AiProvidersService,
     private readonly qualityAnalysis: QualityAnalysisService,
+    @InjectQueue(QUEUE.AI_ANALYSIS) private readonly aiQueue: Queue,
   ) {}
 
-  async triggerAnalysis(organizationId: string, repositoryId: string, actor: ActorContext) {
+  /**
+   * Runs the deterministic pass inline (fast, local, no external calls — see
+   * `QualityAnalysisService#analyzeRepository`) so a real run id is available
+   * immediately, then queues only the genuinely slow part — the AI provider
+   * round-trip — onto the `ai-analysis` worker (requirements §12).
+   */
+  async triggerAnalysis(
+    organizationId: string,
+    repositoryId: string,
+    actor: ActorContext,
+  ) {
     const repository = await this.prisma.repository.findFirst({
       where: { id: repositoryId, organizationId },
       select: { id: true, fullName: true },
@@ -56,25 +72,104 @@ export class AiAnalysisService {
       actor.actorId,
     );
 
-    const interpretation = await this.interpretRun(organizationId, outcome.runId, actor.actorId);
+    const queued = await this.enqueueInterpretation(
+      organizationId,
+      repositoryId,
+      outcome.runId,
+      actor.actorId,
+    );
 
     return {
       runId: outcome.runId,
       runNumber: outcome.runNumber,
       qualityScore: outcome.qualityScore,
       issuesFound: outcome.issuesFound,
-      ...interpretation,
+      queued,
     };
   }
 
   async retry(organizationId: string, runId: string, actor: ActorContext) {
-    const run = await this.prisma.aiAnalysisRun.findFirst({ where: { id: runId, organizationId } });
+    const run = await this.prisma.aiAnalysisRun.findFirst({
+      where: { id: runId, organizationId },
+    });
     if (!run) throw AppException.notFound('Analysis run', runId);
 
-    return this.interpretRun(organizationId, runId, actor.actorId);
+    const queued = await this.enqueueInterpretation(
+      organizationId,
+      run.repositoryId,
+      runId,
+      actor.actorId,
+    );
+
+    return { runId, queued };
   }
 
-  private async interpretRun(organizationId: string, runId: string, requestedBy?: string) {
+  private async enqueueInterpretation(
+    organizationId: string,
+    repositoryId: string | null,
+    runId: string,
+    requestedBy?: string,
+  ): Promise<boolean> {
+    await this.prisma.aiAnalysisRun.update({
+      where: { id: runId },
+      data: { status: 'RUNNING' },
+    });
+
+    return safeEnqueue(
+      this.aiQueue,
+      'interpret-analysis',
+      {
+        organizationId,
+        repositoryId: repositoryId ?? undefined,
+        runId,
+        requestedBy,
+      },
+      this.logger,
+      { jobId: randomUUID() },
+    );
+  }
+
+  /**
+   * Runs the AI interpretation pass and finalizes the run's status —
+   * called from `AiAnalysisProcessor`. An unreachable/unavailable provider is
+   * a soft outcome (`interpretRun` already reports `aiAvailable: false`
+   * without throwing), so the run still completes; only an unexpected error
+   * marks it failed, per devlytics.md §4.2 ("failures freeze, they do not
+   * drift") — the deterministic analysis this run already holds is untouched.
+   */
+  async runInterpretation(
+    organizationId: string,
+    runId: string,
+    requestedBy?: string,
+  ) {
+    try {
+      const result = await this.interpretRun(
+        organizationId,
+        runId,
+        requestedBy,
+      );
+      await this.prisma.aiAnalysisRun.update({
+        where: { id: runId },
+        data: { status: 'COMPLETED' },
+      });
+      return result;
+    } catch (error) {
+      await this.prisma.aiAnalysisRun.update({
+        where: { id: runId },
+        data: {
+          status: 'FAILED',
+          errorMessage: (error as Error).message.slice(0, 1000),
+        },
+      });
+      throw error;
+    }
+  }
+
+  private async interpretRun(
+    organizationId: string,
+    runId: string,
+    requestedBy?: string,
+  ) {
     const issues = await this.prisma.codeQualityIssue.findMany({
       where: { organizationId, analysisRunId: runId, aiInference: null },
     });
@@ -87,8 +182,15 @@ export class AiAnalysisService {
     try {
       adapterInfo = await this.providers.resolveAdapter(organizationId);
     } catch (error) {
-      this.logger.warn(`AI interpretation skipped for run ${runId}: ${(error as Error).message}`);
-      return { interpreted: 0, recommendations: 0, aiAvailable: false, reason: (error as Error).message };
+      this.logger.warn(
+        `AI interpretation skipped for run ${runId}: ${(error as Error).message}`,
+      );
+      return {
+        interpreted: 0,
+        recommendations: 0,
+        aiAvailable: false,
+        reason: (error as Error).message,
+      };
     }
 
     let interpreted = 0;
@@ -118,7 +220,10 @@ export class AiAnalysisService {
         await this.prisma.$transaction([
           this.prisma.codeQualityIssue.update({
             where: { id: issue.id },
-            data: { aiInference: parsed.inference, aiConfidence: new Prisma.Decimal(parsed.confidence) },
+            data: {
+              aiInference: parsed.inference,
+              aiConfidence: new Prisma.Decimal(parsed.confidence),
+            },
           }),
           this.prisma.improvementRecommendation.create({
             data: {
@@ -189,7 +294,9 @@ export class AiAnalysisService {
         orderBy: { runNumber: 'desc' },
         skip: query.skip,
         take: query.limit,
-        include: { repository: { select: { id: true, name: true, fullName: true } } },
+        include: {
+          repository: { select: { id: true, name: true, fullName: true } },
+        },
       }),
       this.prisma.aiAnalysisRun.count({ where }),
     ]);
@@ -211,7 +318,9 @@ export class AiAnalysisService {
   }
 
   async usage(organizationId: string, query: AiUsageQueryDto) {
-    const since = new Date(Date.now() - (query.days ?? 30) * 24 * 60 * 60 * 1000);
+    const since = new Date(
+      Date.now() - (query.days ?? 30) * 24 * 60 * 60 * 1000,
+    );
     const where: Prisma.AiUsageWhereInput = {
       organizationId,
       usageDate: { gte: since },
@@ -220,10 +329,19 @@ export class AiAnalysisService {
     };
 
     const [items, totals] = await Promise.all([
-      this.prisma.aiUsage.findMany({ where, orderBy: { usageDate: 'desc' }, take: query.limit, skip: query.skip }),
+      this.prisma.aiUsage.findMany({
+        where,
+        orderBy: { usageDate: 'desc' },
+        take: query.limit,
+        skip: query.skip,
+      }),
       this.prisma.aiUsage.aggregate({
         where,
-        _sum: { requestCount: true, promptTokens: true, completionTokens: true },
+        _sum: {
+          requestCount: true,
+          promptTokens: true,
+          completionTokens: true,
+        },
       }),
     ]);
 
@@ -240,20 +358,34 @@ export class AiAnalysisService {
   }
 }
 
-function parseInterpretation(content: string, fallbackTitle: string): ParsedInterpretation {
+function parseInterpretation(
+  content: string,
+  fallbackTitle: string,
+): ParsedInterpretation {
   try {
     const match = content.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(match ? match[0] : content) as Partial<ParsedInterpretation>;
+    const parsed = JSON.parse(
+      match ? match[0] : content,
+    ) as Partial<ParsedInterpretation>;
     return {
-      inference: String(parsed.inference ?? `This may indicate risk related to: ${fallbackTitle}`),
-      confidence: NumberUtil.clampScore(Number(parsed.confidence ?? 0.5) * 100) / 100,
-      recommendation: String(parsed.recommendation ?? 'Review this finding with the team.'),
+      inference: String(
+        parsed.inference ??
+          `This may indicate risk related to: ${fallbackTitle}`,
+      ),
+      confidence:
+        NumberUtil.clampScore(Number(parsed.confidence ?? 0.5) * 100) / 100,
+      recommendation: String(
+        parsed.recommendation ?? 'Review this finding with the team.',
+      ),
     };
   } catch {
     return {
-      inference: content.slice(0, 500) || `This may indicate risk related to: ${fallbackTitle}`,
+      inference:
+        content.slice(0, 500) ||
+        `This may indicate risk related to: ${fallbackTitle}`,
       confidence: 0.4,
-      recommendation: 'Review this finding with the team and confirm a remediation plan.',
+      recommendation:
+        'Review this finding with the team and confirm a remediation plan.',
     };
   }
 }

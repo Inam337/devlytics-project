@@ -12,7 +12,9 @@ export class NotificationQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({ description: 'Filter by read state' })
   @IsOptional()
-  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @Transform(({ value }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
   @IsBoolean()
   isRead?: boolean;
 }

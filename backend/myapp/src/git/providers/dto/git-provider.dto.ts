@@ -28,19 +28,25 @@ export class ConnectProviderDto {
   @MaxLength(500)
   baseUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Organization / group to scope discovery to' })
+  @ApiPropertyOptional({
+    description: 'Organization / group to scope discovery to',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(160)
   externalAccountName?: string;
 
-  @ApiPropertyOptional({ description: 'Secret used to validate inbound webhook signatures' })
+  @ApiPropertyOptional({
+    description: 'Secret used to validate inbound webhook signatures',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(200)
   webhookSecret?: string;
 
-  @ApiPropertyOptional({ description: 'Refresh token when the OAuth flow provides one' })
+  @ApiPropertyOptional({
+    description: 'Refresh token when the OAuth flow provides one',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -87,7 +93,10 @@ export class ImportRepositoriesDto {
 }
 
 export class LinkGitIdentityDto {
-  @ApiProperty({ format: 'uuid', description: 'Devlytics user to attach the identity to' })
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Devlytics user to attach the identity to',
+  })
   @IsUUID('4')
   userId: string;
 }
@@ -99,7 +108,10 @@ export class ClassifyGitIdentityDto {
 }
 
 export class DiscoverQueryDto {
-  @ApiPropertyOptional({ type: [String], description: 'Filter discovery to these full names' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Filter discovery to these full names',
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()

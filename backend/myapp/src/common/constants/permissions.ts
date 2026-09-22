@@ -76,8 +76,8 @@ export type PermissionKey = (typeof Permission)[keyof typeof Permission];
 
 export const ALL_PERMISSIONS: PermissionKey[] = Object.values(Permission);
 
-const READ_ONLY_PERMISSIONS: PermissionKey[] = ALL_PERMISSIONS.filter(
-  (key) => key.endsWith(':read'),
+const READ_ONLY_PERMISSIONS: PermissionKey[] = ALL_PERMISSIONS.filter((key) =>
+  key.endsWith(':read'),
 );
 
 /** Everything a developer may do on their own records plus read-only leaderboards. */
@@ -132,19 +132,29 @@ export const ROLE_PERMISSIONS: Record<RoleKey, PermissionKey[]> = {
   TEAM_LEAD: unique(TEAM_LEAD_PERMISSIONS),
   DEVELOPER: unique(DEVELOPER_PERMISSIONS),
   AUDITOR: unique([...READ_ONLY_PERMISSIONS]),
-  BILLING: [Permission.ORGANIZATION_READ, Permission.BILLING_READ, Permission.BILLING_WRITE],
+  BILLING: [
+    Permission.ORGANIZATION_READ,
+    Permission.BILLING_READ,
+    Permission.BILLING_WRITE,
+  ],
 };
 
-export const ROLE_DEFINITIONS: { key: RoleKey; name: string; description: string }[] = [
+export const ROLE_DEFINITIONS: {
+  key: RoleKey;
+  name: string;
+  description: string;
+}[] = [
   {
     key: 'ORGANIZATION_ADMIN',
     name: 'Organization Admin',
-    description: 'Everything, including scoring weights, integrations, security and audit',
+    description:
+      'Everything, including scoring weights, integrations, security and audit',
   },
   {
     key: 'DEPARTMENT_MANAGER',
     name: 'Department Manager',
-    description: 'All teams within their department; read-only on organization settings',
+    description:
+      'All teams within their department; read-only on organization settings',
   },
   {
     key: 'TEAM_LEAD',
@@ -172,7 +182,10 @@ function unique(keys: PermissionKey[]): PermissionKey[] {
   return [...new Set(keys)];
 }
 
-export function permissionParts(key: string): { resource: string; action: string } {
+export function permissionParts(key: string): {
+  resource: string;
+  action: string;
+} {
   const [resource, action] = key.split(':');
   return { resource, action };
 }

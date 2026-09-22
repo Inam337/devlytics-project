@@ -134,7 +134,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private fromPrismaKnownError(
     exception: Prisma.PrismaClientKnownRequestError,
   ): NormalizedError {
-    const target = (exception.meta?.target as string[] | string | undefined) ?? [];
+    const target =
+      (exception.meta?.target as string[] | string | undefined) ?? [];
     const fields = Array.isArray(target) ? target.join(', ') : String(target);
 
     switch (exception.code) {

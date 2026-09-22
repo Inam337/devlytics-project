@@ -39,8 +39,13 @@ export class ProjectsController {
 
   @Get()
   @RequirePermissions(Permission.PROJECT_READ)
-  @ApiOperation({ summary: 'Project directory with status, counts, progress and quality' })
-  findAll(@OrganizationId() organizationId: string, @Query() query: ProjectQueryDto) {
+  @ApiOperation({
+    summary: 'Project directory with status, counts, progress and quality',
+  })
+  findAll(
+    @OrganizationId() organizationId: string,
+    @Query() query: ProjectQueryDto,
+  ) {
     return this.projectsService.findAll(organizationId, query);
   }
 
@@ -54,13 +59,21 @@ export class ProjectsController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.projectsService.create(organizationId, dto, { actorId: userId, ...client });
+    return this.projectsService.create(organizationId, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get(':id')
   @RequirePermissions(Permission.PROJECT_READ)
-  @ApiOperation({ summary: 'Project detail with members and repositories in scope' })
-  findOne(@OrganizationId() organizationId: string, @Param('id', uuid()) id: string) {
+  @ApiOperation({
+    summary: 'Project detail with members and repositories in scope',
+  })
+  findOne(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+  ) {
     return this.projectsService.findOne(organizationId, id);
   }
 
@@ -75,21 +88,29 @@ export class ProjectsController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.projectsService.update(organizationId, id, dto, { actorId: userId, ...client });
+    return this.projectsService.update(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @RequirePermissions(Permission.PROJECT_WRITE)
   @ResponseMessage('Project deleted successfully')
-  @ApiOperation({ summary: 'Delete a project that has no repositories assigned' })
+  @ApiOperation({
+    summary: 'Delete a project that has no repositories assigned',
+  })
   remove(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.projectsService.remove(organizationId, id, { actorId: userId, ...client });
+    return this.projectsService.remove(organizationId, id, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Post(':id/members')
@@ -103,7 +124,10 @@ export class ProjectsController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.projectsService.addMember(organizationId, id, dto, { actorId: userId, ...client });
+    return this.projectsService.addMember(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Delete(':id/members/:userId')
@@ -118,6 +142,9 @@ export class ProjectsController {
     @CurrentUser('userId') actorId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.projectsService.removeMember(organizationId, id, memberId, { actorId, ...client });
+    return this.projectsService.removeMember(organizationId, id, memberId, {
+      actorId,
+      ...client,
+    });
   }
 }

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permission } from '../common/constants/permissions';
 import {
@@ -18,13 +27,19 @@ import {
 import { SelfEvaluationsService } from './self-evaluations.service';
 
 const uuid = () => new ParseUUIDPipe({ version: '4' });
-const REVIEWER_ROLES = ['ORGANIZATION_ADMIN', 'DEPARTMENT_MANAGER', 'TEAM_LEAD'];
+const REVIEWER_ROLES = [
+  'ORGANIZATION_ADMIN',
+  'DEPARTMENT_MANAGER',
+  'TEAM_LEAD',
+];
 
 @ApiTags('Self Evaluation')
 @ApiBearerAuth()
 @Controller('self-evaluations')
 export class SelfEvaluationsController {
-  constructor(private readonly selfEvaluationsService: SelfEvaluationsService) {}
+  constructor(
+    private readonly selfEvaluationsService: SelfEvaluationsService,
+  ) {}
 
   @Post()
   @RequirePermissions(Permission.SELF_EVALUATION_WRITE)
@@ -44,27 +59,38 @@ export class SelfEvaluationsController {
 
   @Get()
   @RequirePermissions(Permission.SELF_EVALUATION_READ)
-  @ApiOperation({ summary: "List self-evaluations (developers see only their own)" })
+  @ApiOperation({
+    summary: 'List self-evaluations (developers see only their own)',
+  })
   findAll(
     @OrganizationId() organizationId: string,
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: SelfEvaluationQueryDto,
   ) {
     const scopeToSelf = user.roleKey === 'DEVELOPER' ? user.userId : undefined;
-    return this.selfEvaluationsService.findAll(organizationId, query, scopeToSelf);
+    return this.selfEvaluationsService.findAll(
+      organizationId,
+      query,
+      scopeToSelf,
+    );
   }
 
   @Get(':id')
   @RequirePermissions(Permission.SELF_EVALUATION_READ)
   @ApiOperation({ summary: 'Self-evaluation detail' })
-  findOne(@OrganizationId() organizationId: string, @Param('id', uuid()) id: string) {
+  findOne(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+  ) {
     return this.selfEvaluationsService.findOne(organizationId, id);
   }
 
   @Patch(':id')
   @RequirePermissions(Permission.SELF_EVALUATION_WRITE)
   @ResponseMessage('Self-evaluation updated successfully')
-  @ApiOperation({ summary: 'Update, submit, or (as a reviewer) close out a self-evaluation' })
+  @ApiOperation({
+    summary: 'Update, submit, or (as a reviewer) close out a self-evaluation',
+  })
   update(
     @OrganizationId() organizationId: string,
     @Param('id', uuid()) id: string,

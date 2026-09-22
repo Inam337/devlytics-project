@@ -47,7 +47,12 @@ interface GhCommitListItem {
 }
 interface GhCommitDetail extends GhCommitListItem {
   stats?: { additions?: number; deletions?: number };
-  files?: { filename: string; status: string; additions: number; deletions: number }[];
+  files?: {
+    filename: string;
+    status: string;
+    additions: number;
+    deletions: number;
+  }[];
 }
 interface GhPull {
   id: number;
@@ -148,7 +153,10 @@ export class GithubAdapter implements GitProviderAdapter {
     return toRepository(await this.http.get<GhRepo>(`/repos/${ref.fullName}`));
   }
 
-  async getCommits(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderCommit[]> {
+  async getCommits(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderCommit[]> {
     const list = await this.http.getPaged<GhCommitListItem>(
       `/repos/${ref.fullName}/commits`,
       { since: window.since.toISOString(), until: window.until?.toISOString() },
@@ -161,7 +169,9 @@ export class GithubAdapter implements GitProviderAdapter {
     for (const item of list) {
       let detail: GhCommitDetail = item;
       try {
-        detail = await this.http.get<GhCommitDetail>(`/repos/${ref.fullName}/commits/${item.sha}`);
+        detail = await this.http.get<GhCommitDetail>(
+          `/repos/${ref.fullName}/commits/${item.sha}`,
+        );
       } catch {
         // Fall back to list data rather than dropping the commit entirely.
       }
@@ -228,7 +238,10 @@ export class GithubAdapter implements GitProviderAdapter {
       }));
   }
 
-  async getReviews(ref: RepositoryRef, pullRequestNumbers: number[]): Promise<ProviderReview[]> {
+  async getReviews(
+    ref: RepositoryRef,
+    pullRequestNumbers: number[],
+  ): Promise<ProviderReview[]> {
     const reviews: ProviderReview[] = [];
     for (const number of pullRequestNumbers) {
       const batch = await this.http.getPaged<GhReview>(
@@ -237,7 +250,9 @@ export class GithubAdapter implements GitProviderAdapter {
         100,
         2,
       );
-      const pull = await this.http.get<GhPull>(`/repos/${ref.fullName}/pulls/${number}`);
+      const pull = await this.http.get<GhPull>(
+        `/repos/${ref.fullName}/pulls/${number}`,
+      );
       for (const review of batch) {
         reviews.push({
           externalId: String(review.id),
@@ -252,7 +267,10 @@ export class GithubAdapter implements GitProviderAdapter {
     return reviews;
   }
 
-  async getIssues(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderIssue[]> {
+  async getIssues(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderIssue[]> {
     const issues = await this.http.getPaged<GhIssue>(
       `/repos/${ref.fullName}/issues`,
       { state: 'all', since: window.since.toISOString() },
@@ -270,9 +288,12 @@ export class GithubAdapter implements GitProviderAdapter {
         description: issue.body ?? undefined,
         creatorUsername: issue.user?.login ?? undefined,
         assigneeUsername: issue.assignee?.login ?? undefined,
-        status: issue.state === 'closed' ? ('CLOSED' as const) : ('OPEN' as const),
+        status:
+          issue.state === 'closed' ? ('CLOSED' as const) : ('OPEN' as const),
         labels: (issue.labels ?? [])
-          .map((label) => (typeof label === 'string' ? label : (label.name ?? '')))
+          .map((label) =>
+            typeof label === 'string' ? label : (label.name ?? ''),
+          )
           .filter(Boolean),
         createdAt: new Date(issue.created_at),
         closedAt: issue.closed_at ? new Date(issue.closed_at) : undefined,
@@ -280,14 +301,22 @@ export class GithubAdapter implements GitProviderAdapter {
       }));
   }
 
-  async getPipelines(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderPipeline[]> {
+  async getPipelines(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderPipeline[]> {
     const payload = await this.http.get<{ workflow_runs?: GhWorkflowRun[] }>(
       `/repos/${ref.fullName}/actions/runs`,
-      { per_page: 100, created: `>=${window.since.toISOString().slice(0, 10)}` },
+      {
+        per_page: 100,
+        created: `>=${window.since.toISOString().slice(0, 10)}`,
+      },
     );
 
     return (payload.workflow_runs ?? []).map((run) => {
-      const startedAt = run.run_started_at ? new Date(run.run_started_at) : undefined;
+      const startedAt = run.run_started_at
+        ? new Date(run.run_started_at)
+        : undefined;
       const finishedAt = run.updated_at ? new Date(run.updated_at) : undefined;
       return {
         externalId: String(run.id),
@@ -299,7 +328,10 @@ export class GithubAdapter implements GitProviderAdapter {
         finishedAt,
         durationSeconds:
           startedAt && finishedAt
-            ? Math.max(0, Math.round((finishedAt.getTime() - startedAt.getTime()) / 1000))
+            ? Math.max(
+                0,
+                Math.round((finishedAt.getTime() - startedAt.getTime()) / 1000),
+              )
             : undefined,
         url: run.html_url,
       };
@@ -354,7 +386,11 @@ function toRepository(repo: GhRepo): ProviderRepository {
     defaultBranch: repo.default_branch ?? 'main',
     language: repo.language ?? undefined,
     visibility:
-      repo.visibility === 'internal' ? 'INTERNAL' : repo.private ? 'PRIVATE' : 'PUBLIC',
+      repo.visibility === 'internal'
+        ? 'INTERNAL'
+        : repo.private
+          ? 'PRIVATE'
+          : 'PUBLIC',
     isArchived: Boolean(repo.archived),
   };
 }
@@ -374,7 +410,10 @@ function mapReviewState(state: string): ProviderReview['state'] {
   }
 }
 
-function mapPipelineStatus(status: string, conclusion?: string | null): ProviderPipeline['status'] {
+function mapPipelineStatus(
+  status: string,
+  conclusion?: string | null,
+): ProviderPipeline['status'] {
   if (status === 'queued' || status === 'waiting') return 'QUEUED';
   if (status === 'in_progress') return 'RUNNING';
   switch (conclusion) {

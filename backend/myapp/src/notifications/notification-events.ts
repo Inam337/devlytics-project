@@ -29,9 +29,13 @@ export const NotificationEvent = {
   SCORING_RULES_CHANGED: 'scoring_rules_changed',
 } as const;
 
-export type NotificationEventKey = (typeof NotificationEvent)[keyof typeof NotificationEvent];
+export type NotificationEventKey =
+  (typeof NotificationEvent)[keyof typeof NotificationEvent];
 
-export const NOTIFICATION_CATEGORY: Record<NotificationEventKey, NotificationCategory> = {
+export const NOTIFICATION_CATEGORY: Record<
+  NotificationEventKey,
+  NotificationCategory
+> = {
   [NotificationEvent.ORGANIZATION_CREATED]: 'TRANSACTIONAL',
   [NotificationEvent.DEVELOPER_INVITATION]: 'TRANSACTIONAL',
   [NotificationEvent.PASSWORD_RESET]: 'TRANSACTIONAL',

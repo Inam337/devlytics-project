@@ -1,7 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { AppException } from '../common/exceptions/app.exception';
 import type { AuditService } from '../audit/audit.service';
-import type { MetricsAggregationService, MetricTotals } from '../metrics/metrics-aggregation.service';
+import type {
+  MetricsAggregationService,
+  MetricTotals,
+} from '../metrics/metrics-aggregation.service';
 import type { NotificationsService } from '../notifications/notifications.service';
 import type { PrismaService } from '../database/prisma.service';
 import { DEFAULT_SCORING_WEIGHTS, SCORE_CATEGORIES } from './scoring.constants';
@@ -40,7 +43,11 @@ function baseTotals(overrides: Partial<MetricTotals> = {}): MetricTotals {
 describe('ScoringService', () => {
   let prisma: {
     organization: { findUniqueOrThrow: jest.Mock; update: jest.Mock };
-    scoringRule: { findMany: jest.Mock; updateMany: jest.Mock; createMany: jest.Mock };
+    scoringRule: {
+      findMany: jest.Mock;
+      updateMany: jest.Mock;
+      createMany: jest.Mock;
+    };
     developerScore: { upsert: jest.Mock };
     teamScore: { upsert: jest.Mock };
     teamMember: { findMany: jest.Mock };
@@ -58,7 +65,11 @@ describe('ScoringService', () => {
   beforeEach(() => {
     prisma = {
       organization: { findUniqueOrThrow: jest.fn(), update: jest.fn() },
-      scoringRule: { findMany: jest.fn(), updateMany: jest.fn(), createMany: jest.fn() },
+      scoringRule: {
+        findMany: jest.fn(),
+        updateMany: jest.fn(),
+        createMany: jest.fn(),
+      },
       developerScore: { upsert: jest.fn() },
       teamScore: { upsert: jest.fn() },
       teamMember: { findMany: jest.fn() },
@@ -82,9 +93,20 @@ describe('ScoringService', () => {
 
   describe('findWeights', () => {
     it('returns the active weight version, its total and each category weight as a plain number', async () => {
-      prisma.organization.findUniqueOrThrow.mockResolvedValue({ activeWeightVersion: 3 });
+      prisma.organization.findUniqueOrThrow.mockResolvedValue({
+        activeWeightVersion: 3,
+      });
       prisma.scoringRule.findMany.mockResolvedValue(
-        decimalRows({ CODE_QUALITY: 30, DELIVERY: 20, CODE_REVIEW: 15, TESTING: 15, RELIABILITY: 10, COLLABORATION: 5, DOCUMENTATION: 3, PROJECT_IMPACT: 2 }),
+        decimalRows({
+          CODE_QUALITY: 30,
+          DELIVERY: 20,
+          CODE_REVIEW: 15,
+          TESTING: 15,
+          RELIABILITY: 10,
+          COLLABORATION: 5,
+          DOCUMENTATION: 3,
+          PROJECT_IMPACT: 2,
+        }),
       );
 
       const result = await service.findWeights('org-1');
@@ -95,23 +117,33 @@ describe('ScoringService', () => {
       });
       expect(result.weightVersion).toBe(3);
       expect(result.total).toBe(100);
-      expect(result.categories).toContainEqual({ category: 'CODE_QUALITY', weightPercent: 30 });
-      expect(result.categories.every((c) => typeof c.weightPercent === 'number')).toBe(true);
+      expect(result.categories).toContainEqual({
+        category: 'CODE_QUALITY',
+        weightPercent: 30,
+      });
+      expect(
+        result.categories.every((c) => typeof c.weightPercent === 'number'),
+      ).toBe(true);
     });
   });
 
   describe('setWeights', () => {
     const actor = { actorId: 'user-1' };
 
-    function validCategories(overrideWeights: Partial<Record<string, number>> = {}) {
+    function validCategories(
+      overrideWeights: Partial<Record<string, number>> = {},
+    ) {
       return SCORE_CATEGORIES.map((category) => ({
         category,
-        weightPercent: overrideWeights[category] ?? DEFAULT_SCORING_WEIGHTS[category],
+        weightPercent:
+          overrideWeights[category] ?? DEFAULT_SCORING_WEIGHTS[category],
       }));
     }
 
     it('rejects a total that is not 100% within tolerance', async () => {
-      const categories = validCategories({ CODE_QUALITY: DEFAULT_SCORING_WEIGHTS.CODE_QUALITY - 5 });
+      const categories = validCategories({
+        CODE_QUALITY: DEFAULT_SCORING_WEIGHTS.CODE_QUALITY - 5,
+      });
 
       await expect(
         service.setWeights('org-1', { categories, reason: 'test' }, actor),
@@ -122,9 +154,15 @@ describe('ScoringService', () => {
     it('accepts a total within the rounding tolerance of 100%', async () => {
       // 33.33 + 33.33 + 33.34 style rounding across 8 categories: nudge one
       // category by the epsilon and confirm it is treated as exactly 100%.
-      const categories = validCategories({ CODE_QUALITY: DEFAULT_SCORING_WEIGHTS.CODE_QUALITY + 0.005 });
-      prisma.organization.findUniqueOrThrow.mockResolvedValue({ activeWeightVersion: 1 });
-      prisma.scoringRule.findMany.mockResolvedValue(decimalRows(DEFAULT_SCORING_WEIGHTS));
+      const categories = validCategories({
+        CODE_QUALITY: DEFAULT_SCORING_WEIGHTS.CODE_QUALITY + 0.005,
+      });
+      prisma.organization.findUniqueOrThrow.mockResolvedValue({
+        activeWeightVersion: 1,
+      });
+      prisma.scoringRule.findMany.mockResolvedValue(
+        decimalRows(DEFAULT_SCORING_WEIGHTS),
+      );
       prisma.organizationUser.findMany.mockResolvedValue([]);
 
       await expect(
@@ -157,9 +195,16 @@ describe('ScoringService', () => {
       prisma.scoringRule.findMany
         .mockResolvedValueOnce(decimalRows(DEFAULT_SCORING_WEIGHTS)) // previous
         .mockResolvedValueOnce(decimalRows(DEFAULT_SCORING_WEIGHTS)); // after commit
-      prisma.organizationUser.findMany.mockResolvedValue([{ userId: 'admin-1' }, { userId: 'admin-2' }]);
+      prisma.organizationUser.findMany.mockResolvedValue([
+        { userId: 'admin-1' },
+        { userId: 'admin-2' },
+      ]);
 
-      const result = await service.setWeights('org-1', { categories, reason: 'quarterly review' }, actor);
+      const result = await service.setWeights(
+        'org-1',
+        { categories, reason: 'quarterly review' },
+        actor,
+      );
 
       expect(prisma.scoringRule.updateMany).toHaveBeenCalledWith({
         where: { organizationId: 'org-1', isActive: true },
@@ -176,7 +221,9 @@ describe('ScoringService', () => {
           }),
         ]),
       });
-      expect(prisma.scoringRule.createMany.mock.calls[0][0].data).toHaveLength(8);
+      expect(prisma.scoringRule.createMany.mock.calls[0][0].data).toHaveLength(
+        8,
+      );
       expect(prisma.organization.update).toHaveBeenCalledWith({
         where: { id: 'org-1' },
         data: { activeWeightVersion: 2 },
@@ -193,7 +240,11 @@ describe('ScoringService', () => {
       );
 
       expect(prisma.organizationUser.findMany).toHaveBeenCalledWith({
-        where: { organizationId: 'org-1', role: { key: 'ORGANIZATION_ADMIN' }, status: 'ACTIVE' },
+        where: {
+          organizationId: 'org-1',
+          role: { key: 'ORGANIZATION_ADMIN' },
+          status: 'ACTIVE',
+        },
         select: { userId: true },
       });
       expect(notifications.notifyMany).toHaveBeenCalledWith([
@@ -206,10 +257,18 @@ describe('ScoringService', () => {
   });
 
   describe('computeDeveloperScore', () => {
-    const period = { period: 'MONTHLY' as const, start: new Date('2026-01-01'), end: new Date('2026-01-31') };
+    const period = {
+      period: 'MONTHLY' as const,
+      start: new Date('2026-01-01'),
+      end: new Date('2026-01-31'),
+    };
 
-    function mockWeights(weights: Record<string, number> = DEFAULT_SCORING_WEIGHTS) {
-      prisma.organization.findUniqueOrThrow.mockResolvedValue({ activeWeightVersion: 1 });
+    function mockWeights(
+      weights: Record<string, number> = DEFAULT_SCORING_WEIGHTS,
+    ) {
+      prisma.organization.findUniqueOrThrow.mockResolvedValue({
+        activeWeightVersion: 1,
+      });
       prisma.scoringRule.findMany.mockResolvedValue(decimalRows(weights));
     }
 
@@ -228,9 +287,15 @@ describe('ScoringService', () => {
           builds: 0,
         }),
       );
-      prisma.repositoryMember.findMany.mockResolvedValue([{ repositoryId: 'repo-1' }]);
+      prisma.repositoryMember.findMany.mockResolvedValue([
+        { repositoryId: 'repo-1' },
+      ]);
       prisma.codeQualitySnapshot.findMany.mockResolvedValue([
-        { repositoryId: 'repo-1', qualityScore: new Prisma.Decimal(80), snapshotDate: new Date('2026-01-30') },
+        {
+          repositoryId: 'repo-1',
+          qualityScore: new Prisma.Decimal(80),
+          snapshotDate: new Date('2026-01-30'),
+        },
       ]);
       prisma.developerScore.upsert.mockResolvedValue({ id: 'score-1' });
 
@@ -245,10 +310,16 @@ describe('ScoringService', () => {
           weightVersion: 1,
         },
       });
-      expect((call.create.codeQualityScore as Prisma.Decimal).toNumber()).toBe(80);
-      expect((call.create.deliveryScore as Prisma.Decimal).toNumber()).toBe(100);
+      expect((call.create.codeQualityScore as Prisma.Decimal).toNumber()).toBe(
+        80,
+      );
+      expect((call.create.deliveryScore as Prisma.Decimal).toNumber()).toBe(
+        100,
+      );
       expect((call.create.testingScore as Prisma.Decimal).toNumber()).toBe(100);
-      expect((call.create.collaborationScore as Prisma.Decimal).toNumber()).toBe(80);
+      expect(
+        (call.create.collaborationScore as Prisma.Decimal).toNumber(),
+      ).toBe(80);
       // weighted total = 80*.25 + 100*.20 + 100*.15 + 100*.15 + 100*.10 + 80*.05 + 100*.05 + 100*.05 = 94
       expect((call.create.totalScore as Prisma.Decimal).toNumber()).toBe(94);
       expect(call.create.freshness).toBe('LIVE');
@@ -263,7 +334,9 @@ describe('ScoringService', () => {
       await service.computeDeveloperScore('org-1', 'user-1', period);
 
       const call = prisma.developerScore.upsert.mock.calls[0][0];
-      expect((call.create.codeQualityScore as Prisma.Decimal).toNumber()).toBe(0);
+      expect((call.create.codeQualityScore as Prisma.Decimal).toNumber()).toBe(
+        0,
+      );
       expect(prisma.codeQualitySnapshot.findMany).not.toHaveBeenCalled();
     });
 
@@ -273,11 +346,15 @@ describe('ScoringService', () => {
       prisma.developerScore.upsert.mockResolvedValue({ id: 'score-1' });
 
       // Branch 1: no PRs created — falls back to reviewsGiven / REVIEWS_GIVEN (20).
-      metrics.developerTotals.mockResolvedValue(baseTotals({ prsCreated: 0, reviewsGiven: 10 }));
+      metrics.developerTotals.mockResolvedValue(
+        baseTotals({ prsCreated: 0, reviewsGiven: 10 }),
+      );
       await service.computeDeveloperScore('org-1', 'user-1', period);
       const first = prisma.developerScore.upsert.mock.calls[0][0];
       // reviewParticipation = normalize(10, 20) = 50; CODE_REVIEW = avg(normalize(10,20)=50, 50) = 50
-      expect((first.create.codeReviewScore as Prisma.Decimal).toNumber()).toBe(50);
+      expect((first.create.codeReviewScore as Prisma.Decimal).toNumber()).toBe(
+        50,
+      );
 
       // Branch 2: PRs created — review participation is PR-relative (prsReviewed / prsCreated*2).
       metrics.developerTotals.mockResolvedValue(
@@ -286,7 +363,9 @@ describe('ScoringService', () => {
       await service.computeDeveloperScore('org-1', 'user-1', period);
       const second = prisma.developerScore.upsert.mock.calls[1][0];
       // reviewParticipation = normalize(4, 8) = 50; CODE_REVIEW = avg(normalize(20,20)=100, 50) = 75
-      expect((second.create.codeReviewScore as Prisma.Decimal).toNumber()).toBe(75);
+      expect((second.create.codeReviewScore as Prisma.Decimal).toNumber()).toBe(
+        75,
+      );
     });
 
     it('treats zero builds as full reliability rather than dividing by zero', async () => {
@@ -297,13 +376,21 @@ describe('ScoringService', () => {
       metrics.developerTotals.mockResolvedValue(baseTotals({ builds: 0 }));
       await service.computeDeveloperScore('org-1', 'user-1', period);
       expect(
-        (prisma.developerScore.upsert.mock.calls[0][0].create.reliabilityScore as Prisma.Decimal).toNumber(),
+        (
+          prisma.developerScore.upsert.mock.calls[0][0].create
+            .reliabilityScore as Prisma.Decimal
+        ).toNumber(),
       ).toBe(100);
 
-      metrics.developerTotals.mockResolvedValue(baseTotals({ builds: 10, successfulBuilds: 7 }));
+      metrics.developerTotals.mockResolvedValue(
+        baseTotals({ builds: 10, successfulBuilds: 7 }),
+      );
       await service.computeDeveloperScore('org-1', 'user-1', period);
       expect(
-        (prisma.developerScore.upsert.mock.calls[1][0].create.reliabilityScore as Prisma.Decimal).toNumber(),
+        (
+          prisma.developerScore.upsert.mock.calls[1][0].create
+            .reliabilityScore as Prisma.Decimal
+        ).toNumber(),
       ).toBe(70);
     });
 
@@ -315,17 +402,29 @@ describe('ScoringService', () => {
 
       await service.computeDeveloperScore('org-1', 'user-1', period, 'STALE');
 
-      expect(prisma.developerScore.upsert.mock.calls[0][0].create.freshness).toBe('STALE');
-      expect(prisma.developerScore.upsert.mock.calls[0][0].update.freshness).toBe('STALE');
+      expect(
+        prisma.developerScore.upsert.mock.calls[0][0].create.freshness,
+      ).toBe('STALE');
+      expect(
+        prisma.developerScore.upsert.mock.calls[0][0].update.freshness,
+      ).toBe('STALE');
     });
   });
 
   describe('computeTeamScore', () => {
-    const period = { period: 'MONTHLY' as const, start: new Date('2026-01-01'), end: new Date('2026-01-31') };
+    const period = {
+      period: 'MONTHLY' as const,
+      start: new Date('2026-01-01'),
+      end: new Date('2026-01-31'),
+    };
 
     it('upserts a zero-member score without touching per-developer metrics when the team is empty', async () => {
-      prisma.organization.findUniqueOrThrow.mockResolvedValue({ activeWeightVersion: 1 });
-      prisma.scoringRule.findMany.mockResolvedValue(decimalRows(DEFAULT_SCORING_WEIGHTS));
+      prisma.organization.findUniqueOrThrow.mockResolvedValue({
+        activeWeightVersion: 1,
+      });
+      prisma.scoringRule.findMany.mockResolvedValue(
+        decimalRows(DEFAULT_SCORING_WEIGHTS),
+      );
       prisma.teamMember.findMany.mockResolvedValue([]);
       prisma.teamScore.upsert.mockResolvedValue({ id: 'team-score-1' });
 
@@ -341,9 +440,16 @@ describe('ScoringService', () => {
     });
 
     it('averages each category across members rather than averaging their leaderboard ranks', async () => {
-      prisma.organization.findUniqueOrThrow.mockResolvedValue({ activeWeightVersion: 1 });
-      prisma.scoringRule.findMany.mockResolvedValue(decimalRows(DEFAULT_SCORING_WEIGHTS));
-      prisma.teamMember.findMany.mockResolvedValue([{ userId: 'user-1' }, { userId: 'user-2' }]);
+      prisma.organization.findUniqueOrThrow.mockResolvedValue({
+        activeWeightVersion: 1,
+      });
+      prisma.scoringRule.findMany.mockResolvedValue(
+        decimalRows(DEFAULT_SCORING_WEIGHTS),
+      );
+      prisma.teamMember.findMany.mockResolvedValue([
+        { userId: 'user-1' },
+        { userId: 'user-2' },
+      ]);
       prisma.repositoryMember.findMany.mockResolvedValue([]);
       prisma.teamScore.upsert.mockResolvedValue({ id: 'team-score-1' });
 
@@ -360,13 +466,24 @@ describe('ScoringService', () => {
   });
 
   describe('recomputeOrganization', () => {
-    const period = { period: 'MONTHLY' as const, start: new Date('2026-01-01'), end: new Date('2026-01-31') };
+    const period = {
+      period: 'MONTHLY' as const,
+      start: new Date('2026-01-01'),
+      end: new Date('2026-01-31'),
+    };
 
     it('recomputes every active member and active team exactly once', async () => {
-      prisma.organizationUser.findMany.mockResolvedValue([{ userId: 'user-1' }, { userId: 'user-2' }]);
+      prisma.organizationUser.findMany.mockResolvedValue([
+        { userId: 'user-1' },
+        { userId: 'user-2' },
+      ]);
       prisma.team.findMany.mockResolvedValue([{ id: 'team-1' }]);
-      const developerSpy = jest.spyOn(service, 'computeDeveloperScore').mockResolvedValue(undefined as never);
-      const teamSpy = jest.spyOn(service, 'computeTeamScore').mockResolvedValue(undefined as never);
+      const developerSpy = jest
+        .spyOn(service, 'computeDeveloperScore')
+        .mockResolvedValue(undefined as never);
+      const teamSpy = jest
+        .spyOn(service, 'computeTeamScore')
+        .mockResolvedValue(undefined as never);
 
       const result = await service.recomputeOrganization('org-1', period);
 

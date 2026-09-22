@@ -4,7 +4,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { PermissionKey } from '../common/constants/permissions';
 import { AppException } from '../common/exceptions/app.exception';
-import type { AuthenticatedUser, JwtAccessPayload } from '../common/types/request-context';
+import type {
+  AuthenticatedUser,
+  JwtAccessPayload,
+} from '../common/types/request-context';
 import { UsersRepository } from '../users/users.repository';
 
 /**
@@ -29,18 +32,30 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtAccessPayload): Promise<AuthenticatedUser> {
     if (payload.type !== 'access') {
-      throw AppException.unauthorized('A refresh token cannot be used to call the API');
+      throw AppException.unauthorized(
+        'A refresh token cannot be used to call the API',
+      );
     }
 
-    const membership = await this.users.findMembership(payload.organizationId, payload.sub);
+    const membership = await this.users.findMembership(
+      payload.organizationId,
+      payload.sub,
+    );
     if (!membership) {
-      throw AppException.unauthorized('You are no longer a member of this organization');
+      throw AppException.unauthorized(
+        'You are no longer a member of this organization',
+      );
     }
-    if (membership.status === 'SUSPENDED' || membership.user.status === 'SUSPENDED') {
+    if (
+      membership.status === 'SUSPENDED' ||
+      membership.user.status === 'SUSPENDED'
+    ) {
       throw AppException.forbidden('This account is suspended');
     }
     if (membership.status === 'REMOVED') {
-      throw AppException.unauthorized('You are no longer a member of this organization');
+      throw AppException.unauthorized(
+        'You are no longer a member of this organization',
+      );
     }
 
     return {

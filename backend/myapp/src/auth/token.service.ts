@@ -7,7 +7,10 @@ import type { SignOptions } from 'jsonwebtoken';
 import { ErrorCode } from '../common/constants/error-codes';
 import { AppException } from '../common/exceptions/app.exception';
 import { CryptoService } from '../common/services/crypto.service';
-import type { JwtAccessPayload, JwtRefreshPayload } from '../common/types/request-context';
+import type {
+  JwtAccessPayload,
+  JwtRefreshPayload,
+} from '../common/types/request-context';
 import { PrismaService } from '../database/prisma.service';
 
 export interface TokenPair {
@@ -60,7 +63,10 @@ export class TokenService {
 
     const familyId = input.familyId ?? randomUUID();
     const jti = randomUUID();
-    const refreshExpiresIn = this.config.get<string>('jwt.refreshExpiresIn', '7d');
+    const refreshExpiresIn = this.config.get<string>(
+      'jwt.refreshExpiresIn',
+      '7d',
+    );
 
     const refreshPayload: JwtRefreshPayload = {
       sub: input.userId,
@@ -103,11 +109,19 @@ export class TokenService {
         secret: this.config.getOrThrow<string>('jwt.refreshSecret'),
       });
     } catch {
-      throw new AppException('Refresh token is invalid or expired', ErrorCode.INVALID_REFRESH_TOKEN, 401);
+      throw new AppException(
+        'Refresh token is invalid or expired',
+        ErrorCode.INVALID_REFRESH_TOKEN,
+        401,
+      );
     }
 
     if (payload.type !== 'refresh') {
-      throw new AppException('Provided token is not a refresh token', ErrorCode.INVALID_REFRESH_TOKEN, 401);
+      throw new AppException(
+        'Provided token is not a refresh token',
+        ErrorCode.INVALID_REFRESH_TOKEN,
+        401,
+      );
     }
 
     const record = await this.prisma.refreshToken.findUnique({
@@ -115,7 +129,11 @@ export class TokenService {
     });
 
     if (!record) {
-      throw new AppException('Refresh token is not recognised', ErrorCode.INVALID_REFRESH_TOKEN, 401);
+      throw new AppException(
+        'Refresh token is not recognised',
+        ErrorCode.INVALID_REFRESH_TOKEN,
+        401,
+      );
     }
 
     if (record.revokedAt) {
@@ -128,7 +146,11 @@ export class TokenService {
     }
 
     if (record.expiresAt < new Date()) {
-      throw new AppException('Refresh token has expired', ErrorCode.TOKEN_EXPIRED, 401);
+      throw new AppException(
+        'Refresh token has expired',
+        ErrorCode.TOKEN_EXPIRED,
+        401,
+      );
     }
 
     return payload;
@@ -144,7 +166,10 @@ export class TokenService {
 
   async revoke(refreshToken: string): Promise<void> {
     await this.prisma.refreshToken.updateMany({
-      where: { tokenHash: this.crypto.hashToken(refreshToken), revokedAt: null },
+      where: {
+        tokenHash: this.crypto.hashToken(refreshToken),
+        revokedAt: null,
+      },
       data: { revokedAt: new Date() },
     });
   }
@@ -168,7 +193,9 @@ export class TokenService {
     const match = /^(\d+)\s*([smhd])$/.exec(duration.trim());
     if (!match) return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const value = Number(match[1]);
-    const unitMs = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[match[2]] ?? 86_400_000;
+    const unitMs =
+      { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[match[2]] ??
+      86_400_000;
     return new Date(Date.now() + value * unitMs);
   }
 }

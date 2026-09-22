@@ -15,6 +15,7 @@ import { SyncService } from './sync.service';
 @Module({
   imports: [
     BullModule.registerQueue({ name: QUEUE.GIT_SYNC }),
+    BullModule.registerQueue({ name: QUEUE.RANKING_CALCULATION }),
     GitCoreModule,
     MetricsModule,
     QualityModule,

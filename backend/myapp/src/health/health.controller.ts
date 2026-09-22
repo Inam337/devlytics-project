@@ -15,7 +15,9 @@ export class HealthController {
   @Public()
   @Get()
   @ResponseMessage('Service is healthy')
-  @ApiOperation({ summary: 'Liveness and database readiness probe used by Docker' })
+  @ApiOperation({
+    summary: 'Liveness and database readiness probe used by Docker',
+  })
   async check() {
     const database = await this.prisma.isHealthy();
     const payload = {

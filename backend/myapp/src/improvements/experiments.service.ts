@@ -34,7 +34,10 @@ const ALLOWED_TRANSITIONS: Record<ExperimentStatus, ExperimentStatus[]> = {
   CANCELLED: [],
 };
 
-function assertTransition(current: ExperimentStatus, target: ExperimentStatus): void {
+function assertTransition(
+  current: ExperimentStatus,
+  target: ExperimentStatus,
+): void {
   if (!ALLOWED_TRANSITIONS[current]?.includes(target)) {
     throw AppException.badRequest(
       `Cannot transition experiment from ${current} to ${target}`,
@@ -47,15 +50,32 @@ function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
-function metricToView<T extends { baselineValue: unknown; targetValue: unknown; currentValue: unknown; finalValue: unknown }>(
-  metric: T,
-) {
+function metricToView<
+  T extends {
+    baselineValue: unknown;
+    targetValue: unknown;
+    currentValue: unknown;
+    finalValue: unknown;
+  },
+>(metric: T) {
   return {
     ...metric,
-    baselineValue: metric.baselineValue === null ? null : NumberUtil.toNumber(metric.baselineValue as Prisma.Decimal),
-    targetValue: metric.targetValue === null ? null : NumberUtil.toNumber(metric.targetValue as Prisma.Decimal),
-    currentValue: metric.currentValue === null ? null : NumberUtil.toNumber(metric.currentValue as Prisma.Decimal),
-    finalValue: metric.finalValue === null ? null : NumberUtil.toNumber(metric.finalValue as Prisma.Decimal),
+    baselineValue:
+      metric.baselineValue === null
+        ? null
+        : NumberUtil.toNumber(metric.baselineValue as Prisma.Decimal),
+    targetValue:
+      metric.targetValue === null
+        ? null
+        : NumberUtil.toNumber(metric.targetValue as Prisma.Decimal),
+    currentValue:
+      metric.currentValue === null
+        ? null
+        : NumberUtil.toNumber(metric.currentValue as Prisma.Decimal),
+    finalValue:
+      metric.finalValue === null
+        ? null
+        : NumberUtil.toNumber(metric.finalValue as Prisma.Decimal),
   };
 }
 
@@ -76,16 +96,25 @@ export class ExperimentsService {
     private readonly progressCalculation: ProgressCalculationService,
   ) {}
 
-  async create(organizationId: string, dto: CreateExperimentDto, actor: ActorContext) {
+  async create(
+    organizationId: string,
+    dto: CreateExperimentDto,
+    actor: ActorContext,
+  ) {
     const startDate = new Date(dto.startDate);
     const endDate = dto.endDate ? new Date(dto.endDate) : undefined;
     if (endDate && endDate <= startDate) {
-      throw AppException.badRequest('endDate must be after startDate', 'INVALID_DATE_RANGE');
+      throw AppException.badRequest(
+        'endDate must be after startDate',
+        'INVALID_DATE_RANGE',
+      );
     }
 
     await this.verifyTenantReferences(organizationId, dto);
 
-    const hasExplicitScope = Boolean(dto.userId || dto.teamId || dto.projectId || dto.repositoryId);
+    const hasExplicitScope = Boolean(
+      dto.userId || dto.teamId || dto.projectId || dto.repositoryId,
+    );
     const userId = dto.userId ?? (hasExplicitScope ? undefined : actor.actorId);
 
     const experiment = await this.prisma.engineeringExperiment.create({
@@ -140,7 +169,12 @@ export class ExperimentsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.engineeringExperiment.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'createdAt'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'createdAt',
+        ),
         skip: query.skip,
         take: query.limit,
         include: {
@@ -172,7 +206,12 @@ export class ExperimentsService {
     };
   }
 
-  async update(organizationId: string, id: string, dto: UpdateExperimentDto, actor: ActorContext) {
+  async update(
+    organizationId: string,
+    id: string,
+    dto: UpdateExperimentDto,
+    actor: ActorContext,
+  ) {
     const existing = await this.findExperimentOrThrow(organizationId, id);
 
     if (dto.status && dto.status !== existing.status) {
@@ -187,7 +226,10 @@ export class ExperimentsService {
 
     const endDate = dto.endDate ? new Date(dto.endDate) : undefined;
     if (endDate && endDate <= existing.startDate) {
-      throw AppException.badRequest('endDate must be after startDate', 'INVALID_DATE_RANGE');
+      throw AppException.badRequest(
+        'endDate must be after startDate',
+        'INVALID_DATE_RANGE',
+      );
     }
 
     const updated = await this.prisma.engineeringExperiment.update({
@@ -247,7 +289,9 @@ export class ExperimentsService {
   }
 
   async start(organizationId: string, id: string, actor: ActorContext) {
-    const experiment = await this.findExperimentOrThrow(organizationId, id, { metrics: true });
+    const experiment = await this.findExperimentOrThrow(organizationId, id, {
+      metrics: true,
+    });
     assertTransition(experiment.status, 'ACTIVE');
 
     if (experiment.status !== 'PAUSED') {
@@ -280,7 +324,10 @@ export class ExperimentsService {
     const experiment = await this.findExperimentOrThrow(organizationId, id);
     assertTransition(experiment.status, 'PAUSED');
 
-    const updated = await this.prisma.engineeringExperiment.update({ where: { id }, data: { status: 'PAUSED' } });
+    const updated = await this.prisma.engineeringExperiment.update({
+      where: { id },
+      data: { status: 'PAUSED' },
+    });
 
     await this.audit.record({
       organizationId,
@@ -300,10 +347,15 @@ export class ExperimentsService {
   }
 
   async complete(organizationId: string, id: string, actor: ActorContext) {
-    const experiment = await this.findExperimentOrThrow(organizationId, id, { metrics: true });
+    const experiment = await this.findExperimentOrThrow(organizationId, id, {
+      metrics: true,
+    });
     assertTransition(experiment.status, 'COMPLETED');
 
-    const resultSummary = await this.captureFinalMeasurements(organizationId, experiment);
+    const resultSummary = await this.captureFinalMeasurements(
+      organizationId,
+      experiment,
+    );
 
     const updated = await this.prisma.engineeringExperiment.update({
       where: { id },
@@ -331,7 +383,10 @@ export class ExperimentsService {
     const experiment = await this.findExperimentOrThrow(organizationId, id);
     assertTransition(experiment.status, 'CANCELLED');
 
-    const updated = await this.prisma.engineeringExperiment.update({ where: { id }, data: { status: 'CANCELLED' } });
+    const updated = await this.prisma.engineeringExperiment.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
 
     await this.audit.record({
       organizationId,
@@ -363,13 +418,24 @@ export class ExperimentsService {
     return metrics.map(metricToView);
   }
 
-  async addMetric(organizationId: string, experimentId: string, dto: CreateExperimentMetricDto, actor: ActorContext) {
-    const experiment = await this.findExperimentOrThrow(organizationId, experimentId);
+  async addMetric(
+    organizationId: string,
+    experimentId: string,
+    dto: CreateExperimentMetricDto,
+    actor: ActorContext,
+  ) {
+    const experiment = await this.findExperimentOrThrow(
+      organizationId,
+      experimentId,
+    );
 
     const duplicate = await this.prisma.experimentMetric.findUnique({
-      where: { experimentId_metricKey: { experimentId, metricKey: dto.metricKey } },
+      where: {
+        experimentId_metricKey: { experimentId, metricKey: dto.metricKey },
+      },
     });
-    if (duplicate) throw AppException.duplicate('Experiment metric', 'metricKey');
+    if (duplicate)
+      throw AppException.duplicate('Experiment metric', 'metricKey');
 
     if (dto.isPrimary) {
       await this.prisma.experimentMetric.updateMany({
@@ -422,7 +488,11 @@ export class ExperimentsService {
       summary: `Metric '${metric.metricName}' added to experiment '${experiment.title}'`,
       entityType: 'ExperimentMetric',
       entityId: metric.id,
-      after: { metricKey: metric.metricKey, baselineValue, targetValue: dto.targetValue },
+      after: {
+        metricKey: metric.metricKey,
+        baselineValue,
+        targetValue: dto.targetValue,
+      },
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
     });
@@ -438,7 +508,9 @@ export class ExperimentsService {
     actor: ActorContext,
   ) {
     await this.findExperimentOrThrow(organizationId, experimentId);
-    const metric = await this.prisma.experimentMetric.findFirst({ where: { id: metricId, experimentId } });
+    const metric = await this.prisma.experimentMetric.findFirst({
+      where: { id: metricId, experimentId },
+    });
     if (!metric) throw AppException.notFound('Experiment metric', metricId);
 
     if (dto.isPrimary) {
@@ -473,9 +545,16 @@ export class ExperimentsService {
     return metricToView(updated);
   }
 
-  async removeMetric(organizationId: string, experimentId: string, metricId: string, actor: ActorContext) {
+  async removeMetric(
+    organizationId: string,
+    experimentId: string,
+    metricId: string,
+    actor: ActorContext,
+  ) {
     await this.findExperimentOrThrow(organizationId, experimentId);
-    const metric = await this.prisma.experimentMetric.findFirst({ where: { id: metricId, experimentId } });
+    const metric = await this.prisma.experimentMetric.findFirst({
+      where: { id: metricId, experimentId },
+    });
     if (!metric) throw AppException.notFound('Experiment metric', metricId);
 
     await this.prisma.experimentMetric.delete({ where: { id: metricId } });
@@ -500,12 +579,25 @@ export class ExperimentsService {
   // ---------------------------------------------------------------------
 
   async progress(organizationId: string, experimentId: string) {
-    const experiment = await this.findExperimentOrThrow(organizationId, experimentId, { metrics: true });
+    const experiment = await this.findExperimentOrThrow(
+      organizationId,
+      experimentId,
+      { metrics: true },
+    );
 
     const metrics = experiment.metrics.map((metric) => {
-      const baseline = metric.baselineValue === null ? null : NumberUtil.toNumber(metric.baselineValue);
-      const target = metric.targetValue === null ? null : NumberUtil.toNumber(metric.targetValue);
-      const current = metric.currentValue === null ? null : NumberUtil.toNumber(metric.currentValue);
+      const baseline =
+        metric.baselineValue === null
+          ? null
+          : NumberUtil.toNumber(metric.baselineValue);
+      const target =
+        metric.targetValue === null
+          ? null
+          : NumberUtil.toNumber(metric.targetValue);
+      const current =
+        metric.currentValue === null
+          ? null
+          : NumberUtil.toNumber(metric.currentValue);
 
       const status =
         baseline === null || target === null
@@ -521,7 +613,12 @@ export class ExperimentsService {
 
       const percentComplete =
         baseline !== null && target !== null && current !== null
-          ? this.progressCalculation.percentComplete(metric.direction, baseline, target, current)
+          ? this.progressCalculation.percentComplete(
+              metric.direction,
+              baseline,
+              target,
+              current,
+            )
           : null;
 
       return {
@@ -548,7 +645,9 @@ export class ExperimentsService {
   }
 
   /** Recomputes `currentValue` for every metric of every ACTIVE experiment — called by the background job. */
-  async refreshActiveExperimentMetrics(organizationId: string): Promise<number> {
+  async refreshActiveExperimentMetrics(
+    organizationId: string,
+  ): Promise<number> {
     const experiments = await this.prisma.engineeringExperiment.findMany({
       where: { organizationId, status: 'ACTIVE' },
       include: { metrics: true },
@@ -582,11 +681,9 @@ export class ExperimentsService {
   // Internals
   // ---------------------------------------------------------------------
 
-  private async findExperimentOrThrow<T extends Prisma.EngineeringExperimentInclude = Record<string, never>>(
-    organizationId: string,
-    id: string,
-    include?: T,
-  ) {
+  private async findExperimentOrThrow<
+    T extends Prisma.EngineeringExperimentInclude = Record<string, never>,
+  >(organizationId: string, id: string, include?: T) {
     const experiment = await this.prisma.engineeringExperiment.findFirst({
       where: { id, organizationId },
       include,
@@ -595,7 +692,12 @@ export class ExperimentsService {
     return experiment as Prisma.EngineeringExperimentGetPayload<{ include: T }>;
   }
 
-  private scopeOf(experiment: { userId: string | null; teamId: string | null; projectId: string | null; repositoryId: string | null }) {
+  private scopeOf(experiment: {
+    userId: string | null;
+    teamId: string | null;
+    projectId: string | null;
+    repositoryId: string | null;
+  }) {
     return {
       userId: experiment.userId,
       teamId: experiment.teamId,
@@ -668,7 +770,10 @@ export class ExperimentsService {
       metrics: { id: string; metricKey: string }[];
     },
   ): Promise<Prisma.InputJsonValue> {
-    const end = experiment.endDate && experiment.endDate < new Date() ? experiment.endDate : new Date();
+    const end =
+      experiment.endDate && experiment.endDate < new Date()
+        ? experiment.endDate
+        : new Date();
     const summary: Record<string, unknown> = {};
     const scope = this.scopeOf(experiment);
 
@@ -698,28 +803,38 @@ export class ExperimentsService {
     return summary as Prisma.InputJsonValue;
   }
 
-  private async verifyTenantReferences(organizationId: string, dto: CreateExperimentDto): Promise<void> {
+  private async verifyTenantReferences(
+    organizationId: string,
+    dto: CreateExperimentDto,
+  ): Promise<void> {
     const checks: Promise<void>[] = [];
 
     if (dto.teamId) {
       checks.push(
-        this.prisma.team.findFirst({ where: { id: dto.teamId, organizationId } }).then((row) => {
-          if (!row) throw AppException.notFound('Team', dto.teamId);
-        }),
+        this.prisma.team
+          .findFirst({ where: { id: dto.teamId, organizationId } })
+          .then((row) => {
+            if (!row) throw AppException.notFound('Team', dto.teamId);
+          }),
       );
     }
     if (dto.projectId) {
       checks.push(
-        this.prisma.project.findFirst({ where: { id: dto.projectId, organizationId } }).then((row) => {
-          if (!row) throw AppException.notFound('Project', dto.projectId);
-        }),
+        this.prisma.project
+          .findFirst({ where: { id: dto.projectId, organizationId } })
+          .then((row) => {
+            if (!row) throw AppException.notFound('Project', dto.projectId);
+          }),
       );
     }
     if (dto.repositoryId) {
       checks.push(
-        this.prisma.repository.findFirst({ where: { id: dto.repositoryId, organizationId } }).then((row) => {
-          if (!row) throw AppException.notFound('Repository', dto.repositoryId);
-        }),
+        this.prisma.repository
+          .findFirst({ where: { id: dto.repositoryId, organizationId } })
+          .then((row) => {
+            if (!row)
+              throw AppException.notFound('Repository', dto.repositoryId);
+          }),
       );
     }
     if (dto.recommendationId) {
@@ -727,21 +842,31 @@ export class ExperimentsService {
         this.prisma.improvementRecommendation
           .findFirst({ where: { id: dto.recommendationId, organizationId } })
           .then((row) => {
-            if (!row) throw AppException.notFound('Recommendation', dto.recommendationId);
+            if (!row)
+              throw AppException.notFound(
+                'Recommendation',
+                dto.recommendationId,
+              );
           }),
       );
     }
     if (dto.goalId) {
       checks.push(
-        this.prisma.improvementGoal.findFirst({ where: { id: dto.goalId, organizationId } }).then((row) => {
-          if (!row) throw AppException.notFound('Goal', dto.goalId);
-        }),
+        this.prisma.improvementGoal
+          .findFirst({ where: { id: dto.goalId, organizationId } })
+          .then((row) => {
+            if (!row) throw AppException.notFound('Goal', dto.goalId);
+          }),
       );
     }
     if (dto.userId) {
       checks.push(
         this.prisma.organizationUser
-          .findUnique({ where: { organizationId_userId: { organizationId, userId: dto.userId } } })
+          .findUnique({
+            where: {
+              organizationId_userId: { organizationId, userId: dto.userId },
+            },
+          })
           .then((row) => {
             if (!row) throw AppException.notFound('User', dto.userId);
           }),

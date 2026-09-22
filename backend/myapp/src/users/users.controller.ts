@@ -35,7 +35,10 @@ export class UsersController {
   @Get()
   @RequirePermissions(Permission.USER_READ)
   @ApiOperation({ summary: 'List organization members' })
-  findAll(@OrganizationId() organizationId: string, @Query() query: UserQueryDto) {
+  findAll(
+    @OrganizationId() organizationId: string,
+    @Query() query: UserQueryDto,
+  ) {
     return this.usersService.findAll(organizationId, query);
   }
 
@@ -49,7 +52,10 @@ export class UsersController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.usersService.invite(organizationId, dto, { actorId: userId, ...client });
+    return this.usersService.invite(organizationId, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get(':id')
@@ -65,7 +71,9 @@ export class UsersController {
   @Patch(':id')
   @RequirePermissions(Permission.USER_UPDATE)
   @ResponseMessage('User updated successfully')
-  @ApiOperation({ summary: 'Update a member profile, role or membership status' })
+  @ApiOperation({
+    summary: 'Update a member profile, role or membership status',
+  })
   update(
     @OrganizationId() organizationId: string,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
@@ -85,7 +93,8 @@ export class UsersController {
   @RequirePermissions(Permission.USER_DELETE)
   @ResponseMessage('User removed from the organization')
   @ApiOperation({
-    summary: 'Remove a member (measured history is retained, membership is marked removed)',
+    summary:
+      'Remove a member (measured history is retained, membership is marked removed)',
   })
   remove(
     @OrganizationId() organizationId: string,
@@ -93,6 +102,9 @@ export class UsersController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.usersService.remove(organizationId, id, { actorId: userId, ...client });
+    return this.usersService.remove(organizationId, id, {
+      actorId: userId,
+      ...client,
+    });
   }
 }

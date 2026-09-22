@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permission } from '../common/constants/permissions';
 import {
@@ -20,7 +27,9 @@ export class RolesController {
 
   @Get()
   @RequirePermissions(Permission.ROLE_READ)
-  @ApiOperation({ summary: 'List roles with their permission scope and member counts' })
+  @ApiOperation({
+    summary: 'List roles with their permission scope and member counts',
+  })
   findAll(@OrganizationId() organizationId: string) {
     return this.rolesService.findAll(organizationId);
   }
@@ -38,7 +47,9 @@ export class RolesController {
   @Patch(':id/permissions')
   @RequirePermissions(Permission.ROLE_UPDATE)
   @ResponseMessage('Role permissions updated successfully')
-  @ApiOperation({ summary: 'Replace a role permission scope (audit-logged with before/after)' })
+  @ApiOperation({
+    summary: 'Replace a role permission scope (audit-logged with before/after)',
+  })
   updatePermissions(
     @OrganizationId() organizationId: string,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

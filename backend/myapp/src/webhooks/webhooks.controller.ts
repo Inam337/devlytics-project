@@ -1,4 +1,12 @@
-import { Controller, Headers, HttpCode, HttpStatus, Post, RawBodyRequest, Req } from '@nestjs/common';
+import {
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+  RawBodyRequest,
+  Req,
+} from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Public, ResponseMessage } from '../common/decorators';
@@ -48,6 +56,10 @@ export class WebhooksController {
     const payload = JSON.parse(request.rawBody.toString('utf8')) as {
       project?: { path_with_namespace?: string };
     };
-    return this.webhooksService.handleGitlab(token, event ?? 'unknown', payload.project?.path_with_namespace);
+    return this.webhooksService.handleGitlab(
+      token,
+      event ?? 'unknown',
+      payload.project?.path_with_namespace,
+    );
   }
 }

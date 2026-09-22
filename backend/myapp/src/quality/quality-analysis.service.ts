@@ -1,9 +1,13 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
+import { Queue } from 'bullmq';
 import { NumberUtil } from '../common/utils/number.util';
 import { AppException } from '../common/exceptions/app.exception';
 import { PrismaService } from '../database/prisma.service';
+import { QUEUE } from '../queue/queue.constants';
+import { safeEnqueue } from '../queue/queue.util';
 import { evaluateRules, RepositoryEvidence } from './quality-rules';
 
 const LARGE_PR_LINE_THRESHOLD = 400;
@@ -31,6 +35,8 @@ export class QualityAnalysisService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    @InjectQueue(QUEUE.IMPROVEMENT_PROGRESS)
+    private readonly improvementProgressQueue: Queue,
   ) {}
 
   async analyzeRepository(
@@ -45,7 +51,12 @@ export class QualityAnalysisService {
 
     const windowDays = 30;
     const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
-    const evidence = await this.gatherEvidence(organizationId, repositoryId, since, windowDays);
+    const evidence = await this.gatherEvidence(
+      organizationId,
+      repositoryId,
+      since,
+      windowDays,
+    );
     const findings = evaluateRules(evidence);
 
     const runNumber = await this.nextRunNumber(organizationId);
@@ -84,7 +95,13 @@ export class QualityAnalysisService {
         });
       }
 
-      const snapshot = await this.buildSnapshot(organizationId, repository, run.id, evidence, findings.length);
+      const snapshot = await this.buildSnapshot(
+        organizationId,
+        repository,
+        run.id,
+        evidence,
+        findings.length,
+      );
 
       await this.prisma.aiAnalysisRun.update({
         where: { id: run.id },
@@ -99,6 +116,17 @@ export class QualityAnalysisService {
 
       this.logger.log(
         `Analysis run #${runNumber} for ${repository.fullName}: ${findings.length} findings, quality score ${snapshot.qualityScore}`,
+      );
+
+      // Single trigger point for goal re-evaluation regardless of which
+      // entry point ran this analysis (git-sync, a standalone quality scan,
+      // or an AI analysis trigger) — avoids evaluating the same snapshot
+      // against goals more than once.
+      await safeEnqueue(
+        this.improvementProgressQueue,
+        'evaluate-goals',
+        { organizationId, repositoryId, requestedBy: requestedById },
+        this.logger,
       );
 
       return {
@@ -130,18 +158,32 @@ export class QualityAnalysisService {
   ): Promise<RepositoryEvidence> {
     const [commitAgg, fileAgg, prAgg, buildAgg] = await Promise.all([
       this.prisma.commit.aggregate({
-        where: { organizationId, repositoryId, isBot: false, committedAt: { gte: since } },
+        where: {
+          organizationId,
+          repositoryId,
+          isBot: false,
+          committedAt: { gte: since },
+        },
         _count: { _all: true },
         _sum: { changedFiles: true },
       }),
       this.prisma.commitFile.aggregate({
         where: {
-          commit: { organizationId, repositoryId, isBot: false, committedAt: { gte: since } },
+          commit: {
+            organizationId,
+            repositoryId,
+            isBot: false,
+            committedAt: { gte: since },
+          },
         },
         _count: { _all: true },
       }),
       this.prisma.pullRequest.count({
-        where: { organizationId, repositoryId, createdAtExternal: { gte: since } },
+        where: {
+          organizationId,
+          repositoryId,
+          createdAtExternal: { gte: since },
+        },
       }),
       this.prisma.ciPipeline.aggregate({
         where: { organizationId, repositoryId, createdAt: { gte: since } },
@@ -149,34 +191,50 @@ export class QualityAnalysisService {
       }),
     ]);
 
-    const [testFileChanges, docFileChanges, failedBuilds, actuallyLargePrs] = await Promise.all([
-      this.prisma.commitFile.count({
-        where: {
-          isTestFile: true,
-          commit: { organizationId, repositoryId, isBot: false, committedAt: { gte: since } },
-        },
-      }),
-      this.prisma.commitFile.count({
-        where: {
-          isDocFile: true,
-          commit: { organizationId, repositoryId, isBot: false, committedAt: { gte: since } },
-        },
-      }),
-      this.prisma.ciPipeline.count({
-        where: { organizationId, repositoryId, createdAt: { gte: since }, status: 'FAILED' },
-      }),
-      this.prisma.pullRequest.count({
-        where: {
-          organizationId,
-          repositoryId,
-          createdAtExternal: { gte: since },
-          OR: [
-            { additions: { gt: LARGE_PR_LINE_THRESHOLD } },
-            { deletions: { gt: LARGE_PR_LINE_THRESHOLD } },
-          ],
-        },
-      }),
-    ]);
+    const [testFileChanges, docFileChanges, failedBuilds, actuallyLargePrs] =
+      await Promise.all([
+        this.prisma.commitFile.count({
+          where: {
+            isTestFile: true,
+            commit: {
+              organizationId,
+              repositoryId,
+              isBot: false,
+              committedAt: { gte: since },
+            },
+          },
+        }),
+        this.prisma.commitFile.count({
+          where: {
+            isDocFile: true,
+            commit: {
+              organizationId,
+              repositoryId,
+              isBot: false,
+              committedAt: { gte: since },
+            },
+          },
+        }),
+        this.prisma.ciPipeline.count({
+          where: {
+            organizationId,
+            repositoryId,
+            createdAt: { gte: since },
+            status: 'FAILED',
+          },
+        }),
+        this.prisma.pullRequest.count({
+          where: {
+            organizationId,
+            repositoryId,
+            createdAtExternal: { gte: since },
+            OR: [
+              { additions: { gt: LARGE_PR_LINE_THRESHOLD } },
+              { deletions: { gt: LARGE_PR_LINE_THRESHOLD } },
+            ],
+          },
+        }),
+      ]);
 
     const commits = commitAgg._count._all;
     const filesChanged = fileAgg._count._all;
@@ -191,7 +249,10 @@ export class QualityAnalysisService {
       largePullRequests: actuallyLargePrs,
       totalBuilds: buildAgg._count._all,
       failedBuilds,
-      avgFilesPerCommit: commits > 0 ? NumberUtil.round((commitAgg._sum.changedFiles ?? 0) / commits) : 0,
+      avgFilesPerCommit:
+        commits > 0
+          ? NumberUtil.round((commitAgg._sum.changedFiles ?? 0) / commits)
+          : 0,
     };
   }
 
@@ -206,7 +267,10 @@ export class QualityAnalysisService {
       ? NumberUtil.percent(evidence.testFileChanges, evidence.filesChanged)
       : 0;
     const ciReliability = evidence.totalBuilds
-      ? NumberUtil.percent(evidence.totalBuilds - evidence.failedBuilds, evidence.totalBuilds)
+      ? NumberUtil.percent(
+          evidence.totalBuilds - evidence.failedBuilds,
+          evidence.totalBuilds,
+        )
       : 100;
     const codeSmells = issueCount;
     const maintainabilityScore = NumberUtil.clampScore(
@@ -214,7 +278,9 @@ export class QualityAnalysisService {
     );
 
     const qualityScore = NumberUtil.clampScore(
-      testCoverageProxy * 0.35 + ciReliability * 0.35 + maintainabilityScore * 0.3,
+      testCoverageProxy * 0.35 +
+        ciReliability * 0.35 +
+        maintainabilityScore * 0.3,
     );
 
     const totalLoc = await this.prisma.commit.aggregate({
@@ -244,7 +310,8 @@ export class QualityAnalysisService {
         maintainabilityScore: new Prisma.Decimal(maintainabilityScore),
         maintainabilityRating: ratingFor(maintainabilityScore),
         technicalDebtMinutes: codeSmells * 20,
-        locTotal: (totalLoc._sum.additions ?? 0) + (totalLoc._sum.deletions ?? 0),
+        locTotal:
+          (totalLoc._sum.additions ?? 0) + (totalLoc._sum.deletions ?? 0),
         metadata: {
           evidence,
           limitations: [
@@ -267,7 +334,8 @@ export class QualityAnalysisService {
         maintainabilityScore: new Prisma.Decimal(maintainabilityScore),
         maintainabilityRating: ratingFor(maintainabilityScore),
         technicalDebtMinutes: codeSmells * 20,
-        locTotal: (totalLoc._sum.additions ?? 0) + (totalLoc._sum.deletions ?? 0),
+        locTotal:
+          (totalLoc._sum.additions ?? 0) + (totalLoc._sum.deletions ?? 0),
         metadata: {
           evidence,
           limitations: [

@@ -7,7 +7,9 @@ export interface PeriodRange {
 }
 
 const startOfUtcDay = (date: Date): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 
 const addDays = (date: Date, days: number): Date =>
   new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
@@ -61,16 +63,26 @@ export const PeriodUtil = {
   },
 
   /** An explicit from/to range, defaulting to the last `defaultDays` days. */
-  range(from?: string | Date, to?: string | Date, defaultDays = 30): { start: Date; end: Date } {
+  range(
+    from?: string | Date,
+    to?: string | Date,
+    defaultDays = 30,
+  ): { start: Date; end: Date } {
     const end = to ? startOfUtcDay(new Date(to)) : startOfUtcDay(new Date());
-    const start = from ? startOfUtcDay(new Date(from)) : addDays(end, -(defaultDays - 1));
+    const start = from
+      ? startOfUtcDay(new Date(from))
+      : addDays(end, -(defaultDays - 1));
     return start > end ? { start: end, end: start } : { start, end };
   },
 
   /** Every UTC day in the inclusive range, used to fill gaps in trend series. */
   eachDay(start: Date, end: Date): Date[] {
     const days: Date[] = [];
-    for (let cursor = startOfUtcDay(start); cursor <= end; cursor = addDays(cursor, 1)) {
+    for (
+      let cursor = startOfUtcDay(start);
+      cursor <= end;
+      cursor = addDays(cursor, 1)
+    ) {
       days.push(cursor);
     }
     return days;

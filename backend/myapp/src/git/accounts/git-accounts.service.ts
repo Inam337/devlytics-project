@@ -1,11 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GitIdentityClassification, Prisma } from '@prisma/client';
 import { AuditService } from '../../audit/audit.service';
-import { PaginatedResult, PaginationQueryDto } from '../../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+} from '../../common/dto/pagination.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../database/prisma.service';
 import type { ActorContext } from '../../organizations/organizations.service';
-import { ClassifyGitIdentityDto, LinkGitIdentityDto } from '../providers/dto/git-provider.dto';
+import {
+  ClassifyGitIdentityDto,
+  LinkGitIdentityDto,
+} from '../providers/dto/git-provider.dto';
 
 /** Automation accounts recognised by name, in addition to provider bot flags. */
 const BOT_PATTERNS = [
@@ -45,7 +51,10 @@ export class GitAccountsService {
     private readonly audit: AuditService,
   ) {}
 
-  static isBotIdentity(username?: string | null, email?: string | null): boolean {
+  static isBotIdentity(
+    username?: string | null,
+    email?: string | null,
+  ): boolean {
     const subject = username ?? email ?? '';
     return BOT_PATTERNS.some((pattern) => pattern.test(subject));
   }
@@ -54,24 +63,36 @@ export class GitAccountsService {
    * Upserts an identity seen during collection and attempts to match it.
    * Idempotent, so replaying a sync never creates duplicates.
    */
-  async resolve(candidate: IdentityCandidate): Promise<{ userId: string | null; isBot: boolean }> {
+  async resolve(
+    candidate: IdentityCandidate,
+  ): Promise<{ userId: string | null; isBot: boolean }> {
     const username = candidate.username?.trim() || candidate.email?.trim();
     if (!username) return { userId: null, isBot: false };
 
-    const isBot = GitAccountsService.isBotIdentity(candidate.username, candidate.email);
+    const isBot = GitAccountsService.isBotIdentity(
+      candidate.username,
+      candidate.email,
+    );
     const email = candidate.email?.trim().toLowerCase() || null;
 
     const existing = await this.prisma.gitAccount.findUnique({
-      where: { providerId_username: { providerId: candidate.providerId, username } },
+      where: {
+        providerId_username: { providerId: candidate.providerId, username },
+      },
     });
 
     // A manual link is authoritative; never overwrite it with a heuristic match.
-    if (existing?.userId) return { userId: existing.userId, isBot: existing.isBot };
+    if (existing?.userId)
+      return { userId: existing.userId, isBot: existing.isBot };
 
-    const matchedUserId = isBot ? null : await this.matchUser(candidate.organizationId, email, username);
+    const matchedUserId = isBot
+      ? null
+      : await this.matchUser(candidate.organizationId, email, username);
 
     const account = await this.prisma.gitAccount.upsert({
-      where: { providerId_username: { providerId: candidate.providerId, username } },
+      where: {
+        providerId_username: { providerId: candidate.providerId, username },
+      },
       update: {
         commitEmail: email ?? existing?.commitEmail,
         avatarUrl: candidate.avatarUrl ?? existing?.avatarUrl,
@@ -135,8 +156,12 @@ export class GitAccountsService {
         skip: query.skip,
         take: query.limit,
         include: {
-          user: { select: { id: true, firstName: true, lastName: true, email: true } },
-          provider: { select: { id: true, providerType: true, displayName: true } },
+          user: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          provider: {
+            select: { id: true, providerType: true, displayName: true },
+          },
         },
       }),
       this.prisma.gitAccount.count({ where }),
@@ -146,8 +171,15 @@ export class GitAccountsService {
   }
 
   /** Manually attaches an unmatched identity to a member. */
-  async link(organizationId: string, id: string, dto: LinkGitIdentityDto, actor: ActorContext) {
-    const account = await this.prisma.gitAccount.findFirst({ where: { id, organizationId } });
+  async link(
+    organizationId: string,
+    id: string,
+    dto: LinkGitIdentityDto,
+    actor: ActorContext,
+  ) {
+    const account = await this.prisma.gitAccount.findFirst({
+      where: { id, organizationId },
+    });
     if (!account) throw AppException.notFound('Git identity', id);
 
     const membership = await this.prisma.organizationUser.findUnique({
@@ -155,7 +187,9 @@ export class GitAccountsService {
       select: { status: true },
     });
     if (!membership || membership.status === 'REMOVED') {
-      throw AppException.unprocessable('That user is not a member of this organization');
+      throw AppException.unprocessable(
+        'That user is not a member of this organization',
+      );
     }
 
     const updated = await this.prisma.gitAccount.update({
@@ -179,8 +213,14 @@ export class GitAccountsService {
       summary: `Git identity '${account.username}' linked to a member`,
       entityType: 'GitAccount',
       entityId: id,
-      before: { userId: account.userId, classification: account.classification },
-      after: { userId: dto.userId, classification: GitIdentityClassification.MATCHED },
+      before: {
+        userId: account.userId,
+        classification: account.classification,
+      },
+      after: {
+        userId: dto.userId,
+        classification: GitIdentityClassification.MATCHED,
+      },
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
     });
@@ -195,7 +235,9 @@ export class GitAccountsService {
     dto: ClassifyGitIdentityDto,
     actor: ActorContext,
   ) {
-    const account = await this.prisma.gitAccount.findFirst({ where: { id, organizationId } });
+    const account = await this.prisma.gitAccount.findFirst({
+      where: { id, organizationId },
+    });
     if (!account) throw AppException.notFound('Git identity', id);
 
     const updated = await this.prisma.gitAccount.update({
@@ -213,7 +255,10 @@ export class GitAccountsService {
 
     if (dto.isBot) {
       await this.prisma.commit.updateMany({
-        where: { organizationId, metadata: { path: ['authorUsername'], equals: account.username } },
+        where: {
+          organizationId,
+          metadata: { path: ['authorUsername'], equals: account.username },
+        },
         data: { isBot: true, authorId: null },
       });
     }
@@ -238,8 +283,13 @@ export class GitAccountsService {
   /** Identities awaiting manual review — they score nothing until resolved. */
   async reviewQueue(organizationId: string) {
     const unmatched = await this.prisma.gitAccount.findMany({
-      where: { organizationId, classification: GitIdentityClassification.UNMATCHED },
-      include: { provider: { select: { providerType: true, displayName: true } } },
+      where: {
+        organizationId,
+        classification: GitIdentityClassification.UNMATCHED,
+      },
+      include: {
+        provider: { select: { providerType: true, displayName: true } },
+      },
       orderBy: { username: 'asc' },
     });
 
@@ -272,7 +322,11 @@ export class GitAccountsService {
   }
 
   /** Re-points previously unattributed activity at the newly linked member. */
-  private async reattributeHistory(organizationId: string, username: string, userId: string) {
+  private async reattributeHistory(
+    organizationId: string,
+    username: string,
+    userId: string,
+  ) {
     const filter = { path: ['authorUsername'], equals: username } as const;
     const [commits, pulls, reviews] = await this.prisma.$transaction([
       this.prisma.commit.updateMany({

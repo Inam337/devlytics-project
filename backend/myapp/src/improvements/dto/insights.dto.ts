@@ -53,7 +53,10 @@ export class ProblemsQueryDto extends PaginationQueryDto {
 }
 
 export class HistoryQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ enum: ExperimentStatus, description: 'Defaults to COMPLETED, PROVEN and FAILED' })
+  @ApiPropertyOptional({
+    enum: ExperimentStatus,
+    description: 'Defaults to COMPLETED, PROVEN and FAILED',
+  })
   @IsOptional()
   @IsEnum(ExperimentStatus)
   status?: ExperimentStatus;

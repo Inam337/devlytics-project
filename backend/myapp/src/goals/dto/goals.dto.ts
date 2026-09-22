@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { GoalDirection, GoalOwnerType, GoalStatus, QualityCategory } from '@prisma/client';
+import {
+  GoalDirection,
+  GoalOwnerType,
+  GoalStatus,
+  QualityCategory,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -44,17 +49,26 @@ export class CreateGoalDto {
   @IsEnum(GoalOwnerType)
   ownerType: GoalOwnerType;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Required when ownerType is DEVELOPER' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Required when ownerType is DEVELOPER',
+  })
   @IsOptional()
   @IsUUID('4')
   ownerUserId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Required when ownerType is TEAM' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Required when ownerType is TEAM',
+  })
   @IsOptional()
   @IsUUID('4')
   ownerTeamId?: string;
 
-  @ApiProperty({ format: 'uuid', description: 'Repository the goal measures against' })
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Repository the goal measures against',
+  })
   @IsUUID('4')
   repositoryId: string;
 
@@ -76,7 +90,10 @@ export class CreateGoalDto {
   @IsString()
   metricKey: GoalMetricKey;
 
-  @ApiProperty({ enum: GoalDirection, description: 'Whether the target is above or below baseline' })
+  @ApiProperty({
+    enum: GoalDirection,
+    description: 'Whether the target is above or below baseline',
+  })
   @IsEnum(GoalDirection)
   direction: GoalDirection;
 
@@ -104,7 +121,10 @@ export class UpdateGoalDto {
   @MaxLength(2000)
   description?: string;
 
-  @ApiPropertyOptional({ enum: GoalStatus, description: 'ABANDONED is the only manual transition' })
+  @ApiPropertyOptional({
+    enum: GoalStatus,
+    description: 'ABANDONED is the only manual transition',
+  })
   @IsOptional()
   @IsEnum(GoalStatus)
   status?: GoalStatus;

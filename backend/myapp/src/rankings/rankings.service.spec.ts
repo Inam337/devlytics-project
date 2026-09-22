@@ -9,7 +9,11 @@ describe('RankingsService', () => {
   let prisma: {
     developerScore: { findMany: jest.Mock };
     teamScore: { findMany: jest.Mock };
-    rankingHistory: { findMany: jest.Mock; upsert: jest.Mock; count: jest.Mock };
+    rankingHistory: {
+      findMany: jest.Mock;
+      upsert: jest.Mock;
+      count: jest.Mock;
+    };
     $transaction: jest.Mock;
   };
   let notifications: { notifyMany: jest.Mock };
@@ -19,7 +23,11 @@ describe('RankingsService', () => {
     prisma = {
       developerScore: { findMany: jest.fn() },
       teamScore: { findMany: jest.fn() },
-      rankingHistory: { findMany: jest.fn(), upsert: jest.fn(), count: jest.fn() },
+      rankingHistory: {
+        findMany: jest.fn(),
+        upsert: jest.fn(),
+        count: jest.fn(),
+      },
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     notifications = { notifyMany: jest.fn().mockResolvedValue(undefined) };
@@ -35,7 +43,11 @@ describe('RankingsService', () => {
       prisma.developerScore.findMany.mockResolvedValue([]);
       prisma.teamScore.findMany.mockResolvedValue([]);
 
-      const result = await service.closePeriod('org-1', 'MONTHLY', new Date('2026-02-15'));
+      const result = await service.closePeriod(
+        'org-1',
+        'MONTHLY',
+        new Date('2026-02-15'),
+      );
 
       expect(result).toEqual({ developers: 0, teams: 0 });
       expect(prisma.rankingHistory.findMany).not.toHaveBeenCalled();
@@ -55,21 +67,48 @@ describe('RankingsService', () => {
         { userId: 'u3', rank: 2 },
       ]);
 
-      const result = await service.closePeriod('org-1', 'MONTHLY', new Date('2026-02-15'));
+      const result = await service.closePeriod(
+        'org-1',
+        'MONTHLY',
+        new Date('2026-02-15'),
+      );
 
       expect(result.developers).toBe(3);
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-      const upsertCalls = prisma.rankingHistory.upsert.mock.calls.map((call) => call[0]);
+      const upsertCalls = prisma.rankingHistory.upsert.mock.calls.map(
+        (call) => call[0],
+      );
 
-      const u1 = upsertCalls.find((c) => c.where.ranking_subject_period_unique.subjectId === 'u1');
-      expect(u1.create).toMatchObject({ rank: 1, previousRank: null, rankDelta: 0, totalSubjects: 3 });
+      const u1 = upsertCalls.find(
+        (c) => c.where.ranking_subject_period_unique.subjectId === 'u1',
+      );
+      expect(u1.create).toMatchObject({
+        rank: 1,
+        previousRank: null,
+        rankDelta: 0,
+        totalSubjects: 3,
+      });
       expect((u1.create.score as Prisma.Decimal).toNumber()).toBe(90);
 
-      const u2 = upsertCalls.find((c) => c.where.ranking_subject_period_unique.subjectId === 'u2');
-      expect(u2.create).toMatchObject({ rank: 2, previousRank: 1, rankDelta: -1, totalSubjects: 3 });
+      const u2 = upsertCalls.find(
+        (c) => c.where.ranking_subject_period_unique.subjectId === 'u2',
+      );
+      expect(u2.create).toMatchObject({
+        rank: 2,
+        previousRank: 1,
+        rankDelta: -1,
+        totalSubjects: 3,
+      });
 
-      const u3 = upsertCalls.find((c) => c.where.ranking_subject_period_unique.subjectId === 'u3');
-      expect(u3.create).toMatchObject({ rank: 3, previousRank: 2, rankDelta: -1, totalSubjects: 3 });
+      const u3 = upsertCalls.find(
+        (c) => c.where.ranking_subject_period_unique.subjectId === 'u3',
+      );
+      expect(u3.create).toMatchObject({
+        rank: 3,
+        previousRank: 2,
+        rankDelta: -1,
+        totalSubjects: 3,
+      });
     });
 
     it('scopes the previous-period lookup and the upsert key to the same organization, subject type and weight version', async () => {
@@ -82,10 +121,18 @@ describe('RankingsService', () => {
       await service.closePeriod('org-1', 'MONTHLY', new Date('2026-02-15'));
 
       const range = PeriodUtil.resolve('MONTHLY', new Date('2026-02-15'));
-      const previousRange = PeriodUtil.previous('MONTHLY', new Date('2026-02-15'));
+      const previousRange = PeriodUtil.previous(
+        'MONTHLY',
+        new Date('2026-02-15'),
+      );
 
       expect(prisma.rankingHistory.findMany).toHaveBeenCalledWith({
-        where: { organizationId: 'org-1', subjectType: 'DEVELOPER', period: 'MONTHLY', periodStart: previousRange.start },
+        where: {
+          organizationId: 'org-1',
+          subjectType: 'DEVELOPER',
+          period: 'MONTHLY',
+          periodStart: previousRange.start,
+        },
       });
       expect(prisma.rankingHistory.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -118,8 +165,16 @@ describe('RankingsService', () => {
     it('notifies only moves of two or more places, wording climbs and drops differently', async () => {
       prisma.developerScore.findMany.mockResolvedValue([
         { userId: 'up', totalScore: new Prisma.Decimal(95), weightVersion: 1 }, // rank 1, was 4 -> +3
-        { userId: 'flat', totalScore: new Prisma.Decimal(80), weightVersion: 1 }, // rank 2, was 1 -> -1 (below threshold)
-        { userId: 'down', totalScore: new Prisma.Decimal(60), weightVersion: 1 }, // rank 3, was 1 -> -2
+        {
+          userId: 'flat',
+          totalScore: new Prisma.Decimal(80),
+          weightVersion: 1,
+        }, // rank 2, was 1 -> -1 (below threshold)
+        {
+          userId: 'down',
+          totalScore: new Prisma.Decimal(60),
+          weightVersion: 1,
+        }, // rank 3, was 1 -> -2
       ]);
       prisma.teamScore.findMany.mockResolvedValue([]);
       prisma.rankingHistory.findMany.mockResolvedValue([
@@ -131,14 +186,22 @@ describe('RankingsService', () => {
       await service.closePeriod('org-1', 'MONTHLY', new Date('2026-02-15'));
 
       expect(notifications.notifyMany).toHaveBeenCalledWith([
-        expect.objectContaining({ userId: 'up', title: expect.stringContaining('moved up to #1') }),
-        expect.objectContaining({ userId: 'down', title: expect.stringContaining('moved to #3') }),
+        expect.objectContaining({
+          userId: 'up',
+          title: expect.stringContaining('moved up to #1'),
+        }),
+        expect.objectContaining({
+          userId: 'down',
+          title: expect.stringContaining('moved to #3'),
+        }),
       ]);
     });
   });
 
   describe('leaderboard reads', () => {
-    function query(overrides: Partial<RankingsQueryDto> = {}): RankingsQueryDto {
+    function query(
+      overrides: Partial<RankingsQueryDto> = {},
+    ): RankingsQueryDto {
       return Object.assign(new RankingsQueryDto(), overrides);
     }
 
@@ -160,8 +223,11 @@ describe('RankingsService', () => {
       prisma.teamScore.findMany.mockResolvedValue([]);
 
       await service.developerLeaderboard('org-1', query({ teamId: 'team-1' }));
-      const developerWhere = prisma.rankingHistory.findMany.mock.calls[0][0].where;
-      expect(developerWhere.user).toEqual({ teamMemberships: { some: { teamId: 'team-1' } } });
+      const developerWhere =
+        prisma.rankingHistory.findMany.mock.calls[0][0].where;
+      expect(developerWhere.user).toEqual({
+        teamMemberships: { some: { teamId: 'team-1' } },
+      });
 
       await service.teamLeaderboard('org-1', query({ teamId: 'team-1' }));
       const teamWhere = prisma.rankingHistory.findMany.mock.calls[1][0].where;
@@ -180,15 +246,31 @@ describe('RankingsService', () => {
 
       await service.teamLeaderboard('org-1', query({ departmentId: 'dept-1' }));
 
-      expect(prisma.rankingHistory.findMany.mock.calls[0][0].where.team).toEqual({
+      expect(
+        prisma.rankingHistory.findMany.mock.calls[0][0].where.team,
+      ).toEqual({
         departmentId: 'dept-1',
       });
     });
 
     it('attaches a score breakdown only for entries with a matching score row', async () => {
       prisma.rankingHistory.findMany.mockResolvedValue([
-        { rank: 1, previousRank: null, rankDelta: 0, score: new Prisma.Decimal(90), userId: 'u1', user: { id: 'u1' } },
-        { rank: 2, previousRank: null, rankDelta: 0, score: new Prisma.Decimal(70), userId: 'u2', user: { id: 'u2' } },
+        {
+          rank: 1,
+          previousRank: null,
+          rankDelta: 0,
+          score: new Prisma.Decimal(90),
+          userId: 'u1',
+          user: { id: 'u1' },
+        },
+        {
+          rank: 2,
+          previousRank: null,
+          rankDelta: 0,
+          score: new Prisma.Decimal(70),
+          userId: 'u2',
+          user: { id: 'u2' },
+        },
       ]);
       prisma.developerScore.findMany.mockResolvedValue([
         {
@@ -215,7 +297,10 @@ describe('RankingsService', () => {
       prisma.rankingHistory.findMany.mockResolvedValue([]);
       prisma.developerScore.findMany.mockResolvedValue([]);
 
-      const result = await service.developerLeaderboard('org-1', query({ date: '2026-03-10' }));
+      const result = await service.developerLeaderboard(
+        'org-1',
+        query({ date: '2026-03-10' }),
+      );
 
       const range = PeriodUtil.resolve('MONTHLY', new Date('2026-03-10'));
       expect(result.periodStart).toBe(PeriodUtil.toDateOnly(range.start));
@@ -224,7 +309,9 @@ describe('RankingsService', () => {
   });
 
   describe('history', () => {
-    function query(overrides: Partial<RankingsQueryDto> = {}): RankingsQueryDto {
+    function query(
+      overrides: Partial<RankingsQueryDto> = {},
+    ): RankingsQueryDto {
       return Object.assign(new RankingsQueryDto(), overrides);
     }
 
@@ -234,7 +321,9 @@ describe('RankingsService', () => {
 
       await service.history('org-1', query());
 
-      expect(prisma.rankingHistory.findMany.mock.calls[0][0].where).toEqual({ organizationId: 'org-1' });
+      expect(prisma.rankingHistory.findMany.mock.calls[0][0].where).toEqual({
+        organizationId: 'org-1',
+      });
     });
 
     it('includes every provided filter in the where clause', async () => {
@@ -243,7 +332,12 @@ describe('RankingsService', () => {
 
       await service.history(
         'org-1',
-        query({ subjectType: 'TEAM', period: 'WEEKLY', userId: 'user-1', teamId: 'team-1' }),
+        query({
+          subjectType: 'TEAM',
+          period: 'WEEKLY',
+          userId: 'user-1',
+          teamId: 'team-1',
+        }),
       );
 
       expect(prisma.rankingHistory.findMany.mock.calls[0][0].where).toEqual({

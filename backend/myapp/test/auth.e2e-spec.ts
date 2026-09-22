@@ -75,7 +75,10 @@ describe('Auth (e2e)', () => {
   it('rejects an invalid password on login (401 INVALID_CREDENTIALS)', async () => {
     const response = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: `admin${stamp}@example.test`, password: 'WrongPassword123!' })
+      .send({
+        email: `admin${stamp}@example.test`,
+        password: 'WrongPassword123!',
+      })
       .expect(401);
 
     expect(response.body.code).toBe('INVALID_CREDENTIALS');
@@ -84,7 +87,10 @@ describe('Auth (e2e)', () => {
   it('logs in and returns a working token pair', async () => {
     const response = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: `admin${stamp}@example.test`, password: 'Str0ng!Passphrase' })
+      .send({
+        email: `admin${stamp}@example.test`,
+        password: 'Str0ng!Passphrase',
+      })
       .expect(200);
 
     const { accessToken, refreshToken } = response.body.data;
@@ -124,7 +130,7 @@ describe('Auth (e2e)', () => {
   });
 
   describe('tenant isolation', () => {
-    it('never lets one organization read or act on another organization\'s resource', async () => {
+    it("never lets one organization read or act on another organization's resource", async () => {
       const orgAEmail = `orga${stamp}@example.test`;
       const orgBEmail = `orgb${stamp}@example.test`;
 
@@ -205,7 +211,12 @@ describe('Auth (e2e)', () => {
       await request(server())
         .post('/api/v1/users')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ email: devEmail, firstName: 'Dev', lastName: 'Eloper', roleKey: 'DEVELOPER' })
+        .send({
+          email: devEmail,
+          firstName: 'Dev',
+          lastName: 'Eloper',
+          roleKey: 'DEVELOPER',
+        })
         .expect(201);
 
       const accepted = await request(server())

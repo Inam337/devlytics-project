@@ -1,5 +1,17 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
   Client,
@@ -27,11 +39,21 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @ResponseMessage('Organization and administrator account created successfully')
+  @ResponseMessage(
+    'Organization and administrator account created successfully',
+  )
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Register an organization and its first Organization Admin' })
-  @ApiResponse({ status: 201, description: 'Session issued for the new administrator' })
-  @ApiResponse({ status: 409, description: 'An account already exists for this email' })
+  @ApiOperation({
+    summary: 'Register an organization and its first Organization Admin',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Session issued for the new administrator',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'An account already exists for this email',
+  })
   register(@Body() dto: RegisterDto, @Client() client: ClientInfo) {
     return this.authService.register(dto, client);
   }
@@ -51,7 +73,9 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Session refreshed successfully')
-  @ApiOperation({ summary: 'Exchange a refresh token for a new pair (rotating the old one)' })
+  @ApiOperation({
+    summary: 'Exchange a refresh token for a new pair (rotating the old one)',
+  })
   refresh(@Body() dto: RefreshTokenDto, @Client() client: ClientInfo) {
     return this.authService.refresh(dto, client);
   }
@@ -60,7 +84,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ResponseMessage('Signed out successfully')
-  @ApiOperation({ summary: 'Revoke the presented refresh token, or every session when omitted' })
+  @ApiOperation({
+    summary:
+      'Revoke the presented refresh token, or every session when omitted',
+  })
   logout(
     @Body() dto: Partial<RefreshTokenDto>,
     @CurrentUser('userId') userId: string,
@@ -71,8 +98,13 @@ export class AuthController {
 
   @Get('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'The signed-in identity, organization, role and permission scope' })
-  me(@OrganizationId() organizationId: string, @CurrentUser('userId') userId: string) {
+  @ApiOperation({
+    summary: 'The signed-in identity, organization, role and permission scope',
+  })
+  me(
+    @OrganizationId() organizationId: string,
+    @CurrentUser('userId') userId: string,
+  ) {
     return this.authService.me(organizationId, userId);
   }
 
@@ -81,7 +113,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('If the account exists, a reset link has been sent')
   @Throttle({ default: { limit: 5, ttl: 300_000 } })
-  @ApiOperation({ summary: 'Request a single-use password reset link (30-minute expiry)' })
+  @ApiOperation({
+    summary: 'Request a single-use password reset link (30-minute expiry)',
+  })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
@@ -99,7 +133,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ResponseMessage('Password changed successfully')
-  @ApiOperation({ summary: 'Change your own password (revokes every existing session)' })
+  @ApiOperation({
+    summary: 'Change your own password (revokes every existing session)',
+  })
   changePassword(
     @OrganizationId() organizationId: string,
     @CurrentUser('userId') userId: string,
@@ -113,8 +149,14 @@ export class AuthController {
   @Post('accept-invitation')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Invitation accepted successfully')
-  @ApiOperation({ summary: 'Set the first password for an invited member and activate membership' })
-  acceptInvitation(@Body() dto: AcceptInvitationDto, @Client() client: ClientInfo) {
+  @ApiOperation({
+    summary:
+      'Set the first password for an invited member and activate membership',
+  })
+  acceptInvitation(
+    @Body() dto: AcceptInvitationDto,
+    @Client() client: ClientInfo,
+  ) {
     return this.authService.acceptInvitation(dto, client);
   }
 }

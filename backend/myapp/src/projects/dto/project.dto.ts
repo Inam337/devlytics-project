@@ -27,7 +27,10 @@ export class CreateProjectDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   name: string;
 
-  @ApiProperty({ example: 'PAY-01', description: 'Unique within the organization' })
+  @ApiProperty({
+    example: 'PAY-01',
+    description: 'Unique within the organization',
+  })
   @IsString()
   @MaxLength(40)
   @Matches(/^[A-Za-z0-9][A-Za-z0-9-_]*$/, {
@@ -57,7 +60,11 @@ export class CreateProjectDto {
   @IsUUID('4')
   ownerId?: string;
 
-  @ApiPropertyOptional({ type: [String], format: 'uuid', description: 'Teams working on it' })
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    description: 'Teams working on it',
+  })
   @IsOptional()
   @IsArray()
   @ArrayUnique()

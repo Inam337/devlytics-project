@@ -69,9 +69,18 @@ export class UsersService {
       include: {
         user: {
           include: {
-            teamMemberships: { include: { team: { select: { id: true, name: true, code: true } } } },
+            teamMemberships: {
+              include: {
+                team: { select: { id: true, name: true, code: true } },
+              },
+            },
             gitAccounts: {
-              select: { id: true, username: true, classification: true, providerId: true },
+              select: {
+                id: true,
+                username: true,
+                classification: true,
+                providerId: true,
+              },
             },
           },
         },
@@ -95,7 +104,11 @@ export class UsersService {
    * Invites a person into the organization. An existing global identity is
    * reused so the same person keeps one login across organizations.
    */
-  async invite(organizationId: string, dto: CreateUserDto, actor: ActorContext) {
+  async invite(
+    organizationId: string,
+    dto: CreateUserDto,
+    actor: ActorContext,
+  ) {
     const role = await this.prisma.role.findUnique({
       where: { organizationId_key: { organizationId, key: dto.roleKey } },
     });
@@ -110,11 +123,15 @@ export class UsersService {
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.user.findUnique({ where: { email: dto.email } });
+      const existing = await tx.user.findUnique({
+        where: { email: dto.email },
+      });
 
       if (existing) {
         const membership = await tx.organizationUser.findUnique({
-          where: { organizationId_userId: { organizationId, userId: existing.id } },
+          where: {
+            organizationId_userId: { organizationId, userId: existing.id },
+          },
         });
         if (membership && membership.status !== 'REMOVED') {
           throw AppException.duplicate('User', 'email in this organization');
@@ -188,8 +205,16 @@ export class UsersService {
     };
   }
 
-  async update(organizationId: string, userId: string, dto: UpdateUserDto, actor: ActorContext) {
-    const membership = await this.repository.findMembership(organizationId, userId);
+  async update(
+    organizationId: string,
+    userId: string,
+    dto: UpdateUserDto,
+    actor: ActorContext,
+  ) {
+    const membership = await this.repository.findMembership(
+      organizationId,
+      userId,
+    );
     if (!membership) throw AppException.notFound('User', userId);
 
     const before = {
@@ -217,7 +242,9 @@ export class UsersService {
           ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
           ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
           ...(dto.jobTitle !== undefined ? { jobTitle: dto.jobTitle } : {}),
-          ...(dto.employeeCode !== undefined ? { employeeCode: dto.employeeCode } : {}),
+          ...(dto.employeeCode !== undefined
+            ? { employeeCode: dto.employeeCode }
+            : {}),
           ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
           ...(dto.status !== undefined ? { status: dto.status } : {}),
         },
@@ -277,7 +304,10 @@ export class UsersService {
    * historical measurements are retained — engineering history is never deleted.
    */
   async remove(organizationId: string, userId: string, actor: ActorContext) {
-    const membership = await this.repository.findMembership(organizationId, userId);
+    const membership = await this.repository.findMembership(
+      organizationId,
+      userId,
+    );
     if (!membership) throw AppException.notFound('User', userId);
 
     await this.prisma.$transaction([
@@ -311,7 +341,10 @@ export class UsersService {
    * number of days (docs/devlytics.md §3.1). Historical scores are preserved;
    * only current-period ranking eligibility is affected.
    */
-  async suspendInactive(organizationId: string, inactivityDays: number): Promise<string[]> {
+  async suspendInactive(
+    organizationId: string,
+    inactivityDays: number,
+  ): Promise<string[]> {
     const cutoff = new Date(Date.now() - inactivityDays * 24 * 60 * 60 * 1000);
 
     const candidates = await this.prisma.organizationUser.findMany({
@@ -320,7 +353,9 @@ export class UsersService {
         status: 'ACTIVE',
         user: {
           OR: [{ lastActiveAt: null }, { lastActiveAt: { lt: cutoff } }],
-          AND: [{ OR: [{ lastLoginAt: null }, { lastLoginAt: { lt: cutoff } }] }],
+          AND: [
+            { OR: [{ lastLoginAt: null }, { lastLoginAt: { lt: cutoff } }] },
+          ],
         },
       },
       include: { user: { select: { id: true, email: true, createdAt: true } } },
@@ -332,12 +367,19 @@ export class UsersService {
       if (membership.user.createdAt > cutoff) continue;
 
       const recentActivity = await this.prisma.developerDailyMetric.count({
-        where: { organizationId, userId: membership.userId, metricDate: { gte: cutoff } },
+        where: {
+          organizationId,
+          userId: membership.userId,
+          metricDate: { gte: cutoff },
+        },
       });
       if (recentActivity > 0) continue;
 
       await this.prisma.$transaction([
-        this.prisma.user.update({ where: { id: membership.userId }, data: { status: 'SUSPENDED' } }),
+        this.prisma.user.update({
+          where: { id: membership.userId },
+          data: { status: 'SUSPENDED' },
+        }),
         this.prisma.organizationUser.update({
           where: { id: membership.id },
           data: { status: 'SUSPENDED' },
@@ -365,10 +407,16 @@ export class UsersService {
   /** Records sign-in activity; also feeds the inactivity-suspension rule. */
   touchLogin(userId: string): Promise<User> {
     const now = new Date();
-    return this.repository.updateUser(userId, { lastLoginAt: now, lastActiveAt: now });
+    return this.repository.updateUser(userId, {
+      lastLoginAt: now,
+      lastActiveAt: now,
+    });
   }
 
-  createUserRecord(data: Prisma.UserCreateInput, tx?: Prisma.TransactionClient) {
+  createUserRecord(
+    data: Prisma.UserCreateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
     return this.repository.createUser(data, tx);
   }
 }

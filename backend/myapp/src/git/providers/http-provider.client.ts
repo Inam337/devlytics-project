@@ -23,10 +23,16 @@ export class HttpProviderClient {
     this.logger = new Logger(loggerContext);
   }
 
-  async get<T>(path: string, query: Record<string, string | number | undefined> = {}): Promise<T> {
+  async get<T>(
+    path: string,
+    query: Record<string, string | number | undefined> = {},
+  ): Promise<T> {
     const url = this.buildUrl(path, query);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 30_000);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      this.options.timeoutMs ?? 30_000,
+    );
 
     try {
       const response = await fetch(url, {
@@ -35,7 +41,11 @@ export class HttpProviderClient {
       });
 
       if (!response.ok) {
-        throw this.toProviderError(response.status, await this.safeBody(response), response);
+        throw this.toProviderError(
+          response.status,
+          await this.safeBody(response),
+          response,
+        );
       }
       return (await response.json()) as T;
     } catch (error) {
@@ -64,7 +74,11 @@ export class HttpProviderClient {
   ): Promise<T[]> {
     const results: T[] = [];
     for (let page = 1; page <= maxPages; page += 1) {
-      const batch = await this.get<T[]>(path, { ...query, per_page: perPage, page });
+      const batch = await this.get<T[]>(path, {
+        ...query,
+        per_page: perPage,
+        page,
+      });
       if (!Array.isArray(batch) || batch.length === 0) break;
       results.push(...batch);
       if (batch.length < perPage) break;
@@ -72,19 +86,28 @@ export class HttpProviderClient {
     return results;
   }
 
-  private buildUrl(path: string, query: Record<string, string | number | undefined>): string {
+  private buildUrl(
+    path: string,
+    query: Record<string, string | number | undefined>,
+  ): string {
     const url = new URL(
-      path.startsWith('http') ? path : `${this.options.baseUrl.replace(/\/$/, '')}${path}`,
+      path.startsWith('http')
+        ? path
+        : `${this.options.baseUrl.replace(/\/$/, '')}${path}`,
     );
     for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined && value !== '') url.searchParams.set(key, String(value));
+      if (value !== undefined && value !== '')
+        url.searchParams.set(key, String(value));
     }
     return url.toString();
   }
 
   private headers(): Record<string, string> {
     return this.options.authScheme === 'Bearer'
-      ? { Authorization: `Bearer ${this.options.token}`, Accept: 'application/json' }
+      ? {
+          Authorization: `Bearer ${this.options.token}`,
+          Accept: 'application/json',
+        }
       : { 'PRIVATE-TOKEN': this.options.token, Accept: 'application/json' };
   }
 
@@ -96,13 +119,19 @@ export class HttpProviderClient {
     }
   }
 
-  private toProviderError(status: number, body: string, response: Response): ProviderRequestError {
+  private toProviderError(
+    status: number,
+    body: string,
+    response: Response,
+  ): ProviderRequestError {
     const remaining = response.headers.get('x-ratelimit-remaining');
     const rateLimited = status === 429 || (status === 403 && remaining === '0');
     const tokenExpired = status === 401;
 
     if (rateLimited) {
-      this.logger.warn('Provider rate limit reached — remaining requests will be retried');
+      this.logger.warn(
+        'Provider rate limit reached — remaining requests will be retried',
+      );
     }
 
     return new ProviderRequestError(

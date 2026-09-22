@@ -24,25 +24,40 @@ const AT_RISK_PERCENT_THRESHOLD = 50;
 @Injectable()
 export class ProgressCalculationService {
   /** Percent of the baseline→target distance covered; can go negative (moved the wrong way) or past 100 (overshot). */
-  percentComplete(direction: MetricDirection, baseline: number, target: number, current: number): number {
+  percentComplete(
+    direction: MetricDirection,
+    baseline: number,
+    target: number,
+    current: number,
+  ): number {
     if (direction === 'TARGET_RANGE') {
       if (target === 0) return current === 0 ? 100 : 0;
       const deviation = (Math.abs(current - target) / Math.abs(target)) * 100;
       return NumberUtil.round(100 - deviation);
     }
 
-    const needed = direction === 'DECREASE' ? baseline - target : target - baseline;
-    if (needed === 0) return this.achieved(direction, target, current) ? 100 : 0;
+    const needed =
+      direction === 'DECREASE' ? baseline - target : target - baseline;
+    if (needed === 0)
+      return this.achieved(direction, target, current) ? 100 : 0;
 
-    const moved = direction === 'DECREASE' ? baseline - current : current - baseline;
+    const moved =
+      direction === 'DECREASE' ? baseline - current : current - baseline;
     return NumberUtil.round((moved / needed) * 100);
   }
 
-  achieved(direction: MetricDirection, target: number, current: number): boolean {
+  achieved(
+    direction: MetricDirection,
+    target: number,
+    current: number,
+  ): boolean {
     if (direction === 'DECREASE') return current <= target;
     if (direction === 'INCREASE') return current >= target;
     if (target === 0) return current === 0;
-    return (Math.abs(current - target) / Math.abs(target)) * 100 <= TARGET_RANGE_TOLERANCE_PERCENT;
+    return (
+      (Math.abs(current - target) / Math.abs(target)) * 100 <=
+      TARGET_RANGE_TOLERANCE_PERCENT
+    );
   }
 
   status(params: {
@@ -57,7 +72,8 @@ export class ProgressCalculationService {
     const { direction, baseline, target, current, startDate, endDate } = params;
     const now = params.now ?? new Date();
 
-    if (current === null || baseline === null || target === null) return 'NOT_STARTED';
+    if (current === null || baseline === null || target === null)
+      return 'NOT_STARTED';
     if (this.achieved(direction, target, current)) return 'TARGET_REACHED';
 
     const percent = this.percentComplete(direction, baseline, target, current);
@@ -66,10 +82,21 @@ export class ProgressCalculationService {
 
     if (endDate && endDate > startDate) {
       const elapsedRatio = NumberUtil.round(
-        Math.min(1, Math.max(0, (now.getTime() - startDate.getTime()) / (endDate.getTime() - startDate.getTime()))),
+        Math.min(
+          1,
+          Math.max(
+            0,
+            (now.getTime() - startDate.getTime()) /
+              (endDate.getTime() - startDate.getTime()),
+          ),
+        ),
         4,
       );
-      if (elapsedRatio >= AT_RISK_ELAPSED_RATIO && percent < AT_RISK_PERCENT_THRESHOLD) return 'AT_RISK';
+      if (
+        elapsedRatio >= AT_RISK_ELAPSED_RATIO &&
+        percent < AT_RISK_PERCENT_THRESHOLD
+      )
+        return 'AT_RISK';
     }
 
     return percent >= AT_RISK_PERCENT_THRESHOLD ? 'ON_TRACK' : 'IN_PROGRESS';

@@ -1,4 +1,9 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, map } from 'rxjs';
 import { PaginatedResult, PaginationMeta } from '../dto/pagination.dto';
@@ -18,10 +23,16 @@ const DEFAULT_MESSAGE = 'Request completed successfully';
  * no handler formats a response by hand.
  */
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResponse<unknown>> {
+export class ResponseInterceptor<T> implements NestInterceptor<
+  T,
+  ApiSuccessResponse<unknown>
+> {
   constructor(private readonly reflector: Reflector) {}
 
-  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<ApiSuccessResponse<unknown>> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<T>,
+  ): Observable<ApiSuccessResponse<unknown>> {
     const message =
       this.reflector.getAllAndOverride<string>(RESPONSE_MESSAGE_KEY, [
         context.getHandler(),

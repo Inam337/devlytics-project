@@ -22,7 +22,9 @@ export class OrganizationsRepository {
   /** Only the organizations this user actually belongs to. */
   findForUser(userId: string): Promise<Organization[]> {
     return this.prisma.organization.findMany({
-      where: { members: { some: { userId, status: { in: ['ACTIVE', 'INVITED'] } } } },
+      where: {
+        members: { some: { userId, status: { in: ['ACTIVE', 'INVITED'] } } },
+      },
       orderBy: { createdAt: 'asc' },
     });
   }
@@ -37,13 +39,18 @@ export class OrganizationsRepository {
 
   /** Header counts shown on the organization detail screen. */
   async counts(id: string) {
-    const [users, departments, teams, projects, repositories] = await this.prisma.$transaction([
-      this.prisma.organizationUser.count({ where: { organizationId: id, status: 'ACTIVE' } }),
-      this.prisma.department.count({ where: { organizationId: id } }),
-      this.prisma.team.count({ where: { organizationId: id, status: 'ACTIVE' } }),
-      this.prisma.project.count({ where: { organizationId: id } }),
-      this.prisma.repository.count({ where: { organizationId: id } }),
-    ]);
+    const [users, departments, teams, projects, repositories] =
+      await this.prisma.$transaction([
+        this.prisma.organizationUser.count({
+          where: { organizationId: id, status: 'ACTIVE' },
+        }),
+        this.prisma.department.count({ where: { organizationId: id } }),
+        this.prisma.team.count({
+          where: { organizationId: id, status: 'ACTIVE' },
+        }),
+        this.prisma.project.count({ where: { organizationId: id } }),
+        this.prisma.repository.count({ where: { organizationId: id } }),
+      ]);
     return { users, departments, teams, projects, repositories };
   }
 }

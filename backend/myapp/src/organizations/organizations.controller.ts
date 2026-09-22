@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permission } from '../common/constants/permissions';
 import {
@@ -30,14 +38,18 @@ export class OrganizationsController {
   @RequirePermissions(Permission.ORGANIZATION_UPDATE)
   @ResponseMessage('Organization created successfully')
   @ApiOperation({
-    summary: 'Create an organization (roles, weights and local AI provider are provisioned with it)',
+    summary:
+      'Create an organization (roles, weights and local AI provider are provisioned with it)',
   })
   create(
     @Body() dto: CreateOrganizationDto,
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.organizationsService.create(dto, { actorId: userId, ...client });
+    return this.organizationsService.create(dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get(':id')
@@ -53,7 +65,9 @@ export class OrganizationsController {
   @Patch(':id')
   @RequirePermissions(Permission.ORGANIZATION_UPDATE)
   @ResponseMessage('Organization updated successfully')
-  @ApiOperation({ summary: 'Update organization settings, branding or setup-wizard progress' })
+  @ApiOperation({
+    summary: 'Update organization settings, branding or setup-wizard progress',
+  })
   update(
     @OrganizationId() organizationId: string,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

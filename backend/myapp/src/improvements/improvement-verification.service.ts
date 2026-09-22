@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ExperimentConfidence, MetricDirection, Prisma, VerificationStatus } from '@prisma/client';
+import {
+  ExperimentConfidence,
+  MetricDirection,
+  Prisma,
+  VerificationStatus,
+} from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/exceptions/app.exception';
 import { NumberUtil } from '../common/utils/number.util';
@@ -36,7 +41,11 @@ export class ImprovementVerificationService {
     private readonly progressCalculation: ProgressCalculationService,
   ) {}
 
-  async verify(organizationId: string, experimentId: string, actor: ActorContext) {
+  async verify(
+    organizationId: string,
+    experimentId: string,
+    actor: ActorContext,
+  ) {
     const experiment = await this.prisma.engineeringExperiment.findFirst({
       where: { id: experimentId, organizationId },
       include: { metrics: true },
@@ -51,27 +60,55 @@ export class ImprovementVerificationService {
 
     const primary = experiment.metrics.find((m) => m.isPrimary);
     if (!primary) {
-      throw AppException.unprocessable('Experiment has no primary metric to verify against', 'INVALID_METRIC');
+      throw AppException.unprocessable(
+        'Experiment has no primary metric to verify against',
+        'INVALID_METRIC',
+      );
     }
 
-    const baseline = primary.baselineValue === null ? null : NumberUtil.toNumber(primary.baselineValue);
-    const final = primary.finalValue === null ? null : NumberUtil.toNumber(primary.finalValue);
-    const target = primary.targetValue === null ? null : NumberUtil.toNumber(primary.targetValue);
+    const baseline =
+      primary.baselineValue === null
+        ? null
+        : NumberUtil.toNumber(primary.baselineValue);
+    const final =
+      primary.finalValue === null
+        ? null
+        : NumberUtil.toNumber(primary.finalValue);
+    const target =
+      primary.targetValue === null
+        ? null
+        : NumberUtil.toNumber(primary.targetValue);
 
     const supporting: SignalChange[] = experiment.metrics
       .filter((m) => m.id !== primary.id)
-      .map((m) => this.signalChange(m.metricKey, m.direction, m.baselineValue, m.finalValue));
+      .map((m) =>
+        this.signalChange(
+          m.metricKey,
+          m.direction,
+          m.baselineValue,
+          m.finalValue,
+        ),
+      );
 
-    const primaryChange = this.signalChange(primary.metricKey, primary.direction, primary.baselineValue, primary.finalValue);
+    const primaryChange = this.signalChange(
+      primary.metricKey,
+      primary.direction,
+      primary.baselineValue,
+      primary.finalValue,
+    );
 
     let verificationStatus: VerificationStatus;
     let targetAchieved = false;
-    let improvementPercentage: number | null = primaryChange.changePercentage;
+    const improvementPercentage: number | null = primaryChange.changePercentage;
 
     if (baseline === null || final === null || target === null) {
       verificationStatus = 'INSUFFICIENT_DATA';
     } else {
-      targetAchieved = this.progressCalculation.achieved(primary.direction, target, final);
+      targetAchieved = this.progressCalculation.achieved(
+        primary.direction,
+        target,
+        final,
+      );
       if (targetAchieved) {
         verificationStatus = 'ACHIEVED';
       } else if ((improvementPercentage ?? 0) > 0) {
@@ -83,10 +120,21 @@ export class ImprovementVerificationService {
 
     const durationDays =
       experiment.completedAt && experiment.startDate
-        ? Math.max(0, (experiment.completedAt.getTime() - experiment.startDate.getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.max(
+            0,
+            (experiment.completedAt.getTime() -
+              experiment.startDate.getTime()) /
+              (1000 * 60 * 60 * 24),
+          )
         : 0;
-    const corroboratingCount = supporting.filter((s) => s.favorable === true).length;
-    const confidence = this.confidenceFor(verificationStatus, durationDays, corroboratingCount);
+    const corroboratingCount = supporting.filter(
+      (s) => s.favorable === true,
+    ).length;
+    const confidence = this.confidenceFor(
+      verificationStatus,
+      durationDays,
+      corroboratingCount,
+    );
 
     const periodStart = primary.measurementPeriodStart ?? experiment.startDate;
     const periodEnd = primary.measurementPeriodEnd ?? experiment.completedAt;
@@ -99,7 +147,11 @@ export class ImprovementVerificationService {
       },
     };
 
-    const evidenceSummary = this.summarize(verificationStatus, primaryChange, targetAchieved);
+    const evidenceSummary = this.summarize(
+      verificationStatus,
+      primaryChange,
+      targetAchieved,
+    );
 
     const proof = await this.prisma.improvementProof.upsert({
       where: { experimentId },
@@ -148,7 +200,12 @@ export class ImprovementVerificationService {
       summary: `Experiment '${experiment.title}' verified: ${verificationStatus} (${confidence} confidence)`,
       entityType: 'EngineeringExperiment',
       entityId: experimentId,
-      after: { verificationStatus, targetAchieved, improvementPercentage, confidence },
+      after: {
+        verificationStatus,
+        targetAchieved,
+        improvementPercentage,
+        confidence,
+      },
       ipAddress: actor.ipAddress,
       userAgent: actor.userAgent,
     });
@@ -168,7 +225,9 @@ export class ImprovementVerificationService {
   }
 
   async findProof(organizationId: string, experimentId: string) {
-    const proof = await this.prisma.improvementProof.findFirst({ where: { experimentId, organizationId } });
+    const proof = await this.prisma.improvementProof.findFirst({
+      where: { experimentId, organizationId },
+    });
     if (!proof) throw AppException.notFound('Improvement proof', experimentId);
     return this.toProofView(proof);
   }
@@ -179,40 +238,78 @@ export class ImprovementVerificationService {
     baselineValue: unknown,
     finalValue: unknown,
   ): SignalChange {
-    const baseline = baselineValue === null || baselineValue === undefined ? null : NumberUtil.toNumber(baselineValue as Prisma.Decimal);
-    const final = finalValue === null || finalValue === undefined ? null : NumberUtil.toNumber(finalValue as Prisma.Decimal);
+    const baseline =
+      baselineValue === null || baselineValue === undefined
+        ? null
+        : NumberUtil.toNumber(baselineValue as Prisma.Decimal);
+    const final =
+      finalValue === null || finalValue === undefined
+        ? null
+        : NumberUtil.toNumber(finalValue as Prisma.Decimal);
 
     if (baseline === null || final === null) {
-      return { metricKey, baseline, final, changePercentage: null, favorable: null };
+      return {
+        metricKey,
+        baseline,
+        final,
+        changePercentage: null,
+        favorable: null,
+      };
     }
 
-    const rawChangePercent = baseline !== 0 ? NumberUtil.round(((final - baseline) / Math.abs(baseline)) * 100, 2) : 0;
+    const rawChangePercent =
+      baseline !== 0
+        ? NumberUtil.round(((final - baseline) / Math.abs(baseline)) * 100, 2)
+        : 0;
     // Report the change in the metric's own terms (rawChangePercent), but judge
     // "favorable" against its direction: a DECREASE metric improves when it goes down.
     // TARGET_RANGE has no single favorable direction, so it's left unknown.
     const favorable: boolean | null =
-      direction === 'DECREASE' ? final < baseline : direction === 'INCREASE' ? final > baseline : null;
-    const changePercentage = direction === 'DECREASE' ? -rawChangePercent : rawChangePercent;
+      direction === 'DECREASE'
+        ? final < baseline
+        : direction === 'INCREASE'
+          ? final > baseline
+          : null;
+    const changePercentage =
+      direction === 'DECREASE' ? -rawChangePercent : rawChangePercent;
 
     return { metricKey, baseline, final, changePercentage, favorable };
   }
 
-  private confidenceFor(status: VerificationStatus, durationDays: number, corroboratingCount: number): ExperimentConfidence {
+  private confidenceFor(
+    status: VerificationStatus,
+    durationDays: number,
+    corroboratingCount: number,
+  ): ExperimentConfidence {
     if (status === 'INSUFFICIENT_DATA') return 'INSUFFICIENT_DATA';
-    if (status === 'NOT_ACHIEVED') return durationDays >= MEDIUM_CONFIDENCE_MIN_DURATION_DAYS ? 'MEDIUM' : 'LOW';
+    if (status === 'NOT_ACHIEVED')
+      return durationDays >= MEDIUM_CONFIDENCE_MIN_DURATION_DAYS
+        ? 'MEDIUM'
+        : 'LOW';
     if (status === 'PARTIALLY_ACHIEVED') return 'LOW';
 
     // ACHIEVED
-    if (durationDays >= HIGH_CONFIDENCE_MIN_DURATION_DAYS && corroboratingCount >= 1) return 'HIGH';
+    if (
+      durationDays >= HIGH_CONFIDENCE_MIN_DURATION_DAYS &&
+      corroboratingCount >= 1
+    )
+      return 'HIGH';
     if (durationDays >= MEDIUM_CONFIDENCE_MIN_DURATION_DAYS) return 'MEDIUM';
     return 'LOW';
   }
 
-  private summarize(status: VerificationStatus, primary: SignalChange, targetAchieved: boolean): string {
+  private summarize(
+    status: VerificationStatus,
+    primary: SignalChange,
+    targetAchieved: boolean,
+  ): string {
     if (status === 'INSUFFICIENT_DATA') {
       return `Not enough measured data to verify '${primary.metricKey}' — no baseline or final value was calculable.`;
     }
-    const change = primary.changePercentage !== null ? `${primary.changePercentage > 0 ? '+' : ''}${primary.changePercentage}%` : 'no change';
+    const change =
+      primary.changePercentage !== null
+        ? `${primary.changePercentage > 0 ? '+' : ''}${primary.changePercentage}%`
+        : 'no change';
     if (targetAchieved) {
       return `Target reached: '${primary.metricKey}' moved ${change} from baseline (${primary.baseline} → ${primary.final}).`;
     }
@@ -229,11 +326,22 @@ export class ImprovementVerificationService {
   >(proof: T) {
     return {
       ...proof,
-      baselineValue: proof.baselineValue === null ? null : NumberUtil.toNumber(proof.baselineValue as Prisma.Decimal),
-      finalValue: proof.finalValue === null ? null : NumberUtil.toNumber(proof.finalValue as Prisma.Decimal),
-      targetValue: proof.targetValue === null ? null : NumberUtil.toNumber(proof.targetValue as Prisma.Decimal),
+      baselineValue:
+        proof.baselineValue === null
+          ? null
+          : NumberUtil.toNumber(proof.baselineValue as Prisma.Decimal),
+      finalValue:
+        proof.finalValue === null
+          ? null
+          : NumberUtil.toNumber(proof.finalValue as Prisma.Decimal),
+      targetValue:
+        proof.targetValue === null
+          ? null
+          : NumberUtil.toNumber(proof.targetValue as Prisma.Decimal),
       improvementPercentage:
-        proof.improvementPercentage === null ? null : NumberUtil.toNumber(proof.improvementPercentage as Prisma.Decimal),
+        proof.improvementPercentage === null
+          ? null
+          : NumberUtil.toNumber(proof.improvementPercentage as Prisma.Decimal),
     };
   }
 }

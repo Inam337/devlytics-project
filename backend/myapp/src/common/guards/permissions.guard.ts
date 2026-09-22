@@ -23,18 +23,20 @@ export class PermissionsGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const required = this.reflector.getAllAndOverride<PermissionKey[]>(PERMISSIONS_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    const requiredRoles = this.reflector.getAllAndOverride<RoleKey[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const required = this.reflector.getAllAndOverride<PermissionKey[]>(
+      PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const requiredRoles = this.reflector.getAllAndOverride<RoleKey[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!required?.length && !requiredRoles?.length) return true;
 
-    const user = context.switchToHttp().getRequest<{ user?: AuthenticatedUser }>().user;
+    const user = context
+      .switchToHttp()
+      .getRequest<{ user?: AuthenticatedUser }>().user;
     if (!user) throw AppException.unauthorized();
 
     if (requiredRoles?.length && !requiredRoles.includes(user.roleKey)) {
@@ -44,7 +46,9 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (required?.length) {
-      const missing = required.filter((permission) => !user.permissions.includes(permission));
+      const missing = required.filter(
+        (permission) => !user.permissions.includes(permission),
+      );
       if (missing.length > 0) {
         throw AppException.forbidden(
           `Your role (${user.roleKey}) is missing the required permission: ${missing.join(', ')}`,

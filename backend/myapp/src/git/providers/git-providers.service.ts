@@ -54,7 +54,9 @@ export class GitProvidersService {
   }
 
   async findOneOrFail(organizationId: string, id: string) {
-    const provider = await this.prisma.gitProvider.findFirst({ where: { id, organizationId } });
+    const provider = await this.prisma.gitProvider.findFirst({
+      where: { id, organizationId },
+    });
     if (!provider) throw AppException.notFound('Git provider', id);
     return provider;
   }
@@ -67,7 +69,11 @@ export class GitProvidersService {
     actor: ActorContext,
   ) {
     const baseUrl = dto.baseUrl ?? this.adapters.defaultBaseUrl(providerType);
-    const adapter = this.adapters.createForToken(providerType, dto.accessToken, baseUrl);
+    const adapter = this.adapters.createForToken(
+      providerType,
+      dto.accessToken,
+      baseUrl,
+    );
 
     let account;
     try {
@@ -161,7 +167,9 @@ export class GitProvidersService {
       where: { organizationId, providerId },
       select: { externalRepositoryId: true },
     });
-    const importedIds = new Set(imported.map((repo) => repo.externalRepositoryId));
+    const importedIds = new Set(
+      imported.map((repo) => repo.externalRepositoryId),
+    );
 
     return discovered.map((repository) => ({
       ...repository,
@@ -210,7 +218,10 @@ export class GitProvidersService {
    * Records a provider failure and freezes collection. Last-known metrics stay
    * exactly where they are — nothing is zeroed (docs/devlytics.md §4.2).
    */
-  async recordFailure(providerId: string, error: ProviderRequestError): Promise<ProviderStatus> {
+  async recordFailure(
+    providerId: string,
+    error: ProviderRequestError,
+  ): Promise<ProviderStatus> {
     const status: ProviderStatus = error.tokenExpired
       ? ProviderStatus.TOKEN_EXPIRED
       : error.rateLimited
@@ -222,19 +233,27 @@ export class GitProvidersService {
       data: { status, lastErrorMessage: error.message.slice(0, 1000) },
     });
 
-    this.logger.warn(`Provider ${providerId} marked ${status}: ${error.message}`);
+    this.logger.warn(
+      `Provider ${providerId} marked ${status}: ${error.message}`,
+    );
     return status;
   }
 
   async markSynced(providerId: string): Promise<void> {
     await this.prisma.gitProvider.update({
       where: { id: providerId },
-      data: { status: ProviderStatus.CONNECTED, lastSyncAt: new Date(), lastErrorMessage: null },
+      data: {
+        status: ProviderStatus.CONNECTED,
+        lastSyncAt: new Date(),
+        lastErrorMessage: null,
+      },
     });
   }
 
   /** Decrypted webhook secret for signature validation. */
-  webhookSecret(provider: { webhookSecretEncrypted: string | null }): string | null {
+  webhookSecret(provider: {
+    webhookSecretEncrypted: string | null;
+  }): string | null {
     return this.crypto.decrypt(provider.webhookSecretEncrypted);
   }
 
@@ -251,7 +270,9 @@ export class GitProvidersService {
   }
 
   /** Providers eligible for the reconciliation poll. */
-  findSyncable(organizationId?: string): Promise<Prisma.GitProviderGetPayload<object>[]> {
+  findSyncable(
+    organizationId?: string,
+  ): Promise<Prisma.GitProviderGetPayload<object>[]> {
     return this.prisma.gitProvider.findMany({
       where: {
         status: { in: [ProviderStatus.CONNECTED, ProviderStatus.RATE_LIMITED] },

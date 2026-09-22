@@ -9,8 +9,17 @@ import { PrismaService } from '../database/prisma.service';
 import { NotificationEvent } from '../notifications/notification-events';
 import { NotificationsService } from '../notifications/notifications.service';
 import type { ActorContext } from '../organizations/organizations.service';
-import { AddTeamMemberDto, CreateTeamDto, TeamQueryDto, UpdateTeamDto } from './dto/team.dto';
-import { TEAM_INCLUDE, TeamWithRelations, TeamsRepository } from './teams.repository';
+import {
+  AddTeamMemberDto,
+  CreateTeamDto,
+  TeamQueryDto,
+  UpdateTeamDto,
+} from './dto/team.dto';
+import {
+  TEAM_INCLUDE,
+  TeamWithRelations,
+  TeamsRepository,
+} from './teams.repository';
 
 const SORTABLE = ['name', 'code', 'createdAt', 'status'] as const;
 
@@ -26,14 +35,22 @@ export class TeamsService {
   async findAll(organizationId: string, query: TeamQueryDto) {
     const where: Prisma.TeamWhereInput = {
       organizationId,
-      ...QueryUtil.compact({ departmentId: query.departmentId, status: query.status }),
+      ...QueryUtil.compact({
+        departmentId: query.departmentId,
+        status: query.status,
+      }),
       ...QueryUtil.search(query.search, ['name', 'code']),
     };
 
     const [teams, total] = await this.prisma.$transaction([
       this.prisma.team.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'name'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'name',
+        ),
         skip: query.skip,
         take: query.limit,
         include: TEAM_INCLUDE,
@@ -66,10 +83,20 @@ export class TeamsService {
           orderBy: { joinedAt: 'asc' },
         },
         projectTeams: {
-          include: { project: { select: { id: true, name: true, code: true, status: true } } },
+          include: {
+            project: {
+              select: { id: true, name: true, code: true, status: true },
+            },
+          },
         },
         repositories: {
-          select: { id: true, name: true, fullName: true, syncStatus: true, language: true },
+          select: {
+            id: true,
+            name: true,
+            fullName: true,
+            syncStatus: true,
+            language: true,
+          },
         },
       },
     });
@@ -90,12 +117,20 @@ export class TeamsService {
     };
   }
 
-  async create(organizationId: string, dto: CreateTeamDto, actor: ActorContext) {
+  async create(
+    organizationId: string,
+    dto: CreateTeamDto,
+    actor: ActorContext,
+  ) {
     const code = dto.code.toUpperCase();
     if (await this.repository.findByCode(organizationId, code)) {
       throw AppException.duplicate('Team', 'code');
     }
-    await this.assertReferences(organizationId, dto.departmentId, dto.teamLeadId);
+    await this.assertReferences(
+      organizationId,
+      dto.departmentId,
+      dto.teamLeadId,
+    );
     assertAvatar(dto.avatarType, dto.avatarUrl);
 
     const team = await this.prisma.$transaction(async (tx) => {
@@ -117,7 +152,12 @@ export class TeamsService {
       // The lead is always a member of their own team.
       if (dto.teamLeadId) {
         await tx.teamMember.create({
-          data: { organizationId, teamId: created.id, userId: dto.teamLeadId, isLead: true },
+          data: {
+            organizationId,
+            teamId: created.id,
+            userId: dto.teamLeadId,
+            isLead: true,
+          },
         });
       }
 
@@ -140,7 +180,12 @@ export class TeamsService {
     return this.findOne(organizationId, team.id);
   }
 
-  async update(organizationId: string, id: string, dto: UpdateTeamDto, actor: ActorContext) {
+  async update(
+    organizationId: string,
+    id: string,
+    dto: UpdateTeamDto,
+    actor: ActorContext,
+  ) {
     const existing = await this.repository.findByIdOrFail(organizationId, id);
     const code = dto.code?.toUpperCase();
 
@@ -148,8 +193,15 @@ export class TeamsService {
       const clash = await this.repository.findByCode(organizationId, code);
       if (clash) throw AppException.duplicate('Team', 'code');
     }
-    await this.assertReferences(organizationId, dto.departmentId, dto.teamLeadId);
-    assertAvatar(dto.avatarType ?? existing.avatarType, dto.avatarUrl ?? existing.avatarUrl);
+    await this.assertReferences(
+      organizationId,
+      dto.departmentId,
+      dto.teamLeadId,
+    );
+    assertAvatar(
+      dto.avatarType ?? existing.avatarType,
+      dto.avatarUrl ?? existing.avatarUrl,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.team.update({
@@ -168,11 +220,19 @@ export class TeamsService {
       });
 
       if (dto.teamLeadId && dto.teamLeadId !== existing.teamLeadId) {
-        await tx.teamMember.updateMany({ where: { teamId: id }, data: { isLead: false } });
+        await tx.teamMember.updateMany({
+          where: { teamId: id },
+          data: { isLead: false },
+        });
         await tx.teamMember.upsert({
           where: { teamId_userId: { teamId: id, userId: dto.teamLeadId } },
           update: { isLead: true },
-          create: { organizationId, teamId: id, userId: dto.teamLeadId, isLead: true },
+          create: {
+            organizationId,
+            teamId: id,
+            userId: dto.teamLeadId,
+            isLead: true,
+          },
         });
       }
     });
@@ -212,14 +272,20 @@ export class TeamsService {
   async remove(organizationId: string, id: string, actor: ActorContext) {
     const team = await this.prisma.team.findFirst({
       where: { id, organizationId },
-      include: { _count: { select: { repositories: true, projectTeams: true } } },
+      include: {
+        _count: { select: { repositories: true, projectTeams: true } },
+      },
     });
     if (!team) throw AppException.notFound('Team', id);
 
-    const hasHistory = team._count.repositories > 0 || team._count.projectTeams > 0;
+    const hasHistory =
+      team._count.repositories > 0 || team._count.projectTeams > 0;
 
     if (hasHistory) {
-      await this.prisma.team.update({ where: { id }, data: { status: 'ARCHIVED' } });
+      await this.prisma.team.update({
+        where: { id },
+        data: { status: 'ARCHIVED' },
+      });
     } else {
       await this.prisma.team.delete({ where: { id } });
     }
@@ -336,7 +402,10 @@ export class TeamsService {
     await this.prisma.$transaction(async (tx) => {
       await tx.teamMember.delete({ where: { id: membership.id } });
       if (team.teamLeadId === userId) {
-        await tx.team.update({ where: { id: teamId }, data: { teamLeadId: null } });
+        await tx.team.update({
+          where: { id: teamId },
+          data: { teamLeadId: null },
+        });
       }
     });
 
@@ -360,7 +429,10 @@ export class TeamsService {
    * Attaches the latest persisted score and rank. Scores are read, never
    * recomputed here — `ScoringService` owns the formula.
    */
-  private async attachCurrentScores(organizationId: string, teams: TeamWithRelations[]) {
+  private async attachCurrentScores(
+    organizationId: string,
+    teams: TeamWithRelations[],
+  ) {
     if (teams.length === 0) return [];
     const teamIds = teams.map((team) => team.id);
 
@@ -376,11 +448,13 @@ export class TeamsService {
     ]);
 
     const latestScore = new Map<string, (typeof scores)[number]>();
-    for (const score of scores) if (!latestScore.has(score.teamId)) latestScore.set(score.teamId, score);
+    for (const score of scores)
+      if (!latestScore.has(score.teamId)) latestScore.set(score.teamId, score);
 
     const latestRank = new Map<string, (typeof rankings)[number]>();
     for (const rank of rankings) {
-      if (rank.teamId && !latestRank.has(rank.teamId)) latestRank.set(rank.teamId, rank);
+      if (rank.teamId && !latestRank.has(rank.teamId))
+        latestRank.set(rank.teamId, rank);
     }
 
     return teams.map((team) => {
@@ -400,7 +474,11 @@ export class TeamsService {
     });
   }
 
-  private async assertReferences(organizationId: string, departmentId?: string, leadId?: string) {
+  private async assertReferences(
+    organizationId: string,
+    departmentId?: string,
+    leadId?: string,
+  ) {
     if (departmentId) {
       const department = await this.prisma.department.findFirst({
         where: { id: departmentId, organizationId },
@@ -411,20 +489,30 @@ export class TeamsService {
     if (leadId) await this.assertOrganizationMember(organizationId, leadId);
   }
 
-  private async assertOrganizationMember(organizationId: string, userId: string) {
+  private async assertOrganizationMember(
+    organizationId: string,
+    userId: string,
+  ) {
     const membership = await this.prisma.organizationUser.findUnique({
       where: { organizationId_userId: { organizationId, userId } },
       select: { status: true },
     });
     if (!membership || membership.status === 'REMOVED') {
-      throw AppException.unprocessable('That user is not a member of this organization');
+      throw AppException.unprocessable(
+        'That user is not a member of this organization',
+      );
     }
   }
 }
 
 /** An IMAGE or ICON avatar needs a URL; INITIALS is generated from the name. */
-function assertAvatar(avatarType?: string | null, avatarUrl?: string | null): void {
+function assertAvatar(
+  avatarType?: string | null,
+  avatarUrl?: string | null,
+): void {
   if ((avatarType === 'IMAGE' || avatarType === 'ICON') && !avatarUrl) {
-    throw AppException.badRequest(`avatarUrl is required when avatarType is ${avatarType}`);
+    throw AppException.badRequest(
+      `avatarUrl is required when avatarType is ${avatarType}`,
+    );
   }
 }

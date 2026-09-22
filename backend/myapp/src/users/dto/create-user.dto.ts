@@ -20,7 +20,9 @@ export class CreateUserDto {
   @ApiProperty({ example: 'ada@example.com' })
   @IsEmail()
   @MaxLength(254)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   email: string;
 
   @ApiProperty({ example: 'Ada' })
@@ -39,7 +41,10 @@ export class CreateUserDto {
   @IsEnum(RoleKey)
   roleKey: RoleKey;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Optional team to join on acceptance' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Optional team to join on acceptance',
+  })
   @IsOptional()
   @IsUUID('4')
   teamId?: string;

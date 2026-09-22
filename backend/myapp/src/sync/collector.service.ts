@@ -25,7 +25,8 @@ export interface CollectionResult {
 }
 
 /** File-path heuristics used to classify test and documentation changes. */
-const TEST_PATH = /(^|\/)(tests?|__tests__|spec|e2e)(\/|$)|\.(test|spec)\.[a-z]+$/i;
+const TEST_PATH =
+  /(^|\/)(tests?|__tests__|spec|e2e)(\/|$)|\.(test|spec)\.[a-z]+$/i;
 const DOC_PATH = /(^|\/)(docs?|documentation)(\/|$)|\.(md|mdx|rst|adoc)$/i;
 
 /**
@@ -70,7 +71,13 @@ export class CollectorService {
     });
 
     try {
-      const result = await this.collectAll(repository, adapter, ref, window, onProgress);
+      const result = await this.collectAll(
+        repository,
+        adapter,
+        ref,
+        window,
+        onProgress,
+      );
 
       await this.prisma.repository.update({
         where: { id: repositoryId },
@@ -134,7 +141,8 @@ export class CollectorService {
       await this.persistCommit(repository, commit, identity);
       result.commits += 1;
 
-      if (onProgress && index % 25 === 0) await onProgress(index, commits.length);
+      if (onProgress && index % 25 === 0)
+        await onProgress(index, commits.length);
     }
 
     // --- pull requests ------------------------------------------------------
@@ -186,7 +194,9 @@ export class CollectorService {
           changedFiles: pull.changedFiles,
           commentCount: pull.commentCount,
           url: pull.url,
-          metadata: { authorUsername: pull.authorUsername } as Prisma.InputJsonValue,
+          metadata: {
+            authorUsername: pull.authorUsername,
+          } as Prisma.InputJsonValue,
         },
       });
 
@@ -223,7 +233,11 @@ export class CollectorService {
               externalReviewId: review.externalId,
             },
           },
-          update: { state: review.state, body: review.body, reviewerId: identity.userId },
+          update: {
+            state: review.state,
+            body: review.body,
+            reviewerId: identity.userId,
+          },
           create: {
             organizationId,
             pullRequestId: pullRequest.id,
@@ -232,7 +246,9 @@ export class CollectorService {
             state: review.state,
             body: review.body,
             submittedAt: review.submittedAt,
-            metadata: { reviewerUsername: review.reviewerUsername } as Prisma.InputJsonValue,
+            metadata: {
+              reviewerUsername: review.reviewerUsername,
+            } as Prisma.InputJsonValue,
           },
         });
 
@@ -361,7 +377,10 @@ export class CollectorService {
       result.deployments += 1;
     }
 
-    await this.refreshRepositoryMembers(repository.organizationId, repository.id);
+    await this.refreshRepositoryMembers(
+      repository.organizationId,
+      repository.id,
+    );
 
     result.total =
       result.commits +
@@ -436,10 +455,18 @@ export class CollectorService {
   }
 
   /** Rebuilds contributor counts so the repository member list stays accurate. */
-  private async refreshRepositoryMembers(organizationId: string, repositoryId: string) {
+  private async refreshRepositoryMembers(
+    organizationId: string,
+    repositoryId: string,
+  ) {
     const grouped = await this.prisma.commit.groupBy({
       by: ['authorId'],
-      where: { organizationId, repositoryId, authorId: { not: null }, isBot: false },
+      where: {
+        organizationId,
+        repositoryId,
+        authorId: { not: null },
+        isBot: false,
+      },
       _count: { _all: true },
     });
 
@@ -462,7 +489,10 @@ export class CollectorService {
    * A first import backfills the configured history window (oldest first, so
    * trends have a baseline); an incremental run starts from the last sync.
    */
-  private window(repository: Repository, jobType: SyncJobType): CollectionWindow {
+  private window(
+    repository: Repository,
+    jobType: SyncJobType,
+  ): CollectionWindow {
     if (jobType === 'FULL_IMPORT' || !repository.lastSyncAt) {
       const months = this.config.get<number>('sync.historyMonths', 12);
       const since = new Date();

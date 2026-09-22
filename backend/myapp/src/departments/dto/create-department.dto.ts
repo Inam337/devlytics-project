@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateDepartmentDto {
   @ApiProperty({ example: 'Platform Engineering' })
@@ -24,7 +31,10 @@ export class CreateDepartmentDto {
   @MaxLength(2000)
   description?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Department manager (must be a member)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Department manager (must be a member)',
+  })
   @IsOptional()
   @IsUUID('4')
   managerId?: string;

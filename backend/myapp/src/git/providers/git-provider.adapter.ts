@@ -73,7 +73,12 @@ export interface ProviderReview {
   externalId: string;
   pullRequestExternalId: string;
   reviewerUsername?: string;
-  state: 'PENDING' | 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | 'DISMISSED';
+  state:
+    | 'PENDING'
+    | 'APPROVED'
+    | 'CHANGES_REQUESTED'
+    | 'COMMENTED'
+    | 'DISMISSED';
   body?: string;
   submittedAt: Date;
 }
@@ -136,12 +141,30 @@ export interface GitProviderAdapter {
   getCurrentUser(): Promise<ProviderAccount>;
   getRepositories(): Promise<ProviderRepository[]>;
   getRepository(ref: RepositoryRef): Promise<ProviderRepository>;
-  getCommits(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderCommit[]>;
-  getPullRequests(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderPullRequest[]>;
-  getReviews(ref: RepositoryRef, pullRequestNumbers: number[]): Promise<ProviderReview[]>;
-  getIssues(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderIssue[]>;
-  getPipelines(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderPipeline[]>;
-  getDeployments(ref: RepositoryRef, window: CollectionWindow): Promise<ProviderDeployment[]>;
+  getCommits(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderCommit[]>;
+  getPullRequests(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderPullRequest[]>;
+  getReviews(
+    ref: RepositoryRef,
+    pullRequestNumbers: number[],
+  ): Promise<ProviderReview[]>;
+  getIssues(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderIssue[]>;
+  getPipelines(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderPipeline[]>;
+  getDeployments(
+    ref: RepositoryRef,
+    window: CollectionWindow,
+  ): Promise<ProviderDeployment[]>;
 }
 
 /** Raised when a provider rejects a call; carries enough to set provider status. */

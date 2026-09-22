@@ -9,7 +9,13 @@ import { PrismaService } from '../database/prisma.service';
 import { NotificationEvent } from '../notifications/notification-events';
 import { NotificationsService } from '../notifications/notifications.service';
 import type { ActorContext } from '../organizations/organizations.service';
-import { CreateGoalDto, GOAL_METRIC_KEYS, GoalMetricKey, GoalsQueryDto, UpdateGoalDto } from './dto/goals.dto';
+import {
+  CreateGoalDto,
+  GOAL_METRIC_KEYS,
+  GoalMetricKey,
+  GoalsQueryDto,
+  UpdateGoalDto,
+} from './dto/goals.dto';
 
 const SORTABLE = ['createdAt', 'dueDate', 'status'] as const;
 const AT_RISK_DAYS = 14;
@@ -43,21 +49,32 @@ export class GoalsService {
     private readonly notifications: NotificationsService,
   ) {}
 
-  async create(organizationId: string, dto: CreateGoalDto, actor: ActorContext) {
+  async create(
+    organizationId: string,
+    dto: CreateGoalDto,
+    actor: ActorContext,
+  ) {
     if (!GOAL_METRIC_KEYS.includes(dto.metricKey)) {
-      throw AppException.badRequest(`Unsupported metricKey. Use one of: ${GOAL_METRIC_KEYS.join(', ')}`);
+      throw AppException.badRequest(
+        `Unsupported metricKey. Use one of: ${GOAL_METRIC_KEYS.join(', ')}`,
+      );
     }
     if (dto.ownerType === 'DEVELOPER' && !dto.ownerUserId) {
-      throw AppException.badRequest('ownerUserId is required when ownerType is DEVELOPER');
+      throw AppException.badRequest(
+        'ownerUserId is required when ownerType is DEVELOPER',
+      );
     }
     if (dto.ownerType === 'TEAM' && !dto.ownerTeamId) {
-      throw AppException.badRequest('ownerTeamId is required when ownerType is TEAM');
+      throw AppException.badRequest(
+        'ownerTeamId is required when ownerType is TEAM',
+      );
     }
 
     const repository = await this.prisma.repository.findFirst({
       where: { id: dto.repositoryId, organizationId },
     });
-    if (!repository) throw AppException.notFound('Repository', dto.repositoryId);
+    if (!repository)
+      throw AppException.notFound('Repository', dto.repositoryId);
 
     const latestSnapshot = await this.prisma.codeQualitySnapshot.findFirst({
       where: { organizationId, repositoryId: dto.repositoryId },
@@ -65,14 +82,19 @@ export class GoalsService {
     });
 
     const baseline = latestSnapshot
-      ? NumberUtil.toNumber(latestSnapshot[SNAPSHOT_FIELD[dto.metricKey]] as Prisma.Decimal | number)
+      ? NumberUtil.toNumber(
+          latestSnapshot[SNAPSHOT_FIELD[dto.metricKey]] as
+            | Prisma.Decimal
+            | number,
+        )
       : 0;
 
     const goal = await this.prisma.improvementGoal.create({
       data: {
         organizationId,
         ownerType: dto.ownerType,
-        ownerUserId: dto.ownerType === 'DEVELOPER' ? dto.ownerUserId : undefined,
+        ownerUserId:
+          dto.ownerType === 'DEVELOPER' ? dto.ownerUserId : undefined,
         ownerTeamId: dto.ownerType === 'TEAM' ? dto.ownerTeamId : undefined,
         repositoryId: dto.repositoryId,
         qualityIssueId: dto.qualityIssueId,
@@ -123,10 +145,17 @@ export class GoalsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.improvementGoal.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'createdAt'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'createdAt',
+        ),
         skip: query.skip,
         take: query.limit,
-        include: { repository: { select: { id: true, name: true, fullName: true } } },
+        include: {
+          repository: { select: { id: true, name: true, fullName: true } },
+        },
       }),
       this.prisma.improvementGoal.count({ where }),
     ]);
@@ -146,8 +175,15 @@ export class GoalsService {
     return toView(goal);
   }
 
-  async update(organizationId: string, id: string, dto: UpdateGoalDto, actor: ActorContext) {
-    const existing = await this.prisma.improvementGoal.findFirst({ where: { id, organizationId } });
+  async update(
+    organizationId: string,
+    id: string,
+    dto: UpdateGoalDto,
+    actor: ActorContext,
+  ) {
+    const existing = await this.prisma.improvementGoal.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('Goal', id);
 
     if (dto.status && dto.status !== 'ABANDONED') {
@@ -184,7 +220,9 @@ export class GoalsService {
   }
 
   async remove(organizationId: string, id: string, actor: ActorContext) {
-    const existing = await this.prisma.improvementGoal.findFirst({ where: { id, organizationId } });
+    const existing = await this.prisma.improvementGoal.findFirst({
+      where: { id, organizationId },
+    });
     if (!existing) throw AppException.notFound('Goal', id);
 
     await this.prisma.improvementGoal.delete({ where: { id } });
@@ -211,11 +249,19 @@ export class GoalsService {
   }
 
   /** Manual "check now" — still only re-measures, it never sets a value by hand. */
-  async recheckProgress(organizationId: string, goalId: string, recordedById?: string) {
-    const goal = await this.prisma.improvementGoal.findFirst({ where: { id: goalId, organizationId } });
+  async recheckProgress(
+    organizationId: string,
+    goalId: string,
+    recordedById?: string,
+  ) {
+    const goal = await this.prisma.improvementGoal.findFirst({
+      where: { id: goalId, organizationId },
+    });
     if (!goal) throw AppException.notFound('Goal', goalId);
     if (!goal.repositoryId) {
-      throw AppException.unprocessable('This goal has no repository to re-measure against');
+      throw AppException.unprocessable(
+        'This goal has no repository to re-measure against',
+      );
     }
 
     const snapshot = await this.prisma.codeQualitySnapshot.findFirst({
@@ -223,14 +269,19 @@ export class GoalsService {
       orderBy: { snapshotDate: 'desc' },
     });
     if (!snapshot) {
-      throw AppException.unprocessable('No analysis run exists yet for this repository');
+      throw AppException.unprocessable(
+        'No analysis run exists yet for this repository',
+      );
     }
 
     return this.applyMeasurement(goal, snapshot, recordedById);
   }
 
   /** Called after a repository's quality snapshot updates, for every affected goal. */
-  async evaluateForRepository(organizationId: string, repositoryId: string): Promise<number> {
+  async evaluateForRepository(
+    organizationId: string,
+    repositoryId: string,
+  ): Promise<number> {
     const snapshot = await this.prisma.codeQualitySnapshot.findFirst({
       where: { organizationId, repositoryId },
       orderBy: { snapshotDate: 'desc' },
@@ -238,7 +289,11 @@ export class GoalsService {
     if (!snapshot) return 0;
 
     const goals = await this.prisma.improvementGoal.findMany({
-      where: { organizationId, repositoryId, status: { in: ['ACTIVE', 'AT_RISK'] } },
+      where: {
+        organizationId,
+        repositoryId,
+        status: { in: ['ACTIVE', 'AT_RISK'] },
+      },
     });
 
     for (const goal of goals) {
@@ -248,14 +303,28 @@ export class GoalsService {
   }
 
   private async applyMeasurement(
-    goal: { id: string; metricKey: string; targetValue: Prisma.Decimal; direction: string; currentValue: Prisma.Decimal; ownerType: string; ownerUserId: string | null; ownerTeamId: string | null; title: string; organizationId: string; lastMovementAt: Date | null },
+    goal: {
+      id: string;
+      metricKey: string;
+      targetValue: Prisma.Decimal;
+      direction: string;
+      currentValue: Prisma.Decimal;
+      ownerType: string;
+      ownerUserId: string | null;
+      ownerTeamId: string | null;
+      title: string;
+      organizationId: string;
+      lastMovementAt: Date | null;
+    },
     snapshot: CodeQualitySnapshot,
     recordedById?: string,
   ) {
     const metricKey = goal.metricKey as GoalMetricKey;
     if (!(metricKey in SNAPSHOT_FIELD)) return;
 
-    const measured = NumberUtil.toNumber(snapshot[SNAPSHOT_FIELD[metricKey]] as Prisma.Decimal | number);
+    const measured = NumberUtil.toNumber(
+      snapshot[SNAPSHOT_FIELD[metricKey]] as Prisma.Decimal | number,
+    );
     const target = NumberUtil.toNumber(goal.targetValue);
     const previousValue = NumberUtil.toNumber(goal.currentValue);
     const moved = Math.abs(measured - previousValue) > 0.001;
@@ -275,9 +344,15 @@ export class GoalsService {
     const now = new Date();
     const lastMovementAt = moved ? now : (goal.lastMovementAt ?? now);
     const atRisk =
-      !achieved && now.getTime() - lastMovementAt.getTime() > AT_RISK_DAYS * 24 * 60 * 60 * 1000;
+      !achieved &&
+      now.getTime() - lastMovementAt.getTime() >
+        AT_RISK_DAYS * 24 * 60 * 60 * 1000;
 
-    const nextStatus: GoalStatus = achieved ? 'COMPLETED' : atRisk ? 'AT_RISK' : 'ACTIVE';
+    const nextStatus: GoalStatus = achieved
+      ? 'COMPLETED'
+      : atRisk
+        ? 'AT_RISK'
+        : 'ACTIVE';
 
     await this.prisma.$transaction([
       this.prisma.improvementGoalProgress.create({
@@ -304,7 +379,8 @@ export class GoalsService {
     ]);
 
     if (achieved) {
-      const notifyUserId = goal.ownerType === 'DEVELOPER' ? goal.ownerUserId : null;
+      const notifyUserId =
+        goal.ownerType === 'DEVELOPER' ? goal.ownerUserId : null;
       if (notifyUserId) {
         await this.notifications.notify({
           organizationId: goal.organizationId,
@@ -315,7 +391,9 @@ export class GoalsService {
           actionUrl: `/goals/${goal.id}`,
         });
       }
-      this.logger.log(`Goal ${goal.id} completed at ${measured} (target ${target})`);
+      this.logger.log(
+        `Goal ${goal.id} completed at ${measured} (target ${target})`,
+      );
     }
 
     return nextStatus;

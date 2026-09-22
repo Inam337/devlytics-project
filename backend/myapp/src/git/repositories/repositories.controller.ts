@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permission } from '../../common/constants/permissions';
 import {
@@ -10,7 +18,11 @@ import {
   ResponseMessage,
 } from '../../common/decorators';
 import { ActivityService } from '../activity/activity.service';
-import { ActivityQueryDto, RepositoryQueryDto, UpdateRepositoryDto } from './dto/repository.dto';
+import {
+  ActivityQueryDto,
+  RepositoryQueryDto,
+  UpdateRepositoryDto,
+} from './dto/repository.dto';
 import { RepositoriesService } from './repositories.service';
 
 const uuid = () => new ParseUUIDPipe({ version: '4' });
@@ -26,15 +38,26 @@ export class RepositoriesController {
 
   @Get()
   @RequirePermissions(Permission.REPOSITORY_READ)
-  @ApiOperation({ summary: 'Repository table: provider, project, team, commits, quality, coverage' })
-  findAll(@OrganizationId() organizationId: string, @Query() query: RepositoryQueryDto) {
+  @ApiOperation({
+    summary:
+      'Repository table: provider, project, team, commits, quality, coverage',
+  })
+  findAll(
+    @OrganizationId() organizationId: string,
+    @Query() query: RepositoryQueryDto,
+  ) {
     return this.repositoriesService.findAll(organizationId, query);
   }
 
   @Get(':id')
   @RequirePermissions(Permission.REPOSITORY_READ)
-  @ApiOperation({ summary: 'Repository detail: KPIs, coverage trend, top contributors' })
-  findOne(@OrganizationId() organizationId: string, @Param('id', uuid()) id: string) {
+  @ApiOperation({
+    summary: 'Repository detail: KPIs, coverage trend, top contributors',
+  })
+  findOne(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+  ) {
     return this.repositoriesService.findOne(organizationId, id);
   }
 
@@ -49,13 +72,19 @@ export class RepositoriesController {
     @CurrentUser('userId') userId: string,
     @Client() client: ClientInfo,
   ) {
-    return this.repositoriesService.update(organizationId, id, dto, { actorId: userId, ...client });
+    return this.repositoriesService.update(organizationId, id, dto, {
+      actorId: userId,
+      ...client,
+    });
   }
 
   @Get(':id/members')
   @RequirePermissions(Permission.REPOSITORY_READ)
   @ApiOperation({ summary: 'Contributors to this repository' })
-  findMembers(@OrganizationId() organizationId: string, @Param('id', uuid()) id: string) {
+  findMembers(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+  ) {
     return this.repositoriesService.findMembers(organizationId, id);
   }
 

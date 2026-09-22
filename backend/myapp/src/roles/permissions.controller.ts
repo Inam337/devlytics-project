@@ -12,16 +12,21 @@ export class PermissionsController {
 
   @Get()
   @RequirePermissions(Permission.ROLE_READ)
-  @ApiOperation({ summary: 'The global permission catalog, grouped by resource' })
+  @ApiOperation({
+    summary: 'The global permission catalog, grouped by resource',
+  })
   async findAll() {
     const permissions = await this.prisma.permission.findMany({
       orderBy: [{ resource: 'asc' }, { action: 'asc' }],
     });
 
-    const byResource = permissions.reduce<Record<string, typeof permissions>>((groups, item) => {
-      (groups[item.resource] ??= []).push(item);
-      return groups;
-    }, {});
+    const byResource = permissions.reduce<Record<string, typeof permissions>>(
+      (groups, item) => {
+        (groups[item.resource] ??= []).push(item);
+        return groups;
+      },
+      {},
+    );
 
     return { total: permissions.length, resources: byResource };
   }

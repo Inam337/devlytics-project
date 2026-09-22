@@ -19,7 +19,10 @@ import { TokenService } from './token.service';
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('jwt.secret'),
         signOptions: {
-          expiresIn: config.get<string>('jwt.expiresIn', '15m') as SignOptions['expiresIn'],
+          expiresIn: config.get<string>(
+            'jwt.expiresIn',
+            '15m',
+          ) as SignOptions['expiresIn'],
         },
       }),
     }),

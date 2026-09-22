@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsHexColor, IsOptional, IsString, IsUrl, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsHexColor,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateOrganizationDto {
   @ApiProperty({ example: 'Northwind Engineering' })
@@ -18,7 +26,8 @@ export class CreateOrganizationDto {
   @IsString()
   @MaxLength(150)
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'slug must be lowercase alphanumeric words separated by single hyphens',
+    message:
+      'slug must be lowercase alphanumeric words separated by single hyphens',
   })
   slug?: string;
 

@@ -8,9 +8,18 @@ import { QueryUtil } from '../../common/utils/query.util';
 import { PrismaService } from '../../database/prisma.service';
 import type { ActorContext } from '../../organizations/organizations.service';
 import { RepositoryQueryDto, UpdateRepositoryDto } from './dto/repository.dto';
-import { REPOSITORY_INCLUDE, RepositoriesRepository } from './repositories.repository';
+import {
+  REPOSITORY_INCLUDE,
+  RepositoriesRepository,
+} from './repositories.repository';
 
-const SORTABLE = ['name', 'fullName', 'lastSyncAt', 'createdAt', 'syncStatus'] as const;
+const SORTABLE = [
+  'name',
+  'fullName',
+  'lastSyncAt',
+  'createdAt',
+  'syncStatus',
+] as const;
 
 @Injectable()
 export class RepositoriesService {
@@ -37,7 +46,12 @@ export class RepositoriesService {
     const [repositories, total] = await this.prisma.$transaction([
       this.prisma.repository.findMany({
         where,
-        orderBy: QueryUtil.orderBy(query.sortBy, query.sortOrder, SORTABLE, 'name'),
+        orderBy: QueryUtil.orderBy(
+          query.sortBy,
+          query.sortOrder,
+          SORTABLE,
+          'name',
+        ),
         skip: query.skip,
         take: query.limit,
         include: REPOSITORY_INCLUDE,
@@ -64,7 +78,9 @@ export class RepositoriesService {
     });
     if (!repository) throw AppException.notFound('Repository', id);
 
-    const snapshots = await this.repository.latestSnapshots(organizationId, [id]);
+    const snapshots = await this.repository.latestSnapshots(organizationId, [
+      id,
+    ]);
     const contributors = await this.topContributors(organizationId, id);
     const coverageTrend = await this.coverageTrend(organizationId, id);
 
@@ -75,7 +91,12 @@ export class RepositoriesService {
     };
   }
 
-  async update(organizationId: string, id: string, dto: UpdateRepositoryDto, actor: ActorContext) {
+  async update(
+    organizationId: string,
+    id: string,
+    dto: UpdateRepositoryDto,
+    actor: ActorContext,
+  ) {
     const existing = await this.repository.findByIdOrFail(organizationId, id);
 
     if (dto.projectId) {
@@ -129,7 +150,13 @@ export class RepositoriesService {
       where: { organizationId, repositoryId },
       include: {
         user: {
-          select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+          },
         },
       },
       orderBy: { contributions: 'desc' },
@@ -137,17 +164,28 @@ export class RepositoriesService {
   }
 
   /** Contributor board on the repository detail screen; bots are excluded. */
-  private async topContributors(organizationId: string, repositoryId: string, take = 5) {
+  private async topContributors(
+    organizationId: string,
+    repositoryId: string,
+    take = 5,
+  ) {
     const grouped = await this.prisma.commit.groupBy({
       by: ['authorId'],
-      where: { organizationId, repositoryId, authorId: { not: null }, isBot: false },
+      where: {
+        organizationId,
+        repositoryId,
+        authorId: { not: null },
+        isBot: false,
+      },
       _count: { _all: true },
       _sum: { additions: true, deletions: true },
       orderBy: { _count: { authorId: 'desc' } },
       take,
     });
 
-    const userIds = grouped.map((row) => row.authorId).filter((id): id is string => Boolean(id));
+    const userIds = grouped
+      .map((row) => row.authorId)
+      .filter((id): id is string => Boolean(id));
     if (userIds.length === 0) return [];
 
     const users = await this.prisma.user.findMany({
@@ -165,7 +203,11 @@ export class RepositoriesService {
     }));
   }
 
-  private async coverageTrend(organizationId: string, repositoryId: string, take = 30) {
+  private async coverageTrend(
+    organizationId: string,
+    repositoryId: string,
+    take = 30,
+  ) {
     const snapshots = await this.prisma.codeQualitySnapshot.findMany({
       where: { organizationId, repositoryId },
       orderBy: { snapshotDate: 'desc' },
@@ -199,7 +241,9 @@ type LatestSnapshot = {
 } | null;
 
 function toView(
-  repository: Prisma.RepositoryGetPayload<{ include: typeof REPOSITORY_INCLUDE }>,
+  repository: Prisma.RepositoryGetPayload<{
+    include: typeof REPOSITORY_INCLUDE;
+  }>,
   snapshot?: LatestSnapshot,
 ) {
   const { _count, ...rest } = repository;
@@ -209,8 +253,12 @@ function toView(
     pullRequestCount: _count.pullRequests,
     issueCount: _count.issues,
     qualityScore: snapshot ? NumberUtil.toNumber(snapshot.qualityScore) : null,
-    coveragePercent: snapshot ? NumberUtil.toNumber(snapshot.coveragePercent) : null,
-    duplicationPercent: snapshot ? NumberUtil.toNumber(snapshot.duplicationPercent) : null,
+    coveragePercent: snapshot
+      ? NumberUtil.toNumber(snapshot.coveragePercent)
+      : null,
+    duplicationPercent: snapshot
+      ? NumberUtil.toNumber(snapshot.duplicationPercent)
+      : null,
     bugs: snapshot?.bugs ?? null,
     codeSmells: snapshot?.codeSmells ?? null,
     vulnerabilities: snapshot?.vulnerabilities ?? null,

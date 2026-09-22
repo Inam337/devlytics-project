@@ -1,6 +1,11 @@
 import { Logger } from '@nestjs/common';
 
-const REQUIRED_KEYS = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'ENCRYPTION_KEY'];
+const REQUIRED_KEYS = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'JWT_REFRESH_SECRET',
+  'ENCRYPTION_KEY',
+];
 
 const INSECURE_DEFAULTS = [
   'change-me-in-production',
@@ -12,7 +17,9 @@ const INSECURE_DEFAULTS = [
  * Fails fast when the process is missing configuration it cannot invent, and
  * refuses to boot production with the placeholder secrets from `.env.example`.
  */
-export function validateEnv(config: Record<string, unknown>): Record<string, unknown> {
+export function validateEnv(
+  config: Record<string, unknown>,
+): Record<string, unknown> {
   const logger = new Logger('Config');
   const missing = REQUIRED_KEYS.filter((key) => !config[key]);
 
@@ -24,12 +31,16 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
 
   const encryptionKey = String(config.ENCRYPTION_KEY);
   if (encryptionKey.length < 32) {
-    throw new Error('ENCRYPTION_KEY must be at least 32 characters (256-bit key material).');
+    throw new Error(
+      'ENCRYPTION_KEY must be at least 32 characters (256-bit key material).',
+    );
   }
 
   if (config.NODE_ENV === 'production') {
     const insecure = REQUIRED_KEYS.filter((key) =>
-      INSECURE_DEFAULTS.some((placeholder) => String(config[key] ?? '').includes(placeholder)),
+      INSECURE_DEFAULTS.some((placeholder) =>
+        String(config[key] ?? '').includes(placeholder),
+      ),
     );
     if (insecure.length > 0) {
       throw new Error(
@@ -37,7 +48,9 @@ export function validateEnv(config: Record<string, unknown>): Record<string, unk
       );
     }
   } else {
-    logger.log(`Configuration loaded for NODE_ENV=${config.NODE_ENV ?? 'development'}`);
+    logger.log(
+      `Configuration loaded for NODE_ENV=${config.NODE_ENV ?? 'development'}`,
+    );
   }
 
   return config;

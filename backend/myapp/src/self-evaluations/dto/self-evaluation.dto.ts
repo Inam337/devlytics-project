@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RankingPeriod, ScoreCategory, SelfEvaluationStatus } from '@prisma/client';
+import {
+  RankingPeriod,
+  ScoreCategory,
+  SelfEvaluationStatus,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
@@ -97,12 +101,17 @@ export class UpdateSelfEvaluationDto {
   @Max(5)
   overallRating?: number;
 
-  @ApiPropertyOptional({ enum: SelfEvaluationStatus, description: 'DRAFT -> SUBMITTED by the owner' })
+  @ApiPropertyOptional({
+    enum: SelfEvaluationStatus,
+    description: 'DRAFT -> SUBMITTED by the owner',
+  })
   @IsOptional()
   @IsEnum(SelfEvaluationStatus)
   status?: SelfEvaluationStatus;
 
-  @ApiPropertyOptional({ description: 'Reviewer-only: notes recorded alongside REVIEWED' })
+  @ApiPropertyOptional({
+    description: 'Reviewer-only: notes recorded alongside REVIEWED',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(4000)

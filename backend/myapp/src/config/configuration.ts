@@ -48,9 +48,13 @@ export const configuration = () => ({
   jwt: {
     secret: process.env.JWT_SECRET ?? '',
     expiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
-    refreshSecret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? '',
+    refreshSecret:
+      process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? '',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
-    passwordResetExpiresMinutes: toInt(process.env.PASSWORD_RESET_EXPIRES_MINUTES, 30),
+    passwordResetExpiresMinutes: toInt(
+      process.env.PASSWORD_RESET_EXPIRES_MINUTES,
+      30,
+    ),
   },
   security: {
     encryptionKey: process.env.ENCRYPTION_KEY ?? '',
@@ -87,7 +91,10 @@ export const configuration = () => ({
   },
   sync: {
     historyMonths: toInt(process.env.SYNC_HISTORY_MONTHS, 12),
-    reconcileIntervalMinutes: toInt(process.env.SYNC_RECONCILE_INTERVAL_MINUTES, 5),
+    reconcileIntervalMinutes: toInt(
+      process.env.SYNC_RECONCILE_INTERVAL_MINUTES,
+      5,
+    ),
     goalAtRiskDays: toInt(process.env.GOAL_AT_RISK_DAYS, 14),
     inactivitySuspendDays: toInt(process.env.INACTIVITY_SUSPEND_DAYS, 90),
   },

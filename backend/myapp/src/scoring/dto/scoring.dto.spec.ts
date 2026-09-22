@@ -1,6 +1,9 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { DEFAULT_SCORING_WEIGHTS, SCORE_CATEGORIES } from '../scoring.constants';
+import {
+  DEFAULT_SCORING_WEIGHTS,
+  SCORE_CATEGORIES,
+} from '../scoring.constants';
 import { SetScoringWeightsDto } from './scoring.dto';
 
 function validPayload() {
@@ -30,7 +33,10 @@ describe('SetScoringWeightsDto', () => {
 
   it('rejects an unknown category', async () => {
     const payload = validPayload();
-    payload.categories[0] = { category: 'NOT_A_CATEGORY' as never, weightPercent: 25 };
+    payload.categories[0] = {
+      category: 'NOT_A_CATEGORY' as never,
+      weightPercent: 25,
+    };
     const dto = plainToInstance(SetScoringWeightsDto, payload);
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -46,7 +52,10 @@ describe('SetScoringWeightsDto', () => {
 
   it('rejects a non-numeric weight', async () => {
     const payload = validPayload();
-    payload.categories[0] = { ...payload.categories[0], weightPercent: 'a lot' as never };
+    payload.categories[0] = {
+      ...payload.categories[0],
+      weightPercent: 'a lot' as never,
+    };
     const dto = plainToInstance(SetScoringWeightsDto, payload);
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);

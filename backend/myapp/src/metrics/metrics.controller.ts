@@ -16,7 +16,10 @@ export class MetricsController {
   @Get('developers')
   @RequirePermissions(Permission.METRIC_READ)
   @ApiOperation({ summary: 'Developer engineering metrics for a period' })
-  developers(@OrganizationId() organizationId: string, @Query() query: MetricsQueryDto) {
+  developers(
+    @OrganizationId() organizationId: string,
+    @Query() query: MetricsQueryDto,
+  ) {
     return this.metricsService.developers(organizationId, query);
   }
 
@@ -34,7 +37,10 @@ export class MetricsController {
   @Get('teams')
   @RequirePermissions(Permission.METRIC_READ)
   @ApiOperation({ summary: 'Team engineering metrics for a period' })
-  teams(@OrganizationId() organizationId: string, @Query() query: MetricsQueryDto) {
+  teams(
+    @OrganizationId() organizationId: string,
+    @Query() query: MetricsQueryDto,
+  ) {
     return this.metricsService.teams(organizationId, query);
   }
 

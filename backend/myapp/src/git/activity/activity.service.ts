@@ -7,7 +7,13 @@ import { RepositoriesRepository } from '../repositories/repositories.repository'
 import { ActivityQueryDto } from '../repositories/dto/repository.dto';
 
 const AUTHOR_SELECT = {
-  select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true },
+  select: {
+    id: true,
+    firstName: true,
+    lastName: true,
+    email: true,
+    avatarUrl: true,
+  },
 };
 
 /**
@@ -22,16 +28,25 @@ export class ActivityService {
     private readonly repositories: RepositoriesRepository,
   ) {}
 
-  async commits(organizationId: string, repositoryId: string, query: ActivityQueryDto) {
+  async commits(
+    organizationId: string,
+    repositoryId: string,
+    query: ActivityQueryDto,
+  ) {
     await this.repositories.findByIdOrFail(organizationId, repositoryId);
 
     const where: Prisma.CommitWhereInput = {
       organizationId,
       repositoryId,
       ...(query.includeBots ? {} : { isBot: false }),
-      ...QueryUtil.compact({ authorId: query.userId, branchName: query.branch }),
+      ...QueryUtil.compact({
+        authorId: query.userId,
+        branchName: query.branch,
+      }),
       ...dateRange('committedAt', query.from, query.to),
-      ...(query.search ? { message: { contains: query.search, mode: 'insensitive' } } : {}),
+      ...(query.search
+        ? { message: { contains: query.search, mode: 'insensitive' } }
+        : {}),
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -48,7 +63,11 @@ export class ActivityService {
     return PaginatedResult.from(items, total, query);
   }
 
-  async pullRequests(organizationId: string, repositoryId: string, query: ActivityQueryDto) {
+  async pullRequests(
+    organizationId: string,
+    repositoryId: string,
+    query: ActivityQueryDto,
+  ) {
     await this.repositories.findByIdOrFail(organizationId, repositoryId);
 
     const where: Prisma.PullRequestWhereInput = {
@@ -59,7 +78,9 @@ export class ActivityService {
         status: query.status as Prisma.PullRequestWhereInput['status'],
       }),
       ...dateRange('createdAtExternal', query.from, query.to),
-      ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
+      ...(query.search
+        ? { title: { contains: query.search, mode: 'insensitive' } }
+        : {}),
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -68,7 +89,10 @@ export class ActivityService {
         orderBy: { createdAtExternal: query.sortOrder },
         skip: query.skip,
         take: query.limit,
-        include: { author: AUTHOR_SELECT, _count: { select: { reviews: true } } },
+        include: {
+          author: AUTHOR_SELECT,
+          _count: { select: { reviews: true } },
+        },
       }),
       this.prisma.pullRequest.count({ where }),
     ]);
@@ -76,7 +100,11 @@ export class ActivityService {
     return PaginatedResult.from(items, total, query);
   }
 
-  async reviews(organizationId: string, repositoryId: string, query: ActivityQueryDto) {
+  async reviews(
+    organizationId: string,
+    repositoryId: string,
+    query: ActivityQueryDto,
+  ) {
     await this.repositories.findByIdOrFail(organizationId, repositoryId);
 
     const where: Prisma.PullRequestReviewWhereInput = {
@@ -106,7 +134,11 @@ export class ActivityService {
     return PaginatedResult.from(items, total, query);
   }
 
-  async issues(organizationId: string, repositoryId: string, query: ActivityQueryDto) {
+  async issues(
+    organizationId: string,
+    repositoryId: string,
+    query: ActivityQueryDto,
+  ) {
     await this.repositories.findByIdOrFail(organizationId, repositoryId);
 
     const where: Prisma.IssueWhereInput = {
@@ -117,7 +149,9 @@ export class ActivityService {
         status: query.status as Prisma.IssueWhereInput['status'],
       }),
       ...dateRange('createdAtExternal', query.from, query.to),
-      ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
+      ...(query.search
+        ? { title: { contains: query.search, mode: 'insensitive' } }
+        : {}),
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -134,7 +168,11 @@ export class ActivityService {
     return PaginatedResult.from(items, total, query);
   }
 
-  async pipelines(organizationId: string, repositoryId: string, query: ActivityQueryDto) {
+  async pipelines(
+    organizationId: string,
+    repositoryId: string,
+    query: ActivityQueryDto,
+  ) {
     await this.repositories.findByIdOrFail(organizationId, repositoryId);
 
     const where: Prisma.CiPipelineWhereInput = {
@@ -166,7 +204,8 @@ export class ActivityService {
       _count: true,
     });
 
-    const succeeded = summary.find((row) => row.status === 'SUCCESS')?._count ?? 0;
+    const succeeded =
+      summary.find((row) => row.status === 'SUCCESS')?._count ?? 0;
     const finished = summary
       .filter((row) => row.status === 'SUCCESS' || row.status === 'FAILED')
       .reduce((count, row) => count + (row._count ?? 0), 0);
@@ -174,20 +213,28 @@ export class ActivityService {
     return PaginatedResult.from(
       items.map((item) => ({
         ...item,
-        successRate: finished ? Math.round((succeeded / finished) * 1000) / 10 : null,
+        successRate: finished
+          ? Math.round((succeeded / finished) * 1000) / 10
+          : null,
       })),
       total,
       query,
     );
   }
 
-  async deployments(organizationId: string, repositoryId: string, query: ActivityQueryDto) {
+  async deployments(
+    organizationId: string,
+    repositoryId: string,
+    query: ActivityQueryDto,
+  ) {
     await this.repositories.findByIdOrFail(organizationId, repositoryId);
 
     const where: Prisma.DeploymentWhereInput = {
       organizationId,
       repositoryId,
-      ...QueryUtil.compact({ status: query.status as Prisma.DeploymentWhereInput['status'] }),
+      ...QueryUtil.compact({
+        status: query.status as Prisma.DeploymentWhereInput['status'],
+      }),
       ...dateRange('deployedAt', query.from, query.to),
     };
 
@@ -205,7 +252,11 @@ export class ActivityService {
   }
 }
 
-function dateRange(field: string, from?: string, to?: string): Record<string, unknown> {
+function dateRange(
+  field: string,
+  from?: string,
+  to?: string,
+): Record<string, unknown> {
   if (!from && !to) return {};
   return {
     [field]: {

@@ -46,7 +46,9 @@ describe('RankingsQueryDto', () => {
   });
 
   it('rejects an invalid subjectType', async () => {
-    const dto = plainToInstance(RankingsQueryDto, { subjectType: 'ORGANIZATION' });
+    const dto = plainToInstance(RankingsQueryDto, {
+      subjectType: 'ORGANIZATION',
+    });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'subjectType')).toBe(true);
   });

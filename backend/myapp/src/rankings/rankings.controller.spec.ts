@@ -3,7 +3,11 @@ import type { RankingsService } from './rankings.service';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 
 describe('RankingsController', () => {
-  let service: { developerLeaderboard: jest.Mock; teamLeaderboard: jest.Mock; history: jest.Mock };
+  let service: {
+    developerLeaderboard: jest.Mock;
+    teamLeaderboard: jest.Mock;
+    history: jest.Mock;
+  };
   let controller: RankingsController;
 
   beforeEach(() => {
