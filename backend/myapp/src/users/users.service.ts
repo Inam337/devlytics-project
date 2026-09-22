@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { MembershipStatus, Prisma, User } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { developerInvitationMail } from '../common/mail-templates/transactional.templates';
+import { MailService } from '../common/services/mail.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationEvent } from '../notifications/notification-events';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -28,11 +31,15 @@ export interface UserView {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly repository: UsersRepository,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   /** Strips credentials and derives the display name used across the UI. */
@@ -196,6 +203,28 @@ export class UsersService {
       body: `You were invited as ${dto.roleKey.replace(/_/g, ' ').toLowerCase()}. Set a password to activate your account.`,
       actionUrl: '/accept-invitation',
     });
+
+    const organization = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true },
+    });
+
+    // Never throws (WOR-13) — a mail outage must not fail the invite request.
+    const appUrl = this.config.get<string>('app.url', 'http://localhost:3000');
+    const inviteMail = await this.mail.sendTemplate(
+      result.user.email,
+      developerInvitationMail({
+        recipientFirstName: result.user.firstName,
+        organizationName: organization?.name ?? 'Devlytics',
+        roleName: role.name,
+        ctaUrl: `${appUrl}/accept-invitation?email=${encodeURIComponent(result.user.email)}&organizationId=${organizationId}`,
+      }),
+    );
+    if (!inviteMail.success) {
+      this.logger.warn(
+        `Developer-invitation email failed for ${result.user.email}: ${inviteMail.error}`,
+      );
+    }
 
     return {
       ...UsersService.toView(result.user),

@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { assignedToProjectMail } from '../common/mail-templates/transactional.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
@@ -38,10 +41,14 @@ const LIST_INCLUDE = {
 
 @Injectable()
 export class ProjectsService {
+  private readonly logger = new Logger(ProjectsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async findAll(organizationId: string, query: ProjectQueryDto) {
@@ -353,6 +360,33 @@ export class ProjectsService {
         : `You joined ${project.name}.`,
       actionUrl: `/projects/${projectId}`,
     });
+
+    const member = await this.prisma.user.findUnique({
+      where: { id: dto.userId },
+      select: { email: true, firstName: true },
+    });
+    if (member) {
+      const appUrl = this.config.get<string>(
+        'app.url',
+        'http://localhost:3000',
+      );
+      // Never throws (WOR-13) — a mail outage must not fail the assign request.
+      const projectMail = await this.mail.sendTemplate(
+        member.email,
+        assignedToProjectMail({
+          recipientFirstName: member.firstName,
+          projectName: project.name,
+          roleLabel: dto.roleLabel,
+          allocationPercent: dto.allocationPercent ?? 100,
+          ctaUrl: `${appUrl}/projects/${projectId}`,
+        }),
+      );
+      if (!projectMail.success) {
+        this.logger.warn(
+          `Assigned-to-project email failed for ${member.email}: ${projectMail.error}`,
+        );
+      }
+    }
 
     return this.findOne(organizationId, projectId);
   }

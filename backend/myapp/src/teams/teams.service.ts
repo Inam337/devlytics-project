@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { addedToTeamMail } from '../common/mail-templates/transactional.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
@@ -25,11 +28,15 @@ const SORTABLE = ['name', 'code', 'createdAt', 'status'] as const;
 
 @Injectable()
 export class TeamsService {
+  private readonly logger = new Logger(TeamsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly repository: TeamsRepository,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async findAll(organizationId: string, query: TeamQueryDto) {
@@ -383,6 +390,33 @@ export class TeamsService {
       body: `You were added to the team ${team.name} (${team.code}).`,
       actionUrl: `/teams/${teamId}`,
     });
+
+    const member = await this.prisma.user.findUnique({
+      where: { id: dto.userId },
+      select: { email: true, firstName: true },
+    });
+    if (member) {
+      const appUrl = this.config.get<string>(
+        'app.url',
+        'http://localhost:3000',
+      );
+      // Never throws (WOR-13) — a mail outage must not fail the add-member request.
+      const teamMail = await this.mail.sendTemplate(
+        member.email,
+        addedToTeamMail({
+          recipientFirstName: member.firstName,
+          teamName: team.name,
+          teamCode: team.code,
+          positionTitle: dto.positionTitle,
+          ctaUrl: `${appUrl}/teams/${teamId}`,
+        }),
+      );
+      if (!teamMail.success) {
+        this.logger.warn(
+          `Added-to-team email failed for ${member.email}: ${teamMail.error}`,
+        );
+      }
+    }
 
     return this.findMembers(organizationId, teamId);
   }

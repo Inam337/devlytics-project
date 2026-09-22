@@ -5,7 +5,12 @@ import { AuditService } from '../audit/audit.service';
 import { ErrorCode } from '../common/constants/error-codes';
 import type { ClientInfo } from '../common/decorators';
 import { AppException } from '../common/exceptions/app.exception';
+import {
+  organizationCreatedMail,
+  passwordResetMail,
+} from '../common/mail-templates/transactional.templates';
 import { CryptoService } from '../common/services/crypto.service';
+import { MailService } from '../common/services/mail.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationEvent } from '../notifications/notification-events';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -52,7 +57,13 @@ export class AuthService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
+
+  /** Base URL emails link back into the app with — never hardcoded (docs §8). */
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
+  }
 
   /**
    * Creates the organization and its first Organization Admin in one
@@ -133,6 +144,22 @@ export class AuthService {
       body: 'Connect a Git provider and import repositories to start collecting engineering evidence.',
       actionUrl: '/onboarding',
     });
+
+    // Never throws (WOR-13) — a mail outage must not fail registration.
+    const orgCreatedMail = await this.mail.sendTemplate(
+      user.email,
+      organizationCreatedMail({
+        recipientFirstName: user.firstName,
+        organizationName: organization.name,
+        organizationSlug: organization.slug,
+        ctaUrl: `${this.appUrl()}/onboarding`,
+      }),
+    );
+    if (!orgCreatedMail.success) {
+      this.logger.warn(
+        `Organization-created email failed for ${user.email}: ${orgCreatedMail.error}`,
+      );
+    }
 
     void membership;
     return this.buildSession(user.id, organization.id, client);
@@ -345,14 +372,31 @@ export class AuthService {
 
     const membership = await this.users.findPrimaryMembership(user.id);
     if (membership) {
+      // In-app row only — the dedicated password-reset email below (with the
+      // actual single-use link) replaces the generic EMAIL-channel fan-out
+      // the notifications processor would otherwise send for this event.
       await this.notifications.notify({
         organizationId: membership.organizationId,
         userId: user.id,
         event: NotificationEvent.PASSWORD_RESET,
         title: 'Reset your Devlytics password',
         body: `A password reset was requested. The link expires in ${minutes} minutes.`,
-        channel: 'EMAIL',
       });
+    }
+
+    // Never throws (WOR-13) — a mail outage must not fail the forgot-password request.
+    const resetMail = await this.mail.sendTemplate(
+      user.email,
+      passwordResetMail({
+        recipientFirstName: user.firstName,
+        expiresInMinutes: minutes,
+        ctaUrl: `${this.appUrl()}/reset-password?token=${encodeURIComponent(token)}`,
+      }),
+    );
+    if (!resetMail.success) {
+      this.logger.warn(
+        `Password-reset email failed for ${user.email}: ${resetMail.error}`,
+      );
     }
 
     this.logger.log(`Password reset requested for ${user.email}`);
