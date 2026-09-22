@@ -27,6 +27,7 @@ import { QueueModule } from './queue/queue.module';
 import { RankingsModule } from './rankings/rankings.module';
 import { ReportsModule } from './reports/reports.module';
 import { RolesModule } from './roles/roles.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 import { ScoringModule } from './scoring/scoring.module';
 import { SelfEvaluationsModule } from './self-evaluations/self-evaluations.module';
 import { SyncModule } from './sync/sync.module';
@@ -92,6 +93,9 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     // Reporting
     DashboardModule,
     ReportsModule,
+
+    // Scheduled automation
+    SchedulerModule,
   ],
   providers: [
     // Order matters: authenticate, then authorize, then rate-limit.
