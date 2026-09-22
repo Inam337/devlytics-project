@@ -1,10 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import { Prisma, ReportExport, RoleKey } from '@prisma/client';
+import { Queue } from 'bullmq';
+import {
+  PaginatedResult,
+  PaginationQueryDto,
+} from '../common/dto/pagination.dto';
 import { NumberUtil } from '../common/utils/number.util';
 import { PeriodUtil } from '../common/utils/period.util';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
 import { MetricsAggregationService } from '../metrics/metrics-aggregation.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { QUEUE } from '../queue/queue.constants';
+import { safeEnqueue } from '../queue/queue.util';
+import { CreateReportExportDto } from './dto/create-report-export.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
 import {
   ReportColumn,
@@ -14,6 +24,12 @@ import {
   toNarrativePdf,
   toPdf,
 } from './report-export.util';
+
+/** The subset of the authenticated caller an export access check needs. */
+export interface ExportActor {
+  userId: string;
+  roleKey: RoleKey;
+}
 
 export interface ReportResult {
   format: 'json' | 'csv' | 'pdf';
@@ -34,9 +50,13 @@ export interface ReportResult {
  */
 @Injectable()
 export class ReportsService {
+  private readonly logger = new Logger(ReportsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly metrics: MetricsAggregationService,
+    @InjectQueue(QUEUE.REPORT_GENERATION)
+    private readonly reportQueue: Queue,
   ) {}
 
   async developers(
@@ -327,7 +347,9 @@ export class ReportsService {
     const growthArea = ranked[ranked.length - 1]?.[0] ?? 'n/a';
     const confidences = issues.flatMap((issue) =>
       issue.recommendations
-        .map((rec) => (rec.aiConfidence ? NumberUtil.toNumber(rec.aiConfidence) : null))
+        .map((rec) =>
+          rec.aiConfidence ? NumberUtil.toNumber(rec.aiConfidence) : null,
+        )
         .filter((value): value is number => value !== null),
     );
     const avgConfidence = NumberUtil.average(confidences);
@@ -355,7 +377,9 @@ export class ReportsService {
         heading: 'AI Interpretation',
         paragraphs:
           issues.length === 0
-            ? ['No AI-interpreted findings on this developer’s repositories yet.']
+            ? [
+                'No AI-interpreted findings on this developer’s repositories yet.',
+              ]
             : undefined,
         table: {
           columns: [
@@ -431,7 +455,9 @@ export class ReportsService {
 
     const members = await this.prisma.teamMember.findMany({
       where: { organizationId, teamId },
-      include: { user: { select: { id: true, firstName: true, lastName: true } } },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true } },
+      },
     });
     const { start, end } = PeriodUtil.range(query.from, query.to);
     const memberTotals = await this.metrics.developerTotalsBulk(
@@ -448,15 +474,16 @@ export class ReportsService {
       })
     ).map((r) => r.id);
 
-    const recommendations = await this.prisma.improvementRecommendation.findMany({
-      where: {
-        organizationId,
-        qualityIssue: { repositoryId: { in: repoIds } },
-        status: { not: 'REJECTED' },
-      },
-      orderBy: { priority: 'asc' },
-      take: 15,
-    });
+    const recommendations =
+      await this.prisma.improvementRecommendation.findMany({
+        where: {
+          organizationId,
+          qualityIssue: { repositoryId: { in: repoIds } },
+          status: { not: 'REJECTED' },
+        },
+        orderBy: { priority: 'asc' },
+        take: 15,
+      });
 
     const sections: ReportSection[] = [
       {
@@ -611,6 +638,285 @@ export class ReportsService {
     return this.build('Improvements Report', query, columns, rows);
   }
 
+  // ---------------------------------------------------------------------
+  // Async exports (WOR-7): the six report builders above stream a buffer
+  // synchronously for live preview; these queue the same builders onto
+  // `report-generation` and persist the result as a downloadable
+  // `ReportExport` row, per devlytics.md §7.
+  // ---------------------------------------------------------------------
+
+  /** Queues an export job; the buffer is produced by `generateExport` on the worker. */
+  async requestExport(
+    organizationId: string,
+    dto: CreateReportExportDto,
+    actor: ExportActor,
+  ): Promise<{ id: string; status: string; queued: boolean }> {
+    if (dto.reportType === 'INDIVIDUAL_AI_ANALYSIS') {
+      if (!dto.targetUserId) {
+        throw AppException.badRequest(
+          'targetUserId is required for an INDIVIDUAL_AI_ANALYSIS export',
+        );
+      }
+      await this.assertIndividualTargetAccess(
+        organizationId,
+        dto.targetUserId,
+        actor,
+      );
+    }
+
+    const { reportType, format, targetUserId, ...filters } = dto;
+    const record = await this.prisma.reportExport.create({
+      data: {
+        organizationId,
+        requestedById: actor.userId,
+        targetUserId,
+        reportType,
+        format,
+        filters: QueryUtil.compact(
+          filters as Record<string, unknown>,
+        ) as Prisma.InputJsonValue,
+      },
+    });
+
+    const queued = await safeEnqueue(
+      this.reportQueue,
+      'generate-export',
+      { organizationId, requestedBy: actor.userId, exportId: record.id },
+      this.logger,
+      { jobId: record.id },
+    );
+
+    return { id: record.id, status: record.status, queued };
+  }
+
+  async listExports(
+    organizationId: string,
+    requestedById: string,
+    query: PaginationQueryDto,
+  ) {
+    const where: Prisma.ReportExportWhereInput = {
+      organizationId,
+      requestedById,
+    };
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.reportExport.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: query.skip,
+        take: query.limit,
+        select: {
+          id: true,
+          reportType: true,
+          format: true,
+          status: true,
+          fileName: true,
+          targetUserId: true,
+          analysisRunNumber: true,
+          errorMessage: true,
+          createdAt: true,
+          finishedAt: true,
+        },
+      }),
+      this.prisma.reportExport.count({ where }),
+    ]);
+    return PaginatedResult.from(items, total, query);
+  }
+
+  async getExportStatus(
+    organizationId: string,
+    id: string,
+    actor: ExportActor,
+  ) {
+    const record = await this.findExportOrThrow(organizationId, id);
+    await this.assertExportAccess(organizationId, record, actor);
+    return {
+      id: record.id,
+      reportType: record.reportType,
+      format: record.format,
+      status: record.status,
+      fileName: record.fileName,
+      analysisRunNumber: record.analysisRunNumber,
+      errorMessage: record.errorMessage,
+      createdAt: record.createdAt,
+      finishedAt: record.finishedAt,
+    };
+  }
+
+  async downloadExport(
+    organizationId: string,
+    id: string,
+    actor: ExportActor,
+  ): Promise<{ fileName: string; mimeType: string; buffer: Buffer }> {
+    const record = await this.findExportOrThrow(organizationId, id);
+    await this.assertExportAccess(organizationId, record, actor);
+
+    if (record.status !== 'COMPLETED' || !record.fileBytes) {
+      throw AppException.unprocessable(
+        `Report export is ${record.status.toLowerCase()}, not ready for download`,
+      );
+    }
+
+    return {
+      fileName: record.fileName ?? 'report',
+      mimeType: record.mimeType ?? 'application/octet-stream',
+      buffer: Buffer.from(record.fileBytes),
+    };
+  }
+
+  /**
+   * Builds the export and persists it — called from `ReportGenerationProcessor`.
+   * Mirrors `AiAnalysisService#runInterpretation`: COMPLETED/FAILED is decided
+   * here, the processor only rethrows so BullMQ's retry/backoff takes over.
+   */
+  async generateExport(
+    organizationId: string,
+    exportId: string,
+  ): Promise<void> {
+    const record = await this.findExportOrThrow(organizationId, exportId);
+
+    await this.prisma.reportExport.update({
+      where: { id: exportId },
+      data: { status: 'RUNNING' },
+    });
+
+    try {
+      const result = await this.buildForExport(organizationId, record);
+      await this.prisma.reportExport.update({
+        where: { id: exportId },
+        data: {
+          status: 'COMPLETED',
+          fileName: `${slug(result.title)}.${record.format.toLowerCase()}`,
+          mimeType:
+            record.format === 'PDF'
+              ? 'application/pdf'
+              : 'text/csv; charset=utf-8',
+          fileBytes: result.buffer ? Uint8Array.from(result.buffer) : null,
+          analysisRunNumber: result.analysisRunNumber,
+          finishedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      await this.prisma.reportExport.update({
+        where: { id: exportId },
+        data: {
+          status: 'FAILED',
+          errorMessage: (error as Error).message.slice(0, 1000),
+          finishedAt: new Date(),
+        },
+      });
+      throw error;
+    }
+  }
+
+  private async buildForExport(
+    organizationId: string,
+    record: ReportExport,
+  ): Promise<ReportResult> {
+    const filters = (record.filters as Record<string, unknown>) ?? {};
+    const query: ReportQueryDto = {
+      ...filters,
+      format: record.format === 'PDF' ? 'pdf' : 'csv',
+    };
+
+    switch (record.reportType) {
+      case 'DEVELOPERS':
+        return this.developers(organizationId, query);
+      case 'TEAMS':
+        return this.teams(organizationId, query);
+      case 'REPOSITORIES':
+        return this.repositories(organizationId, query);
+      case 'QUALITY':
+        return this.quality(organizationId, query);
+      case 'RANKINGS':
+        return this.rankings(organizationId, query);
+      case 'IMPROVEMENTS':
+        return this.improvements(organizationId, query);
+      case 'TEAM_AI_ANALYSIS':
+        if (!query.teamId) {
+          throw AppException.badRequest(
+            'teamId is required for a TEAM_AI_ANALYSIS export',
+          );
+        }
+        return this.teamAiAnalysis(organizationId, query.teamId, query);
+      case 'INDIVIDUAL_AI_ANALYSIS':
+        if (!record.targetUserId) {
+          throw AppException.badRequest(
+            'targetUserId is required for an INDIVIDUAL_AI_ANALYSIS export',
+          );
+        }
+        return this.individualAiAnalysis(
+          organizationId,
+          record.targetUserId,
+          query,
+        );
+      default:
+        throw AppException.badRequest(
+          `Unsupported report export type: ${record.reportType}`,
+        );
+    }
+  }
+
+  private async findExportOrThrow(
+    organizationId: string,
+    id: string,
+  ): Promise<ReportExport> {
+    const record = await this.prisma.reportExport.findFirst({
+      where: { id, organizationId },
+    });
+    if (!record) throw AppException.notFound('Report export', id);
+    return record;
+  }
+
+  /**
+   * Only the requester, the target developer, the target's team lead, or an
+   * organization admin may view/download an export — required explicitly for
+   * INDIVIDUAL_AI_ANALYSIS (devlytics.md §7: never a peer developer), applied
+   * to every export type for consistency.
+   */
+  private async assertExportAccess(
+    organizationId: string,
+    record: ReportExport,
+    actor: ExportActor,
+  ): Promise<void> {
+    if (record.requestedById === actor.userId) return;
+    if (actor.roleKey === 'ORGANIZATION_ADMIN') return;
+    if (record.reportType === 'INDIVIDUAL_AI_ANALYSIS' && record.targetUserId) {
+      await this.assertIndividualTargetAccess(
+        organizationId,
+        record.targetUserId,
+        actor,
+      );
+      return;
+    }
+    throw AppException.forbidden(
+      'You do not have access to this report export',
+    );
+  }
+
+  /** The access-control acceptance criterion for INDIVIDUAL_AI_ANALYSIS exports. */
+  private async assertIndividualTargetAccess(
+    organizationId: string,
+    targetUserId: string,
+    actor: ExportActor,
+  ): Promise<void> {
+    if (targetUserId === actor.userId) return;
+    if (actor.roleKey === 'ORGANIZATION_ADMIN') return;
+
+    const isTeamLead = await this.prisma.team.findFirst({
+      where: {
+        organizationId,
+        teamLeadId: actor.userId,
+        members: { some: { userId: targetUserId } },
+      },
+      select: { id: true },
+    });
+    if (isTeamLead) return;
+
+    throw AppException.forbidden(
+      'Only the developer themselves, their team lead, or an organization admin may access this report',
+    );
+  }
+
   private scopeLabel(query: ReportQueryDto): string {
     return [
       query.from || query.to
@@ -655,4 +961,11 @@ export class ReportsService {
     }
     return { format, title, scope, columns, rows };
   }
+}
+
+function slug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

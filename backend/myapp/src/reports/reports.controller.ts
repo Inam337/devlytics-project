@@ -1,10 +1,29 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Permission } from '../common/constants/permissions';
-import { OrganizationId, RequirePermissions } from '../common/decorators';
+import {
+  CurrentUser,
+  OrganizationId,
+  RequirePermissions,
+  ResponseMessage,
+} from '../common/decorators';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import type { AuthenticatedUser } from '../common/types/request-context';
+import { CreateReportExportDto } from './dto/create-report-export.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
 import { ReportResult, ReportsService } from './reports.service';
+
+const uuid = () => new ParseUUIDPipe({ version: '4' });
 
 @ApiTags('Reports')
 @ApiBearerAuth()
@@ -93,6 +112,61 @@ export class ReportsController {
       res,
       this.reportsService.improvements(organizationId, query),
     );
+  }
+
+  @Post('exports')
+  @RequirePermissions(Permission.REPORT_READ)
+  @ResponseMessage('Report export queued successfully')
+  @ApiOperation({
+    summary:
+      'Queue an async report export (PDF/CSV); poll GET /reports/exports/:id',
+  })
+  requestExport(
+    @OrganizationId() organizationId: string,
+    @Body() dto: CreateReportExportDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.reportsService.requestExport(organizationId, dto, user);
+  }
+
+  @Get('exports')
+  @RequirePermissions(Permission.REPORT_READ)
+  @ApiOperation({ summary: 'List report exports I requested' })
+  listExports(
+    @OrganizationId() organizationId: string,
+    @CurrentUser('userId') userId: string,
+    @Query() query: PaginationQueryDto,
+  ) {
+    return this.reportsService.listExports(organizationId, userId, query);
+  }
+
+  @Get('exports/:id')
+  @RequirePermissions(Permission.REPORT_READ)
+  @ApiOperation({ summary: 'Report export status' })
+  exportStatus(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.reportsService.getExportStatus(organizationId, id, user);
+  }
+
+  @Get('exports/:id/download')
+  @RequirePermissions(Permission.REPORT_READ)
+  @ApiOperation({ summary: 'Download a completed report export' })
+  async downloadExport(
+    @OrganizationId() organizationId: string,
+    @Param('id', uuid()) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const { fileName, mimeType, buffer } =
+      await this.reportsService.downloadExport(organizationId, id, user);
+    res
+      .status(200)
+      .header('Content-Type', mimeType)
+      .header('Content-Disposition', `attachment; filename="${fileName}"`)
+      .send(buffer);
   }
 
   private async respond(
