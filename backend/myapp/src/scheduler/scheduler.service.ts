@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Interval } from '@nestjs/schedule';
+import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { SyncService } from '../sync/sync.service';
+import { UsersService } from '../users/users.service';
 
 /**
  * `@Interval` needs a literal at class-definition time (it runs before Nest's
@@ -27,6 +28,7 @@ export class SchedulerService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sync: SyncService,
+    private readonly users: UsersService,
     private readonly config: ConfigService,
   ) {}
 
@@ -90,6 +92,54 @@ export class SchedulerService {
     this.logger.log(
       `Webhook reconciliation: queued incremental sync for ${reconciled}/${repositories.length} ` +
         `repository(ies) across ${byOrganization.size} organization(s)`,
+    );
+  }
+
+  /**
+   * WOR-10: daily 90-day (configurable) inactivity auto-suspension —
+   * devlytics.md §3.1 "no commits, reviews or logins for 90 consecutive
+   * days → automatic suspension, audit-logged, excluded from current
+   * rankings but historical scores preserved."
+   *
+   * `UsersService#suspendInactive` already implements the candidate query,
+   * the audit log entry, and setting both `User.status` and
+   * `OrganizationUser.status` to `SUSPENDED` — it just had no caller before
+   * this job. Ranking exclusion needs no extra code here: `ScoringService
+   * #recomputeOrganization` only iterates `OrganizationUser` rows with
+   * `status: 'ACTIVE'`, so a suspended user simply stops getting new
+   * `DeveloperScore`/`RankingHistory` rows; their historical ones are never
+   * touched by this job.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async suspendInactiveUsers(): Promise<void> {
+    const inactivityDays = this.config.get<number>(
+      'sync.inactivitySuspendDays',
+      90,
+    );
+    const organizations = await this.prisma.organization.findMany({
+      select: { id: true },
+    });
+
+    let totalSuspended = 0;
+    for (const organization of organizations) {
+      try {
+        const suspended = await this.users.suspendInactive(
+          organization.id,
+          inactivityDays,
+        );
+        totalSuspended += suspended.length;
+      } catch (error) {
+        this.logger.error(
+          `Inactivity suspension sweep failed for organization ${organization.id}: ${
+            (error as Error).message
+          }`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Inactivity suspension sweep: ${totalSuspended} user(s) suspended across ` +
+        `${organizations.length} organization(s) (threshold ${inactivityDays} days)`,
     );
   }
 }
