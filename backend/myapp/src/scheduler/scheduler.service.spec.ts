@@ -1,4 +1,5 @@
 import type { ConfigService } from '@nestjs/config';
+import type { GoalsService } from '../goals/goals.service';
 import type { PrismaService } from '../database/prisma.service';
 import type { SyncService } from '../sync/sync.service';
 import type { UsersService } from '../users/users.service';
@@ -11,6 +12,7 @@ describe('SchedulerService', () => {
   };
   let sync: { queueIncremental: jest.Mock };
   let users: { suspendInactive: jest.Mock };
+  let goals: { sweepAtRisk: jest.Mock };
   let config: { get: jest.Mock };
   let service: SchedulerService;
 
@@ -21,12 +23,14 @@ describe('SchedulerService', () => {
     };
     sync = { queueIncremental: jest.fn() };
     users = { suspendInactive: jest.fn() };
+    goals = { sweepAtRisk: jest.fn() };
     config = { get: jest.fn().mockReturnValue(5) };
 
     service = new SchedulerService(
       prisma as unknown as PrismaService,
       sync as unknown as SyncService,
       users as unknown as UsersService,
+      goals as unknown as GoalsService,
       config as unknown as ConfigService,
     );
   });
@@ -141,6 +145,45 @@ describe('SchedulerService', () => {
 
       await expect(service.suspendInactiveUsers()).resolves.toBeUndefined();
       expect(users.suspendInactive).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('sweepAtRiskGoals (WOR-11)', () => {
+    it('does nothing when there are no organizations', async () => {
+      prisma.organization.findMany.mockResolvedValue([]);
+
+      await service.sweepAtRiskGoals();
+
+      expect(goals.sweepAtRisk).not.toHaveBeenCalled();
+    });
+
+    it('sweeps every organization using the configured at-risk threshold', async () => {
+      prisma.organization.findMany.mockResolvedValue([
+        { id: 'org-1' },
+        { id: 'org-2' },
+      ]);
+      config.get.mockReturnValue(14);
+      goals.sweepAtRisk
+        .mockResolvedValueOnce(['goal-1', 'goal-2'])
+        .mockResolvedValueOnce([]);
+
+      await service.sweepAtRiskGoals();
+
+      expect(goals.sweepAtRisk).toHaveBeenCalledWith('org-1', 14);
+      expect(goals.sweepAtRisk).toHaveBeenCalledWith('org-2', 14);
+    });
+
+    it('logs and continues when one organization fails, without throwing', async () => {
+      prisma.organization.findMany.mockResolvedValue([
+        { id: 'org-1' },
+        { id: 'org-2' },
+      ]);
+      goals.sweepAtRisk
+        .mockRejectedValueOnce(new Error('db unavailable'))
+        .mockResolvedValueOnce(['goal-3']);
+
+      await expect(service.sweepAtRiskGoals()).resolves.toBeUndefined();
+      expect(goals.sweepAtRisk).toHaveBeenCalledTimes(2);
     });
   });
 });

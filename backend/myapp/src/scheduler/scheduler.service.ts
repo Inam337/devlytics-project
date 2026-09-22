@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression, Interval } from '@nestjs/schedule';
+import { GoalsService } from '../goals/goals.service';
 import { PrismaService } from '../database/prisma.service';
 import { SyncService } from '../sync/sync.service';
 import { UsersService } from '../users/users.service';
@@ -29,6 +30,7 @@ export class SchedulerService {
     private readonly prisma: PrismaService,
     private readonly sync: SyncService,
     private readonly users: UsersService,
+    private readonly goals: GoalsService,
     private readonly config: ConfigService,
   ) {}
 
@@ -140,6 +142,46 @@ export class SchedulerService {
     this.logger.log(
       `Inactivity suspension sweep: ${totalSuspended} user(s) suspended across ` +
         `${organizations.length} organization(s) (threshold ${inactivityDays} days)`,
+    );
+  }
+
+  /**
+   * WOR-11: daily 14-day (configurable) goal at-risk sweep —
+   * devlytics.md §6 Goals "At-risk rule: no measurable movement in 14 days."
+   *
+   * `GoalsService#evaluateForRepository` already re-checks this window as a
+   * byproduct of a fresh quality snapshot, but that only fires for goals on
+   * repositories that actually synced recently. This job catches the rest:
+   * goals whose repository hasn't synced in a while still age into `AT_RISK`
+   * on schedule instead of silently staying `ACTIVE` forever.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async sweepAtRiskGoals(): Promise<void> {
+    const atRiskDays = this.config.get<number>('sync.goalAtRiskDays', 14);
+    const organizations = await this.prisma.organization.findMany({
+      select: { id: true },
+    });
+
+    let totalFlagged = 0;
+    for (const organization of organizations) {
+      try {
+        const flagged = await this.goals.sweepAtRisk(
+          organization.id,
+          atRiskDays,
+        );
+        totalFlagged += flagged.length;
+      } catch (error) {
+        this.logger.error(
+          `Goal at-risk sweep failed for organization ${organization.id}: ${
+            (error as Error).message
+          }`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Goal at-risk sweep: flagged ${totalFlagged} goal(s) as AT_RISK across ` +
+        `${organizations.length} organization(s) (threshold ${atRiskDays} days)`,
     );
   }
 }

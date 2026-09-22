@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CodeQualitySnapshot, GoalStatus, Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PaginatedResult } from '../common/dto/pagination.dto';
@@ -18,7 +19,6 @@ import {
 } from './dto/goals.dto';
 
 const SORTABLE = ['createdAt', 'dueDate', 'status'] as const;
-const AT_RISK_DAYS = 14;
 
 const SNAPSHOT_FIELD: Record<GoalMetricKey, keyof CodeQualitySnapshot> = {
   quality_score: 'qualityScore',
@@ -47,6 +47,7 @@ export class GoalsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(
@@ -302,6 +303,47 @@ export class GoalsService {
     return goals.length;
   }
 
+  /**
+   * WOR-11: standalone daily sweep, called from `SchedulerService`.
+   *
+   * `evaluateForRepository`'s at-risk check only runs as a byproduct of a
+   * fresh quality snapshot (triggered by a repo sync), so a goal on a
+   * repository that hasn't synced recently would otherwise never get
+   * flagged. Only touches `ACTIVE` goals — `COMPLETED`/`ABANDONED` are
+   * excluded by the status filter, and the reverse transition (`AT_RISK` →
+   * `ACTIVE`/`COMPLETED` on new movement) stays `evaluateForRepository`'s job
+   * so it isn't duplicated here.
+   */
+  async sweepAtRisk(
+    organizationId: string,
+    atRiskDays: number,
+  ): Promise<string[]> {
+    const cutoff = new Date(Date.now() - atRiskDays * 24 * 60 * 60 * 1000);
+
+    const goals = await this.prisma.improvementGoal.findMany({
+      where: {
+        organizationId,
+        status: 'ACTIVE',
+        // No movement ever recorded falls back to the goal's own creation
+        // date, so a goal that's simply never been measured still ages out.
+        OR: [
+          { lastMovementAt: { lt: cutoff } },
+          { lastMovementAt: null, createdAt: { lt: cutoff } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    for (const goal of goals) {
+      await this.prisma.improvementGoal.update({
+        where: { id: goal.id },
+        data: { status: 'AT_RISK' },
+      });
+    }
+
+    return goals.map((goal) => goal.id);
+  }
+
   private async applyMeasurement(
     goal: {
       id: string;
@@ -341,12 +383,13 @@ export class GoalsService {
     const achieved =
       goal.direction === 'INCREASE' ? measured >= target : measured <= target;
 
+    const atRiskDays = this.config.get<number>('sync.goalAtRiskDays', 14);
     const now = new Date();
     const lastMovementAt = moved ? now : (goal.lastMovementAt ?? now);
     const atRisk =
       !achieved &&
       now.getTime() - lastMovementAt.getTime() >
-        AT_RISK_DAYS * 24 * 60 * 60 * 1000;
+        atRiskDays * 24 * 60 * 60 * 1000;
 
     const nextStatus: GoalStatus = achieved
       ? 'COMPLETED'
