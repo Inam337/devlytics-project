@@ -1,15 +1,25 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Test } from '@nestjs/testing';
+import { Test, TestingModuleBuilder } from '@nestjs/testing';
 import { AppModule } from '../../src/app.module';
 import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
 
-/** Builds an app instance with the same pipes/filters/interceptors as production. */
-export async function createTestApp(): Promise<INestApplication> {
-  const moduleRef = await Test.createTestingModule({
+/**
+ * Builds an app instance with the same pipes/filters/interceptors as production.
+ *
+ * `configureModule` lets a spec override a provider (e.g. swapping
+ * `ProviderAdapterFactory` for a test double at the Git-provider boundary,
+ * since real GitHub/GitLab OAuth cannot run in CI) before the module compiles.
+ */
+export async function createTestApp(
+  configureModule?: (builder: TestingModuleBuilder) => TestingModuleBuilder,
+): Promise<INestApplication> {
+  let builder = Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  });
+  if (configureModule) builder = configureModule(builder);
+  const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication({ rawBody: true });
 
   app.setGlobalPrefix('api/v1');
