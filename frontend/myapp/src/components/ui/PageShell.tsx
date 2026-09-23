@@ -33,7 +33,7 @@ export default function PageShell({
     <div className={cn(maxWidthClasses[maxWidth], 'space-y-4', className)}>
       {title
         ? (
-            <h2 className="text-lg font-semibold text-zentro-black-teal">
+            <h2 className="text-lg font-semibold text-brand-dark">
               {title}
             </h2>
           )

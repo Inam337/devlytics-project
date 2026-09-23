@@ -156,7 +156,7 @@ function DataTablePagination<TData>({
             className={cn(
               'min-w-8 rounded-md border px-2.5 py-1.5 text-sm transition-colors',
               page === pageIndex
-                ? 'border-zentro-teal bg-zentro-teal text-white shadow-sm'
+                ? 'border-brand-teal bg-brand-teal text-white shadow-sm'
                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50',
             )}
             onClick={() => table.setPageIndex(page)}

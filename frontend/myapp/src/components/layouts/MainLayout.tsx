@@ -1,16 +1,13 @@
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+
 import { useT } from '@/hooks/use-t';
 import { Menu } from '@/components/icons/FluentIcons';
-
 import { AppConstants } from '@/common/AppConstants';
 import { AppSidebar } from '@/components/layouts/AppSidebar';
-import HeaderCartLink from '@/components/layouts/HeaderCartLink';
 import HeaderProfileDropdown from '@/components/layouts/HeaderProfileDropdown';
 import LanguageSwitcher from '@/components/layouts/LanguageSwitcher';
 import { SidebarLayoutProvider, useSidebarLayout } from '@/components/layouts/sidebar-layout-context';
-import { useCartStore } from '@/stores/cart';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -20,37 +17,10 @@ interface MainLayoutProps {
 const routeTitleKeys: Record<string, string> = {
   [AppConstants.Routes.Private.Dashboard]: 'menu.dashboard',
   [AppConstants.Routes.Private.Profile]: 'menu.profile',
-  [AppConstants.Routes.Private.Products]: 'menu.products',
-  [AppConstants.Routes.Private.Categories]: 'menu.categories',
-  [AppConstants.Routes.Private.Cart]: 'menu.cart',
-  [AppConstants.Routes.Private.Checkout]: 'menu.checkout',
-  [AppConstants.Routes.Private.Orders]: 'menu.ordersList',
-  [AppConstants.Routes.Private.Admin.Categories]: 'menu.adminCategories',
-  [AppConstants.Routes.Private.Admin.Products]: 'menu.adminProducts',
-  [AppConstants.Routes.Private.Admin.Suppliers]: 'menu.adminSuppliers',
-  [AppConstants.Routes.Private.Admin.Stock]: 'menu.adminStock',
-  [AppConstants.Routes.Private.Admin.Purchases]: 'menu.adminPurchases',
-  [AppConstants.Routes.Private.Admin.Sales]: 'menu.adminSales',
-  [AppConstants.Routes.Private.Admin.Customers]: 'menu.adminCustomers',
-  [AppConstants.Routes.Private.Admin.Users]: 'menu.adminUsers',
 };
 
 function resolveTitleKey(pathname: string): string | undefined {
-  const exact = routeTitleKeys[pathname];
-
-  if (exact) {
-    return exact;
-  }
-
-  if (pathname.startsWith(`${AppConstants.Routes.Private.Products}/`)) {
-    return 'commerce.productDetail';
-  }
-
-  if (pathname.startsWith(`${AppConstants.Routes.Private.Orders}/`)) {
-    return 'commerce.orderDetail';
-  }
-
-  return undefined;
+  return routeTitleKeys[pathname];
 }
 
 function MainLayoutContent({
@@ -59,18 +29,12 @@ function MainLayoutContent({
 }: MainLayoutProps) {
   const location = useLocation();
   const { t } = useT();
-  const fetchCart = useCartStore(state => state.fetchCart);
   const { isMobile, setMobileOpen } = useSidebarLayout();
   const titleKey = resolveTitleKey(location.pathname);
-
-  useEffect(() => {
-    void fetchCart();
-  }, [fetchCart]);
-
   const pageTitle = headerTitle
     ?? (titleKey
       ? t(titleKey, titleKey)
-      : t('app.title', 'Zentro'));
+      : t('app.title', 'Devlytics'));
 
   return (
     <div className="flex min-h-screen bg-page-gradient">
@@ -99,7 +63,6 @@ function MainLayoutContent({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitcher />
-            <HeaderCartLink />
             <HeaderProfileDropdown />
           </div>
         </header>

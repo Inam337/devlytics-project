@@ -1,13 +1,13 @@
 @layer base {
   :root {
     --color-border-default: var(--border);
-    --color-border-teal: var(--zentro-teal);
-    --color-border-mint: var(--zentro-mint);
+    --color-border-teal: var(--brand-teal);
+    --color-border-mint: var(--brand-mint);
   }
 }
 
 @layer components {
-  .border-zentro {
+  .border-default {
     border-color: var(--color-border-default);
   }
 

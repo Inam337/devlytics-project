@@ -26,6 +26,7 @@ function messageFromBody(data: unknown): { message: string; details?: string[] }
 
   if (Array.isArray(raw)) {
     const details = raw.filter((m): m is string => typeof m === 'string');
+
     return {
       message: details[0] ?? 'Validation failed',
       details,
@@ -54,15 +55,18 @@ export function parseApiError(error: unknown): ApiError {
         status: 0,
         message:
           error.code === 'ERR_NETWORK'
-            ? 'Cannot reach the API. Start the backend (cd backend/myapp && pnpm run start:dev), then restart the frontend (pnpm dev).'
+            ? [
+                'Cannot reach the API. Start the backend',
+                '(cd backend/myapp && pnpm run start:dev), then restart the frontend (pnpm dev).',
+              ].join(' ')
             : error.message || 'Network request failed',
       };
     }
 
     const status = error.response.status;
     const { message, details } = messageFromBody(error.response.data);
-    const apiMessage =
-      message !== 'Request failed' ? message : `Request failed with status ${status}`;
+    const apiMessage
+      = message !== 'Request failed' ? message : `Request failed with status ${status}`;
 
     return { status, message: apiMessage, details };
   }

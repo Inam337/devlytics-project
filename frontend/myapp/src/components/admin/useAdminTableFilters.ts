@@ -15,11 +15,9 @@ export function useAdminTableFilters(options: UseAdminTableFiltersOptions = {}) 
   const [appliedSearch, setAppliedSearch] = useState('');
   const [draftFilters, setDraftFilters] = useState<AdminFilterValues>({ ...initial });
   const [appliedFilters, setAppliedFilters] = useState<AdminFilterValues>({ ...initial });
-
   const setDraftFilter = useCallback((key: string, value: string) => {
     setDraftFilters(prev => ({ ...prev, [key]: value }));
   }, []);
-
   const handleSetDraftSearch = useCallback((value: string) => {
     setDraftSearch(value);
 
@@ -27,7 +25,6 @@ export function useAdminTableFilters(options: UseAdminTableFiltersOptions = {}) 
       setAppliedSearch(value);
     }
   }, [liveSearch]);
-
   const applyFilters = useCallback(() => {
     if (!liveSearch) {
       setAppliedSearch(draftSearch);
@@ -36,7 +33,6 @@ export function useAdminTableFilters(options: UseAdminTableFiltersOptions = {}) 
     setAppliedFilters({ ...draftFilters });
     setFiltersOpen(false);
   }, [draftFilters, draftSearch, liveSearch]);
-
   const clearFilters = useCallback(() => {
     setDraftSearch('');
     setAppliedSearch('');

@@ -1,8 +1,9 @@
 import React from 'react';
 import clsx from 'clsx';
 
-import { RbIcon } from '../icons/common/RbIcon';
 import { IconColors } from '@/components/icons/types/RbIcon.types';
+
+import { RbIcon } from '../icons/common/RbIcon';
 
 interface AppButtonProps {
   children: React.ReactNode;

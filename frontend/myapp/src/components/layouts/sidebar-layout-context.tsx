@@ -22,9 +22,11 @@ const SidebarLayoutContext = createContext<SidebarLayoutContextValue | null>(nul
 export function SidebarLayoutProvider({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);  const toggleCollapsed = useCallback(() => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const toggleCollapsed = useCallback(() => {
     setCollapsed(prev => !prev);
-  }, []);  const value = useMemo(
+  }, []);
+  const value = useMemo(
     () => ({
       collapsed: isMobile ? false : collapsed,
       toggleCollapsed,

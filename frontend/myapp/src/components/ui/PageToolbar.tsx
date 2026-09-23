@@ -84,8 +84,8 @@ export default function PageToolbar({
               <AppButton
                 color="flat"
                 className={cn(
-                  'border border-border bg-white text-zentro-black-teal',
-                  filtersOpen && 'border-zentro-teal bg-zentro-mint/10',
+                  'border border-border bg-white text-brand-dark',
+                  filtersOpen && 'border-brand-teal bg-brand-mint/10',
                 )}
                 onClick={handleFiltersToggle}
               >

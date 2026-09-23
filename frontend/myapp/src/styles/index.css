@@ -9,19 +9,19 @@
 
 @theme {
   --font-sans: "Inter", sans-serif;
-  --color-zentro-black-teal: #1A312C;
-  --color-zentro-teal: #428475;
-  --color-zentro-mint: #89D7B7;
-  --color-zentro-beige: #FFF4E1;
+  --color-brand-dark: #1A312C;
+  --color-brand-teal: #428475;
+  --color-brand-mint: #89D7B7;
+  --color-brand-beige: #FFF4E1;
   --color-primary: #428475;
   --color-sidebar: #1A312C;
 }
 
 :root {
-  --zentro-black-teal: #1A312C;
-  --zentro-teal: #428475;
-  --zentro-mint: #89D7B7;
-  --zentro-beige: #FFF4E1;
+  --brand-dark: #1A312C;
+  --brand-teal: #428475;
+  --brand-mint: #89D7B7;
+  --brand-beige: #FFF4E1;
   --gradient-page: linear-gradient(180deg, #FFF4E1 0%, #f7f3ea 45%, #eef5f2 100%);
   --gradient-card: linear-gradient(180deg, #ffffff 0%, #f8faf9 100%);
   --gradient-primary: linear-gradient(90deg, #428475 0%, #89D7B7 100%);
@@ -29,41 +29,41 @@
   --gradient-sidebar-active: linear-gradient(90deg, rgba(66, 132, 117, 0.35) 0%, rgba(137, 215, 183, 0.2) 100%);
   --radius: 0.625rem;
   --font-noto-arabic: "Noto Sans Arabic", sans-serif;
-  --background: var(--zentro-beige);
-  --foreground: var(--zentro-black-teal);
+  --background: var(--brand-beige);
+  --foreground: var(--brand-dark);
   --card: #ffffff;
-  --card-foreground: var(--zentro-black-teal);
+  --card-foreground: var(--brand-dark);
   --popover: #ffffff;
-  --popover-foreground: var(--zentro-black-teal);
-  --primary: var(--zentro-teal);
+  --popover-foreground: var(--brand-dark);
+  --primary: var(--brand-teal);
   --primary-foreground: #ffffff;
   --secondary: #ffffff;
-  --secondary-foreground: var(--zentro-teal);
+  --secondary-foreground: var(--brand-teal);
   --muted: #f0f5f3;
   --muted-foreground: #5a6e68;
   --accent: #e8f5ef;
-  --accent-foreground: var(--zentro-black-teal);
+  --accent-foreground: var(--brand-dark);
   --destructive: #c45c4a;
   --field-error-border: #F23030;
   --field-error-text: #E57373;
   --field-error-bg: #FFF0F0;
   --border: #d4e4de;
   --input: #d4e4de;
-  --ring: var(--zentro-mint);
-  --chart-1: var(--zentro-teal);
-  --chart-2: var(--zentro-mint);
-  --chart-3: var(--zentro-black-teal);
+  --ring: var(--brand-mint);
+  --chart-1: var(--brand-teal);
+  --chart-2: var(--brand-mint);
+  --chart-3: var(--brand-dark);
   --chart-4: #6ba896;
-  --chart-5: var(--zentro-beige);
-  --sidebar: var(--zentro-black-teal);
+  --chart-5: var(--brand-beige);
+  --sidebar: var(--brand-dark);
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: var(--zentro-teal);
-  --sidebar-primary-foreground: var(--zentro-mint);
-  --sidebar-accent: var(--zentro-teal);
+  --sidebar-primary: var(--brand-teal);
+  --sidebar-primary-foreground: var(--brand-mint);
+  --sidebar-accent: var(--brand-teal);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(137, 215, 183, 0.2);
-  --sidebar-ring: var(--zentro-mint);
-  --color-primary: var(--zentro-teal);
+  --sidebar-ring: var(--brand-mint);
+  --color-primary: var(--brand-teal);
 }
 
 .dark {
@@ -73,8 +73,8 @@
   --card-foreground: #f0f5f3;
   --popover: #1A312C;
   --popover-foreground: #f0f5f3;
-  --primary: var(--zentro-mint);
-  --primary-foreground: var(--zentro-black-teal);
+  --primary: var(--brand-mint);
+  --primary-foreground: var(--brand-dark);
   --secondary: #243d36;
   --secondary-foreground: #f0f5f3;
   --muted: #243d36;
@@ -84,15 +84,15 @@
   --destructive: #e07a6a;
   --border: rgba(137, 215, 183, 0.15);
   --input: rgba(137, 215, 183, 0.15);
-  --ring: var(--zentro-teal);
+  --ring: var(--brand-teal);
   --sidebar: #0f1f1b;
   --sidebar-foreground: #f0f5f3;
-  --sidebar-primary: var(--zentro-mint);
-  --sidebar-primary-foreground: var(--zentro-black-teal);
+  --sidebar-primary: var(--brand-mint);
+  --sidebar-primary-foreground: var(--brand-dark);
   --sidebar-accent: #2d4a42;
   --sidebar-accent-foreground: #f0f5f3;
   --sidebar-border: rgba(137, 215, 183, 0.1);
-  --sidebar-ring: var(--zentro-teal);
+  --sidebar-ring: var(--brand-teal);
   --yellow-dark: #d97706;
   --yellow-light: #fffbeb;
 }
@@ -117,7 +117,7 @@ body[data-scroll-locked] {
 
 .rdrDayToday .rdrDayNumber span:after {
   content: "";
-  background: var(--zentro-teal);
+  background: var(--brand-teal);
 }
 
 .border {
@@ -135,7 +135,7 @@ body[data-scroll-locked] {
 
 .thin-scroll {
   scrollbar-width: thin;
-  scrollbar-color: var(--zentro-mint) #e8ece9;
+  scrollbar-color: var(--brand-mint) #e8ece9;
 }
 
 .thin-scroll::-webkit-scrollbar {
@@ -149,13 +149,13 @@ body[data-scroll-locked] {
 }
 
 .thin-scroll::-webkit-scrollbar-thumb {
-  background: var(--zentro-mint);
+  background: var(--brand-mint);
   border-radius: 3px;
   transition: background-color 0.2s ease;
 }
 
 .thin-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--zentro-teal);
+  background: var(--brand-teal);
 }
 
 .thin-scroll::-webkit-scrollbar-corner {
@@ -181,19 +181,19 @@ body {
 }
 
 .bg-sidebar-gradient {
-  background: linear-gradient(180deg, var(--zentro-black-teal) 0%, #152822 100%);
+  background: linear-gradient(180deg, var(--brand-dark) 0%, #152822 100%);
 }
 
-.text-zentro-black-teal {
-  color: var(--zentro-black-teal);
+.text-brand-dark {
+  color: var(--brand-dark);
 }
 
-.text-zentro-teal {
-  color: var(--zentro-teal);
+.text-brand-teal {
+  color: var(--brand-teal);
 }
 
-.text-zentro-mint {
-  color: var(--zentro-mint);
+.text-brand-mint {
+  color: var(--brand-mint);
 }
 
 @keyframes border-rotate {
@@ -209,8 +209,8 @@ body {
   padding: 6px;
   border-radius: 1rem;
   background:
-    linear-gradient(90deg, var(--zentro-teal), var(--zentro-mint), var(--zentro-teal)),
-    linear-gradient(0deg, var(--zentro-mint), var(--zentro-teal), var(--zentro-mint));
+    linear-gradient(90deg, var(--brand-teal), var(--brand-mint), var(--brand-teal)),
+    linear-gradient(0deg, var(--brand-mint), var(--brand-teal), var(--brand-mint));
   background-size: 200% 100%, 100% 200%;
   background-position: 0% 50%, 50% 0%;
   animation: border-rotate 4s ease-in-out infinite;

@@ -18,9 +18,9 @@ type StatusVariant
     | 'outline';
 
 const statusVariantClasses: Record<StatusVariant, string> = {
-  default: 'bg-zentro-teal/10 text-zentro-teal border border-zentro-teal/20',
-  mint: 'bg-zentro-mint/20 text-zentro-black-teal border border-zentro-mint/30',
-  teal: 'bg-zentro-teal text-white border border-transparent',
+  default: 'bg-brand-teal/10 text-brand-teal border border-brand-teal/20',
+  mint: 'bg-brand-mint/20 text-brand-dark border border-brand-mint/30',
+  teal: 'bg-brand-teal text-white border border-transparent',
   success: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
   warning: 'bg-amber-50 text-amber-700 border border-amber-100',
   danger: 'bg-rose-50 text-rose-600 border border-rose-100',
@@ -131,7 +131,7 @@ export function dateColumn<T>(
       }
 
       return (
-        <span className="text-zentro-black-teal">
+        <span className="text-brand-dark">
           {formatter.format(date)}
         </span>
       );
@@ -163,7 +163,7 @@ export function actionColumn<T>(options: ActionColumnOptions<T>): ColumnDef<T> {
           ? (
               <button
                 type="button"
-                className="rounded-md p-1 text-zentro-teal/80 transition-colors hover:text-zentro-teal"
+                className="rounded-md p-1 text-brand-teal/80 transition-colors hover:text-brand-teal"
                 aria-label={editLabel}
                 onClick={() => onEdit(row.original)}
               >

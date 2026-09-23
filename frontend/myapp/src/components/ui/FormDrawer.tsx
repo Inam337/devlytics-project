@@ -74,7 +74,7 @@ export default function FormDrawer({
           <SheetHeader className="shrink-0 border-b border-border px-4 py-4 pr-12 text-left">
             <SheetTitle
               id="form-drawer-title"
-              className="text-lg text-zentro-black-teal"
+              className="text-lg text-brand-dark"
             >
               {title}
             </SheetTitle>

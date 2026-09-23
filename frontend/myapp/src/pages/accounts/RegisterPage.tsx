@@ -67,7 +67,7 @@ export default function RegisterPage() {
     <AuthPageLayout>
       <AuthFormLayout
         title={t('auth.register.title', 'Create account')}
-        subtitle={t('auth.register.subtitle', 'Join Zentro to shop and manage orders')}
+        subtitle={t('auth.register.subtitle', 'Create your Devlytics account')}
         footer={(
           <p className="text-sm text-gray-600 text-center">
             {t('auth.common.hasAccount', 'Already have an account?')}

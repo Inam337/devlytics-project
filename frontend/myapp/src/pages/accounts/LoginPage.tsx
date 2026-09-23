@@ -63,7 +63,7 @@ export default function LoginPage() {
     <AuthPageLayout>
       <AuthFormLayout
         title={t('auth.login.title', 'Sign in')}
-        subtitle={t('auth.login.subtitle', 'Welcome back to Zentro')}
+        subtitle={t('auth.login.subtitle', 'Welcome back')}
         footer={(
           <>
             <p className="text-sm text-gray-600 text-center">

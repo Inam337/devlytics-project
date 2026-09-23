@@ -26,7 +26,6 @@ type QueueItem = {
 
 let isRefreshing = false;
 let refreshQueue: QueueItem[] = [];
-
 const flushRefreshQueue = (error: unknown | null, token: string | null = null) => {
   refreshQueue.forEach((item) => {
     if (error) {
@@ -40,7 +39,9 @@ const flushRefreshQueue = (error: unknown | null, token: string | null = null) =
 
 const redirectToLogin = () => {
   clearTokens();
+
   const loginPath = AppConstants.Routes.Public.Login;
+
   if (!window.location.pathname.startsWith(loginPath)) {
     window.location.assign(loginPath);
   }
@@ -51,8 +52,10 @@ const applySessionTokens = async (
   refreshToken: string,
 ): Promise<void> => {
   setTokens(accessToken, refreshToken);
+
   const { useAuthStore } = await import('@/stores/auth');
   const current = useAuthStore.getState();
+
   useAuthStore.getState().setSession({
     token: accessToken,
     refreshToken,
@@ -63,17 +66,17 @@ const applySessionTokens = async (
 const onRequest = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
   if (!config.skipAuth) {
     const token = getAccessToken();
+
     if (token) {
       config.headers.set('Authorization', `Bearer ${token}`);
     }
   }
+
   return config;
 };
 
 const onRequestError = (error: unknown): Promise<never> => Promise.reject(error);
-
 const onResponse = (response: AxiosResponse): AxiosResponse => response;
-
 const createResponseErrorHandler = (instance: AxiosInstance) => {
   return async (error: unknown): Promise<never> => {
     if (!axios.isAxiosError(error) || error.response?.status !== 401) {
@@ -91,12 +94,15 @@ const createResponseErrorHandler = (instance: AxiosInstance) => {
       if (!originalRequest?.skipAuth) {
         redirectToLogin();
       }
+
       return Promise.reject(parseApiError(error));
     }
 
     const storedRefresh = getRefreshToken();
+
     if (!storedRefresh) {
       redirectToLogin();
+
       return Promise.reject(parseApiError(error));
     }
 
@@ -106,6 +112,7 @@ const createResponseErrorHandler = (instance: AxiosInstance) => {
       }).then((token) => {
         originalRequest.headers.set('Authorization', `Bearer ${token}`);
         originalRequest._retry = true;
+
         return instance(originalRequest);
       });
     }
@@ -115,13 +122,16 @@ const createResponseErrorHandler = (instance: AxiosInstance) => {
 
     try {
       const { token, refreshToken } = await requestTokenRefresh(storedRefresh);
+
       await applySessionTokens(token, refreshToken);
       flushRefreshQueue(null, token);
       originalRequest.headers.set('Authorization', `Bearer ${token}`);
+
       return instance(originalRequest);
     } catch (refreshError) {
       flushRefreshQueue(refreshError);
       redirectToLogin();
+
       return Promise.reject(parseApiError(refreshError));
     } finally {
       isRefreshing = false;

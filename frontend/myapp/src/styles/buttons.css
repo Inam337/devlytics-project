@@ -63,6 +63,6 @@
   }
 
   .btn-flat:hover:not(:disabled) {
-    color: var(--zentro-black-teal);
+    color: var(--brand-dark);
   }
 }

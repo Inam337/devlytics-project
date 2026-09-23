@@ -36,7 +36,7 @@ export const createRegisterSchema = (t: TranslationFunction) =>
           t('auth.register.errors.confirmPasswordRequired', 'Please confirm your password'),
         ),
     })
-    .refine((data) => data.password === data.confirmPassword, {
+    .refine(data => data.password === data.confirmPassword, {
       message: t('auth.register.errors.passwordMismatch', 'Passwords do not match'),
       path: ['confirmPassword'],
     });

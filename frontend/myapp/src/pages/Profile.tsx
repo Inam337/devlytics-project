@@ -18,7 +18,7 @@ import {
 
 export default function Profile() {
   const { t, i18nT, resolveAuthMessage } = useAuthTranslation();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthStore(state => state.user);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +34,6 @@ export default function Profile() {
     mode: 'onSubmit',
     reValidateMode: 'onChange',
   });
-
   const onSubmit = async (data: ChangePasswordFormData) => {
     setError(null);
     setSuccess(null);
@@ -46,23 +45,24 @@ export default function Profile() {
         newPassword: data.newPassword,
       });
 
-      if (!result.ok) {
-        setError(
+      if (result.ok === true) {
+        setSuccess(
           resolveAuthMessage(
-            result.error ?? 'auth.profile.errors.generic',
+            result.data.message.startsWith('auth.')
+              ? result.data.message
+              : 'auth.profile.changePassword.success',
           ),
         );
+        reset(changePasswordFormDefaultValues);
+
         return;
       }
 
-      setSuccess(
+      setError(
         resolveAuthMessage(
-          result.data.message.startsWith('auth.')
-            ? result.data.message
-            : 'auth.profile.changePassword.success',
+          result.error ?? 'auth.profile.errors.generic',
         ),
       );
-      reset(changePasswordFormDefaultValues);
     } finally {
       setIsSubmitting(false);
     }
@@ -81,15 +81,17 @@ export default function Profile() {
         {i18nT('auth.profile.title', 'Profile')}
       </h1>
 
-      {user ? (
-        <p className="text-gray-600 mb-6">
-          {user.name}
-          {' · '}
-          {user.email}
-          {' · '}
-          {user.role}
-        </p>
-      ) : null}
+      {user
+        ? (
+            <p className="text-gray-600 mb-6">
+              {user.name}
+              {' · '}
+              {user.email}
+              {' · '}
+              {user.role}
+            </p>
+          )
+        : null}
 
       <section>
         <h2 className="text-lg font-medium mb-1">
@@ -152,16 +154,21 @@ export default function Profile() {
             )}
           />
 
-          <FieldError msg={error} variant="form" />
+          <FieldError
+            msg={error}
+            variant="form"
+          />
 
-          {success ? (
-            <p
-              className="text-sm text-green-700"
-              role="status"
-            >
-              {success}
-            </p>
-          ) : null}
+          {success
+            ? (
+                <p
+                  className="text-sm text-green-700"
+                  role="status"
+                >
+                  {success}
+                </p>
+              )
+            : null}
 
           <AppButton
             type="submit"

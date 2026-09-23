@@ -8,7 +8,6 @@ type UseAdminFormDrawerOptions = {
 
 export function useAdminFormDrawer<TId = number>(options: UseAdminFormDrawerOptions = {}) {
   const drawer = useFormDrawer<TId>();
-
   const handleOpenChange = useCallback((open: boolean) => {
     drawer.setOpen(open);
 
@@ -17,7 +16,6 @@ export function useAdminFormDrawer<TId = number>(options: UseAdminFormDrawerOpti
       options.onReset?.();
     }
   }, [drawer, options.onReset]);
-
   const openCreate = useCallback(() => {
     options.onReset?.();
     drawer.openCreate();

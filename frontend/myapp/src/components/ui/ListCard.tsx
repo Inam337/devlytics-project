@@ -46,7 +46,7 @@ export default function ListCard({
     >
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-start gap-2">
-          <h3 className="font-medium text-zentro-black-teal">{title}</h3>
+          <h3 className="font-medium text-brand-dark">{title}</h3>
           {badge}
         </div>
         {subtitle

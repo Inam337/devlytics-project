@@ -7,7 +7,7 @@ import ur from '@/locales/ur.json';
 export const SUPPORTED_LOCALES = ['en', 'ur'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-const STORAGE_KEY = 'zentro-locale';
+const STORAGE_KEY = 'devlytics-locale';
 
 function getInitialLocale(): SupportedLocale {
   const stored = localStorage.getItem(STORAGE_KEY);

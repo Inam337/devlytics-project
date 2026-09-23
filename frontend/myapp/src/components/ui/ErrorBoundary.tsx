@@ -3,9 +3,9 @@ import type { ErrorInfo, ReactNode } from 'react';
 
 import { RbIcon } from '@/components/icons/common/RbIcon';
 import { IconColors } from '@/components/icons/types/RbIcon.types';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { Button } from '@/components/ui/Button';
-import { Image } from '@/components/ui/Image';
-import Logo from '@/assets/logo/logo.svg';
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -72,14 +72,8 @@ function ErrorBoundary({ children, fallback }: Props) {
         <div className="sm:max-w-72 lg:max-w-96 mx-auto flex-col items-center
          justify-center bg-white p-8 rounded-sm"
         >
-          <div className="relative mx-auto w-[135px] h-[48px] mb-4">
-            <Image
-              src={Logo}
-              alt="Login Banner"
-              className="object-cover object-left"
-              width={135}
-              height={48}
-            />
+          <div className="relative mx-auto mb-4 flex h-12 items-center justify-center">
+            <BrandLogo variant="color" />
           </div>
 
           <div className="w-full flex-col flex items-center justify-center text-center">

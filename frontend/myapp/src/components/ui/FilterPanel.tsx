@@ -36,9 +36,9 @@ export default function FilterPanel({
   return (
     <div className={cn('mt-3', className)}>
       <div className="space-y-4 rounded-lg border border-gray-200/80 bg-[#FCF9F4] p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-sm font-medium text-zentro-black-teal">
+        <div className="flex items-center gap-2 text-sm font-medium text-brand-dark">
           <SlidersHorizontal
-            className="size-4 text-zentro-teal"
+            className="size-4 text-brand-teal"
             aria-hidden
           />
           <span>{title ?? t('filters.title', 'Filters')}</span>

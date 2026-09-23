@@ -23,7 +23,7 @@ const SuspenseLoading: React.FC<SuspenseLoadingProps> = ({
   return (
     <div className={cn(
       'w-full fixed z-50 left-0 top-0 flex items-center justify-center h-screen flex-col',
-      'bg-zentro-beige/60 backdrop-blur-[2px]',
+      'bg-brand-beige/60 backdrop-blur-[2px]',
       className,
     )}
     >
@@ -33,7 +33,7 @@ const SuspenseLoading: React.FC<SuspenseLoadingProps> = ({
           <div
             className="w-2 h-2 rounded-full"
             style={{
-              backgroundColor: 'var(--zentro-teal)',
+              backgroundColor: 'var(--brand-teal)',
               animation: 'bounce-circle 1.4s ease-in-out infinite',
               animationDelay: '0s',
             }}
@@ -41,7 +41,7 @@ const SuspenseLoading: React.FC<SuspenseLoadingProps> = ({
           <div
             className="w-2 h-2 rounded-full"
             style={{
-              backgroundColor: 'var(--zentro-mint)',
+              backgroundColor: 'var(--brand-mint)',
               animation: 'bounce-circle 1.4s ease-in-out infinite',
               animationDelay: '0.2s',
             }}
@@ -49,7 +49,7 @@ const SuspenseLoading: React.FC<SuspenseLoadingProps> = ({
           <div
             className="w-2 h-2 rounded-full"
             style={{
-              backgroundColor: 'var(--zentro-teal)',
+              backgroundColor: 'var(--brand-teal)',
               animation: 'bounce-circle 1.4s ease-in-out infinite',
               animationDelay: '0.4s',
             }}
@@ -58,7 +58,7 @@ const SuspenseLoading: React.FC<SuspenseLoadingProps> = ({
         {/* Loading Bar */}
         <div
           className={cn(
-            'relative overflow-hidden rounded-full bg-zentro-mint/30',
+            'relative overflow-hidden rounded-full bg-brand-mint/30',
             barSize.width,
             barSize.height,
           )}
@@ -71,8 +71,8 @@ const SuspenseLoading: React.FC<SuspenseLoadingProps> = ({
               background: `linear-gradient(
                 90deg,
                 transparent 0%,
-                var(--zentro-teal) 35%,
-                var(--zentro-mint) 65%,
+                var(--brand-teal) 35%,
+                var(--brand-mint) 65%,
                 transparent 100%
               )`,
               width: '50%',

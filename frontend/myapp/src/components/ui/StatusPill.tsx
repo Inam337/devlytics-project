@@ -9,14 +9,14 @@ const statusPillVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-zentro-teal/15 text-zentro-teal border border-zentro-teal/25',
-        mint: 'bg-zentro-mint/30 text-zentro-black-teal border border-zentro-mint/40',
-        teal: 'bg-zentro-teal text-white border border-transparent',
+        default: 'bg-brand-teal/15 text-brand-teal border border-brand-teal/25',
+        mint: 'bg-brand-mint/30 text-brand-dark border border-brand-mint/40',
+        teal: 'bg-brand-teal text-white border border-transparent',
         success: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
         warning: 'bg-amber-50 text-amber-800 border border-amber-200',
         danger: 'bg-red-50 text-red-700 border border-red-200',
         neutral: 'bg-muted text-muted-foreground border border-border',
-        outline: 'bg-white text-zentro-black-teal border border-border',
+        outline: 'bg-white text-brand-dark border border-border',
       },
     },
     defaultVariants: {

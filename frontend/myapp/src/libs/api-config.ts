@@ -30,5 +30,6 @@ export function getApiBaseUrl(): string {
 
 export function isUsingDevProxy(): boolean {
   const base = getApiBaseUrl();
+
   return import.meta.env.DEV && (base === '' || base.startsWith('/'));
 }

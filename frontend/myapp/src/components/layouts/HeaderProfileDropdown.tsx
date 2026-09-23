@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { useT } from '@/hooks/use-t';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, KeyRound, LogOut } from '@/components/icons/FluentIcons';
 
+import { useT } from '@/hooks/use-t';
+import { ChevronDown, KeyRound, LogOut } from '@/components/icons/FluentIcons';
 import { AppConstants } from '@/common/AppConstants';
 import { cn } from '@/libs/utils';
 import { useAuthStore } from '@/stores/auth';
-import { useCartStore } from '@/stores/cart';
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -51,7 +50,6 @@ export default function HeaderProfileDropdown() {
   const handleLogout = () => {
     setOpen(false);
     logout();
-    useCartStore.getState().reset();
     navigate(AppConstants.Routes.Public.Login, { replace: true });
   };
 

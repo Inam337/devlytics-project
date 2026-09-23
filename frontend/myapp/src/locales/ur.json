@@ -1,33 +1,20 @@
 {
-  "app": {
-    "title": "زینٹرو",
-    "description": "زینٹرو شاپ مینجمنٹ سسٹم",
-    "version": "ورژن 1.0.0"
-  },
   "i18n": {
     "language": "زبان"
+  },
+  "app": {
+    "title": "Devlytics"
+  },
+  "common": {
+    "text": {
+      "loading": "لوڈ ہو رہا ہے..."
+    }
   },
   "menu": {
     "dashboard": "ڈیش بورڈ",
     "profile": "پروفائل",
-    "catalog": "کیٹلاگ",
-    "products": "مصنوعات",
-    "categories": "زمرے",
-    "cart": "ٹوکری",
-    "orders": "آرڈرز",
-    "ordersList": "آرڈر کی فہرست",
-    "checkout": "چیک آؤٹ",
     "account": "اکاؤنٹ",
-    "logout": "لاگ آؤٹ",
-    "admin": "ایڈمن",
-    "adminCategories": "زمرے منظم کریں",
-    "adminProducts": "مصنوعات منظم کریں",
-    "adminStock": "اسٹاک",
-    "adminSuppliers": "سپلائرز",
-    "adminPurchases": "خریداری",
-    "adminSales": "فروخت (POS)",
-    "adminCustomers": "گاہک",
-    "adminUsers": "صارفین"
+    "logout": "لاگ آؤٹ"
   },
   "sidebar": {
     "collapse": "سمیٹیں",
@@ -44,168 +31,9 @@
   },
   "pages": {
     "dashboard": {
-      "welcome": "خوش آمدید۔ نیویگیشن کے لیے سائڈبار استعمال کریں۔"
-    }
-  },
-  "commerce": {
-    "loading": "لوڈ ہو رہا ہے...",
-    "retry": "دوبارہ کوشش کریں",
-    "empty": "ابھی دکھانے کے لیے کچھ نہیں۔",
-    "cart": "ٹوکری",
-    "checkout": "چیک آؤٹ",
-    "productDetail": "مصنوعات کی تفصیل",
-    "orderDetail": "آرڈر کی تفصیل",
-    "browseProducts": "مصنوعات دیکھیں",
-    "continueShopping": "خریداری جاری رکھیں",
-    "each": "فی عدد",
-    "remove": "ہٹائیں",
-    "subtotal": "ذیلی کل",
-    "orderSummary": "آرڈر کا خلاصہ",
-    "pricesFromServer": "چیک آؤٹ پر قیمتیں سرور سے لوڈ ہوتی ہیں۔",
-    "clearCart": "ٹوکری خالی کریں",
-    "reviewOrder": "اپنا آرڈر دیکھیں",
-    "estimatedTotal": "تخمینی کل",
-    "placeOrder": "آرڈر دیں",
-    "backToCart": "ٹوکری پر واپس",
-    "backToOrders": "آرڈرز پر واپس",
-    "viewOrder": "دیکھیں",
-    "orderNumber": "آرڈر #{id}",
-    "items": "اشیاء",
-    "paid": "ادا شدہ",
-    "lineItems": "اشیاء",
-    "product": "مصنوعات",
-    "payment": "ادائیگی",
-    "method": "طریقہ",
-    "status": "حالت",
-    "amount": "رقم",
-    "selectPaymentMethod": "ادائیگی کا طریقہ",
-    "payNow": "ابھی ادا کریں",
-    "paymentCreated": "ادائیگی بن گئی۔ حالت: {status}",
-    "allCategories": "سب",
-    "addToCart": "ٹوکری میں شامل کریں",
-    "goToCart": "ٹوکری پر جائیں",
-    "quantity": "مقدار",
-    "unit": "یونٹ",
-    "type": "قسم",
-    "stock": "اسٹاک",
-    "backToProducts": "مصنوعات پر واپس",
-    "inStock": "اسٹاک میں",
-    "outOfStock": "اسٹاک ختم",
-    "products.empty": "کوئی مصنوعات نہیں ملی۔",
-    "categories.empty": "کوئی زمرے نہیں۔",
-    "cart.empty": "آپ کی ٹوکری خالی ہے۔ شروع کرنے کے لیے مصنوعات دیکھیں۔",
-    "checkout.emptyCart": "چیک آؤٹ سے پہلے ٹوکری میں اشیاء شامل کریں۔",
-    "orders.empty": "ابھی کوئی آرڈر نہیں۔ ٹوکری سے چیک آؤٹ کریں۔",
-    "dashboard": {
-      "welcome": "زینٹرو شاپ میں خوش آمدید",
-      "productsHint": "کیٹلاگ دیکھیں اور ٹوکری میں شامل کریں۔",
-      "cartHint": "مقدار دیکھیں اور چیک آؤٹ پر جائیں۔",
-      "ordersHint": "آرڈر کی حالت اور ادائیگی مکمل کریں۔"
-    }
-  },
-  "admin": {
-    "save": "محفوظ کریں",
-    "cancel": "منسوخ",
-    "edit": "ترمیم",
-    "delete": "حذف",
-    "deactivate": "غیر فعال",
-    "activate": "فعال",
-    "inactive": "غیر فعال",
-    "active": "فعال",
-    "email": "ای میل",
-    "phone": "فون",
-    "password": "پاس ورڈ",
-    "newPasswordOptional": "نیا پاس ورڈ (اختیاری)",
-    "passwordRequired": "نئے صارف کے لیے پاس ورڈ ضروری ہے",
-    "customerFormRequired": "نام، ای میل اور فون ضروری ہیں",
-    "userFormRequired": "نام اور ای میل ضروری ہیں",
-    "addCustomer": "گاہک شامل کریں",
-    "editCustomer": "گاہک میں ترمیم",
-    "newCustomer": "نیا گاہک",
-    "addUser": "صارف شامل کریں",
-    "editUser": "صارف میں ترمیم",
-    "newUser": "نیا صارف",
-    "name": "نام",
-    "description": "تفصیل",
-    "price": "قیمت",
-    "unit": "یونٹ",
-    "type": "قسم",
-    "category": "زمرہ",
-    "noCategory": "کوئی نہیں",
-    "reorderLevel": "دوبارہ آرڈر کی سطح",
-    "product": "مصنوعات",
-    "quantity": "مقدار",
-    "unitPrice": "فی یونٹ قیمت",
-    "location": "مقام",
-    "supplier": "سپلائر",
-    "contact": "رابطہ",
-    "address": "پتہ",
-    "lineItems": "لائن آئٹمز",
-    "addLine": "لائن شامل کریں",
-    "removeLine": "لائن ہٹائیں",
-    "noProductsForLines": "لائن آئٹمز سے پہلے کیٹلاگ میں مصنوعات شامل کریں۔",
-    "nameRequired": "نام ضروری ہے",
-    "productFormRequired": "نام، قیمت اور یونٹ ضروری ہیں",
-    "stockFormRequired": "مصنوعات اور مقام ضروری ہیں",
-    "purchaseFormRequired": "سپلائر اور کم از کم ایک لائن آئٹم ضروری ہے",
-    "saleFormRequired": "کم از کم ایک لائن آئٹم ضروری ہے",
-    "confirmDelete": "یہ آئٹم حذف کریں؟",
-    "confirmDeactivateProduct": "یہ مصنوعات غیر فعال کریں؟ شاپ کیٹلاگ سے چھپ جائے گی۔",
-    "addCategory": "زمرہ شامل کریں",
-    "editCategory": "زمرے میں ترمیم",
-    "newCategory": "نیا زمرہ",
-    "addProduct": "مصنوعات شامل کریں",
-    "editProduct": "مصنوعات میں ترمیم",
-    "newProduct": "نئی مصنوعات",
-    "addSupplier": "سپلائر شامل کریں",
-    "editSupplier": "سپلائر میں ترمیم",
-    "newSupplier": "نیا سپلائر",
-    "addStock": "اسٹاک شامل کریں",
-    "editStock": "اسٹاک میں ترمیم",
-    "newStock": "نیا اسٹاک اندراج",
-    "addPurchase": "خریداری ریکارڈ کریں",
-    "newPurchase": "نئی خریداری",
-    "purchaseNumber": "خریداری #{id}",
-    "addSale": "فروخت ریکارڈ کریں",
-    "newSale": "نئی فروخت",
-    "saleNumber": "فروخت #{id}",
-    "categories": {
-      "empty": "ابھی کوئی زمرے نہیں۔ مصنوعات منظم کرنے کے لیے ایک بنائیں۔",
-      "hint": "مصنوعات بناتے وقت استعمال ہونے والے زمرے منظم کریں۔"
-    },
-    "products": {
-      "empty": "کوئی فعال مصنوعات نہیں۔ کیٹلاگ کے لیے ایک بنائیں۔",
-      "hint": "مصنوعات بنائیں اور ترمیم کریں۔ حذف نرم غیر فعال کرتا ہے (شاپ سے چھپ جاتا ہے)۔"
-    },
-    "suppliers": {
-      "empty": "ابھی کوئی سپلائر نہیں۔",
-      "hint": "خریداری ریکارڈ کرتے وقت سپلائرز منسلک ہوتے ہیں۔"
-    },
-    "stock": {
-      "empty": "ابھی کوئی اسٹاک اندراج نہیں۔",
-      "hint": "مصنوعات اور گودام کے مقام کے مطابق مقدار ٹریک کریں۔"
-    },
-    "purchases": {
-      "empty": "ابھی کوئی خریداری ریکارڈ نہیں۔",
-      "hint": "نیسٹڈ آئٹمز کے ساتھ خریداری بنائیں؛ کل سرور پر حساب ہوتا ہے۔"
-    },
-    "sales": {
-      "empty": "ابھی کوئی POS فروخت ریکارڈ نہیں۔",
-      "hint": "اسٹور فروخت لائن آئٹمز کے ساتھ ریکارڈ کریں؛ کل سرور پر حساب ہوتا ہے۔"
-    },
-    "customers": {
-      "empty": "ابھی کوئی B2B گاہک نہیں۔",
-      "hint": "B2B گاہک ریکارڈز (نام، ای میل، فون، پتہ) برقرار رکھیں۔"
-    },
-    "users": {
-      "empty": "ابھی کوئی ایپ صارف فہرست میں نہیں۔",
-      "hint": "لاگ ان اکاؤنٹس منظم کریں۔ کردار بیک اینڈ سے تفویض ہوتے ہیں (ڈیفالٹ user)۔"
-    },
-    "dashboard": {
-      "title": "ایڈمن ٹولز",
-      "productsHint": "کیٹلاگ مصنوعات بنائیں اور ترمیم کریں۔",
-      "stockHint": "مقام کے مطابق گودام مقدار۔",
-      "purchasesHint": "سپلائر خریداری ریکارڈ کریں۔"
+      "title": "Devlytics میں خوش آمدید",
+      "welcome": "یہ ایک عارضی ڈیش بورڈ ہے۔ اصل اسکرینز ڈیزائن ہونے کے بعد اسے تبدیل کر دیں گی۔",
+      "signedInAs": "بطور {name} سائن ان"
     }
   },
   "auth": {
@@ -219,7 +47,7 @@
     },
     "login": {
       "title": "سائن ان",
-      "subtitle": "زینٹرو میں خوش آمدید",
+      "subtitle": "خوش آمدید",
       "emailLabel": "ای میل",
       "emailPlaceholder": "اپنی ای میل درج کریں",
       "passwordLabel": "پاس ورڈ",
@@ -236,7 +64,7 @@
     },
     "register": {
       "title": "اکاؤنٹ بنائیں",
-      "subtitle": "خریداری اور آرڈر کے لیے زینٹرو میں شامل ہوں",
+      "subtitle": "اپنا Devlytics اکاؤنٹ بنائیں",
       "nameLabel": "مکمل نام",
       "namePlaceholder": "اپنا نام درج کریں",
       "emailLabel": "ای میل",
@@ -298,7 +126,6 @@
         "incorrectCurrentPassword": "موجودہ پاس ورڈ غلط ہے",
         "generic": "پاس ورڈ تبدیل نہیں ہو سکا۔ دوبارہ کوشش کریں۔"
       }
-    },
-    "loading": "لوڈ ہو رہا ہے..."
+    }
   }
 }

@@ -39,14 +39,14 @@ export const createChangePasswordSchema = (t: TranslationFunction) =>
           ),
         ),
     })
-    .refine((data) => data.newPassword === data.confirmNewPassword, {
+    .refine(data => data.newPassword === data.confirmNewPassword, {
       message: t(
         'auth.profile.errors.passwordMismatch',
         'New passwords do not match',
       ),
       path: ['confirmNewPassword'],
     })
-    .refine((data) => data.currentPassword !== data.newPassword, {
+    .refine(data => data.currentPassword !== data.newPassword, {
       message: t(
         'auth.profile.errors.sameAsCurrent',
         'New password must be different from your current password',

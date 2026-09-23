@@ -1,4 +1,3 @@
-import { brandIcon, logoColor, logoWhite } from '@/assets';
 import { cn } from '@/libs/utils';
 
 type BrandLogoProps = {
@@ -7,31 +6,39 @@ type BrandLogoProps = {
   className?: string;
 };
 
+/**
+ * Placeholder text mark — no Devlytics logo assets exist yet.
+ * Swap for an <img> once real branding is designed (see docs/Interactive design for Devlytics platform/).
+ */
 export function BrandLogo({
   variant = 'white',
   collapsed = false,
   className,
 }: BrandLogoProps) {
+  const textColorClass = variant === 'white' ? 'text-white' : 'text-brand-dark';
+
   if (collapsed) {
     return (
-      <img
-        src={brandIcon}
-        alt="Zentro"
-        className={cn('h-8 w-8 shrink-0 object-contain', className)}
-      />
+      <span
+        className={cn(
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-teal text-sm font-bold text-white',
+          className,
+        )}
+      >
+        D
+      </span>
     );
   }
 
-  const logoSrc = variant === 'white' ? logoWhite : logoColor;
-
   return (
-    <img
-      src={logoSrc}
-      alt="Zentro"
+    <span
       className={cn(
-        'h-8 w-auto max-w-[9.5rem] shrink-0 object-contain object-left',
+        'text-lg font-semibold tracking-tight',
+        textColorClass,
         className,
       )}
-    />
+    >
+      Devlytics
+    </span>
   );
 }
