@@ -1,5 +1,7 @@
+import type { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PeriodUtil } from '../common/utils/period.util';
+import type { MailService } from '../common/services/mail.service';
 import type { NotificationsService } from '../notifications/notifications.service';
 import type { PrismaService } from '../database/prisma.service';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
@@ -14,9 +16,11 @@ describe('RankingsService', () => {
       upsert: jest.Mock;
       count: jest.Mock;
     };
+    user: { findMany: jest.Mock };
     $transaction: jest.Mock;
   };
   let notifications: { notifyMany: jest.Mock };
+  let mail: { sendTemplate: jest.Mock };
   let service: RankingsService;
 
   beforeEach(() => {
@@ -28,12 +32,18 @@ describe('RankingsService', () => {
         upsert: jest.fn(),
         count: jest.fn(),
       },
+      user: { findMany: jest.fn().mockResolvedValue([]) },
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     notifications = { notifyMany: jest.fn().mockResolvedValue(undefined) };
+    mail = { sendTemplate: jest.fn().mockResolvedValue({ success: true }) };
     service = new RankingsService(
       prisma as unknown as PrismaService,
       notifications as unknown as NotificationsService,
+      mail as unknown as MailService,
+      {
+        get: jest.fn().mockReturnValue('http://localhost:3000'),
+      } as unknown as ConfigService,
     );
     prisma.rankingHistory.upsert.mockResolvedValue({});
   });

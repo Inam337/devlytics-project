@@ -1,9 +1,12 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
 import { AppException } from '../common/exceptions/app.exception';
+import { analysisRunCompleteMail } from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { PrismaService } from '../database/prisma.service';
@@ -45,6 +48,8 @@ export class AiAnalysisService {
     private readonly prisma: PrismaService,
     private readonly providers: AiProvidersService,
     private readonly qualityAnalysis: QualityAnalysisService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
     @InjectQueue(QUEUE.AI_ANALYSIS) private readonly aiQueue: Queue,
   ) {}
 
@@ -148,10 +153,15 @@ export class AiAnalysisService {
         runId,
         requestedBy,
       );
-      await this.prisma.aiAnalysisRun.update({
+      const run = await this.prisma.aiAnalysisRun.update({
         where: { id: runId },
         data: { status: 'COMPLETED' },
+        include: {
+          repository: { select: { fullName: true } },
+          requestedBy: { select: { email: true, firstName: true } },
+        },
       });
+      await this.sendAnalysisCompleteMail(run);
       return result;
     } catch (error) {
       await this.prisma.aiAnalysisRun.update({
@@ -163,6 +173,48 @@ export class AiAnalysisService {
       });
       throw error;
     }
+  }
+
+  /**
+   * ANALYSIS_RUN_COMPLETE (WOR-15): only sent when the run has a human
+   * requester (`requestedById`) — an automated/scheduled trigger has no
+   * natural recipient and is skipped. Never sent on the FAILED path; this
+   * event is specifically "run complete."
+   */
+  private async sendAnalysisCompleteMail(run: {
+    id: string;
+    requestedById: string | null;
+    runNumber: number;
+    issuesFound: number;
+    repository: { fullName: string } | null;
+    requestedBy: { email: string; firstName: string } | null;
+  }): Promise<void> {
+    if (!run.requestedById || !run.requestedBy?.email) return;
+    try {
+      const result = await this.mail.sendTemplate(
+        run.requestedBy.email,
+        analysisRunCompleteMail({
+          recipientFirstName: run.requestedBy.firstName,
+          repositoryName: run.repository?.fullName ?? 'your repository',
+          runNumber: run.runNumber,
+          issuesFound: run.issuesFound,
+          ctaUrl: `${this.appUrl()}/ai-analysis/${run.id}`,
+        }),
+      );
+      if (!result.success) {
+        this.logger.warn(
+          `Analysis-run-complete email failed for run ${run.id}: ${result.error}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Unexpected error sending analysis-run-complete email for run ${run.id}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
   }
 
   private async interpretRun(

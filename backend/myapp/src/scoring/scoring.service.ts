@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, ScoreCategory } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { AppException } from '../common/exceptions/app.exception';
+import { scoringRulesChangedMail } from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { PeriodUtil } from '../common/utils/period.util';
 import { PrismaService } from '../database/prisma.service';
@@ -39,7 +42,13 @@ export class ScoringService {
     private readonly metrics: MetricsAggregationService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
+  }
 
   // --- weight configuration --------------------------------------------------
 
@@ -138,7 +147,13 @@ export class ScoringService {
       userAgent: actor.userAgent,
     });
 
-    await this.notifyAdmins(organizationId, nextVersion, dto.reason);
+    await this.notifyAdmins(
+      organizationId,
+      nextVersion,
+      previous.categories,
+      dto.categories,
+      dto.reason,
+    );
 
     return this.findWeights(organizationId);
   }
@@ -453,6 +468,8 @@ export class ScoringService {
   private async notifyAdmins(
     organizationId: string,
     weightVersion: number,
+    before: { category: ScoreCategory; weightPercent: number }[],
+    after: { category: ScoreCategory; weightPercent: number }[],
     reason?: string,
   ) {
     const admins = await this.prisma.organizationUser.findMany({
@@ -461,7 +478,10 @@ export class ScoringService {
         role: { key: 'ORGANIZATION_ADMIN' },
         status: 'ACTIVE',
       },
-      select: { userId: true },
+      select: {
+        userId: true,
+        user: { select: { email: true, firstName: true } },
+      },
     });
     await this.notifications.notifyMany(
       admins.map((admin) => ({
@@ -470,9 +490,32 @@ export class ScoringService {
         event: NotificationEvent.SCORING_RULES_CHANGED,
         title: `Scoring weights updated to version ${weightVersion}`,
         body: reason ?? 'Scoring category weights were changed.',
-        channel: 'EMAIL' as const,
         actionUrl: '/settings/scoring-rules',
       })),
     );
+
+    for (const admin of admins) {
+      try {
+        const result = await this.mail.sendTemplate(
+          admin.user.email,
+          scoringRulesChangedMail({
+            weightVersion,
+            reason,
+            before,
+            after,
+            ctaUrl: `${this.appUrl()}/settings/scoring-rules`,
+          }),
+        );
+        if (!result.success) {
+          this.logger.warn(
+            `Scoring-rules-changed email failed for admin ${admin.userId}: ${result.error}`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Unexpected error sending scoring-rules-changed email to admin ${admin.userId}: ${(error as Error).message}`,
+        );
+      }
+    }
   }
 }

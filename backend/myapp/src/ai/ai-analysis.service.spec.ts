@@ -1,4 +1,6 @@
+import type { ConfigService } from '@nestjs/config';
 import type { Queue } from 'bullmq';
+import type { MailService } from '../common/services/mail.service';
 import type { PrismaService } from '../database/prisma.service';
 import type { QualityAnalysisService } from '../quality/quality-analysis.service';
 import { AiAnalysisService } from './ai-analysis.service';
@@ -12,6 +14,7 @@ describe('AiAnalysisService', () => {
   };
   let providers: { resolveAdapter: jest.Mock };
   let qualityAnalysis: { analyzeRepository: jest.Mock };
+  let mail: { sendTemplate: jest.Mock };
   let queue: { add: jest.Mock };
   let service: AiAnalysisService;
 
@@ -23,6 +26,7 @@ describe('AiAnalysisService', () => {
     };
     providers = { resolveAdapter: jest.fn() };
     qualityAnalysis = { analyzeRepository: jest.fn() };
+    mail = { sendTemplate: jest.fn().mockResolvedValue({ success: true }) };
     queue = { add: jest.fn().mockResolvedValue({}) };
     prisma.aiAnalysisRun.update.mockResolvedValue({});
 
@@ -30,6 +34,10 @@ describe('AiAnalysisService', () => {
       prisma as unknown as PrismaService,
       providers as unknown as AiProvidersService,
       qualityAnalysis as unknown as QualityAnalysisService,
+      mail as unknown as MailService,
+      {
+        get: jest.fn().mockReturnValue('http://localhost:3000'),
+      } as unknown as ConfigService,
       queue as unknown as Queue,
     );
   });
@@ -129,6 +137,10 @@ describe('AiAnalysisService', () => {
       expect(prisma.aiAnalysisRun.update).toHaveBeenCalledWith({
         where: { id: 'run-1' },
         data: { status: 'COMPLETED' },
+        include: {
+          repository: { select: { fullName: true } },
+          requestedBy: { select: { email: true, firstName: true } },
+        },
       });
     });
 

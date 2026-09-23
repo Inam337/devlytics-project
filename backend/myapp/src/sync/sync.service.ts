@@ -1,5 +1,6 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, SyncJobStatus, SyncJobType } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { AuditService } from '../audit/audit.service';
@@ -8,6 +9,8 @@ import {
   PaginationQueryDto,
 } from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { syncFailureMail } from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
 import {
@@ -41,7 +44,13 @@ export class SyncService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     @InjectQueue(QUEUE.GIT_SYNC) private readonly gitSyncQueue: Queue,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
+  }
 
   /** Stage 2: twelve-month backfill for each newly imported repository. */
   async queueFullImport(
@@ -346,7 +355,13 @@ export class SyncService {
       job.organizationId,
       job.repositoryId,
     );
-    if (failures < SYNC_FAILURE_THRESHOLD) return;
+    // Bug fix (WOR-15 AC): this must fire exactly once, at the 2nd
+    // consecutive failure — not on every failure once the threshold is
+    // reached. `!==` (rather than the previous `<`) means failure #3, #4, ...
+    // of the same unbroken streak never re-alert; a later successful sync
+    // resets the streak via `consecutiveFailures`, so the repo is never
+    // permanently muted.
+    if (failures !== SYNC_FAILURE_THRESHOLD) return;
 
     await this.alertAdminsOfSyncFailure(
       job.organizationId,
@@ -372,7 +387,10 @@ export class SyncService {
         role: { key: 'ORGANIZATION_ADMIN' },
         status: 'ACTIVE',
       },
-      select: { userId: true },
+      select: {
+        userId: true,
+        user: { select: { email: true, firstName: true } },
+      },
     });
 
     await this.notifications.notifyMany(
@@ -382,10 +400,32 @@ export class SyncService {
         event: NotificationEvent.SYNC_FAILURE,
         title: `Sync failing for ${repository?.fullName ?? 'a repository'}`,
         body: `${failures} consecutive sync failures. Last error: ${message.slice(0, 200)}`,
-        channel: 'EMAIL' as const,
         actionUrl: `/repositories/${repositoryId}`,
       })),
     );
+
+    for (const admin of admins) {
+      try {
+        const result = await this.mail.sendTemplate(
+          admin.user.email,
+          syncFailureMail({
+            repositoryName: repository?.fullName ?? 'a repository',
+            consecutiveFailures: failures,
+            lastErrorMessage: message.slice(0, 200),
+            ctaUrl: `${this.appUrl()}/repositories/${repositoryId}`,
+          }),
+        );
+        if (!result.success) {
+          this.logger.warn(
+            `Sync-failure email failed for admin ${admin.userId}: ${result.error}`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Unexpected error sending sync-failure email to admin ${admin.userId}: ${(error as Error).message}`,
+        );
+      }
+    }
   }
 
   /** Consecutive failures for a repository, used for the sync-failure alert. */

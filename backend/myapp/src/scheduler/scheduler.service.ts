@@ -5,6 +5,12 @@ import { Cron, CronExpression, Interval } from '@nestjs/schedule';
 import { RankingPeriod } from '@prisma/client';
 import { Queue } from 'bullmq';
 import { PeriodRange, PeriodUtil } from '../common/utils/period.util';
+import {
+  projectCompletionSummaryMail,
+  teamLeaderboardDigestMail,
+  weeklyDeveloperSummaryMail,
+} from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { PrismaService } from '../database/prisma.service';
 import { GoalsService } from '../goals/goals.service';
 import { NotificationEvent } from '../notifications/notification-events';
@@ -61,6 +67,7 @@ export class SchedulerService implements OnApplicationBootstrap {
     private readonly goals: GoalsService,
     private readonly reports: ReportsService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
     private readonly config: ConfigService,
     @InjectQueue(QUEUE.RANKING_CALCULATION)
     private readonly rankingQueue: Queue,
@@ -368,7 +375,10 @@ export class SchedulerService implements OnApplicationBootstrap {
         status: 'ACTIVE',
         role: { key: 'ORGANIZATION_ADMIN' },
       },
-      select: { userId: true },
+      select: {
+        userId: true,
+        user: { select: { email: true, firstName: true } },
+      },
     });
     if (!admin) {
       this.logger.warn(
@@ -383,11 +393,37 @@ export class SchedulerService implements OnApplicationBootstrap {
 
     await this.triggerTeamReportsAndDigests(organizationId, period, adminActor);
     await this.triggerIndividualReportsAndDigests(organizationId, period);
-    await this.triggerProjectCompletionSummary(
-      organizationId,
-      range,
-      admin.userId,
-    );
+    await this.triggerProjectCompletionSummary(organizationId, range, {
+      userId: admin.userId,
+      email: admin.user.email,
+      firstName: admin.user.firstName,
+    });
+  }
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
+  }
+
+  /** Never allows a mail failure to interrupt the digest fan-out that called it. */
+  private async sendDigestMail(
+    to: string,
+    input: ReturnType<
+      | typeof weeklyDeveloperSummaryMail
+      | typeof teamLeaderboardDigestMail
+      | typeof projectCompletionSummaryMail
+    >,
+    context: string,
+  ): Promise<void> {
+    try {
+      const result = await this.mail.sendTemplate(to, input);
+      if (!result.success) {
+        this.logger.warn(`${context} email failed for ${to}: ${result.error}`);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Unexpected error sending ${context} email to ${to}: ${(error as Error).message}`,
+      );
+    }
   }
 
   /** Team AI-analysis report export + team leaderboard digest, per active team. */
@@ -401,7 +437,12 @@ export class SchedulerService implements OnApplicationBootstrap {
       select: {
         id: true,
         name: true,
-        members: { select: { userId: true } },
+        members: {
+          select: {
+            userId: true,
+            user: { select: { email: true, firstName: true } },
+          },
+        },
       },
     });
 
@@ -419,8 +460,17 @@ export class SchedulerService implements OnApplicationBootstrap {
           event: NotificationEvent.TEAM_LEADERBOARD_DIGEST,
           title: `${team.name} — leaderboard digest`,
           body: `Your team's ${period.toLowerCase()} leaderboard digest is ready.`,
-          channel: 'EMAIL',
         });
+        await this.sendDigestMail(
+          member.user.email,
+          teamLeaderboardDigestMail({
+            recipientFirstName: member.user.firstName,
+            teamName: team.name,
+            periodLabel: period.toLowerCase(),
+            ctaUrl: `${this.appUrl()}/leaderboards/teams`,
+          }),
+          'team-leaderboard-digest',
+        );
       }
     }
     await this.notifications.notifyMany(digestInputs);
@@ -437,7 +487,10 @@ export class SchedulerService implements OnApplicationBootstrap {
         status: 'ACTIVE',
         role: { key: 'DEVELOPER' },
       },
-      select: { userId: true },
+      select: {
+        userId: true,
+        user: { select: { email: true, firstName: true } },
+      },
     });
 
     for (const developer of developers) {
@@ -452,6 +505,15 @@ export class SchedulerService implements OnApplicationBootstrap {
         },
         { userId: developer.userId, roleKey: 'DEVELOPER' },
       );
+      await this.sendDigestMail(
+        developer.user.email,
+        weeklyDeveloperSummaryMail({
+          recipientFirstName: developer.user.firstName,
+          periodLabel: period.toLowerCase(),
+          ctaUrl: `${this.appUrl()}/reports`,
+        }),
+        'weekly-developer-summary',
+      );
     }
 
     await this.notifications.notifyMany(
@@ -461,7 +523,6 @@ export class SchedulerService implements OnApplicationBootstrap {
         event: NotificationEvent.WEEKLY_DEVELOPER_SUMMARY,
         title: 'Your performance summary is ready',
         body: `Your ${period.toLowerCase()} performance summary has been generated.`,
-        channel: 'EMAIL' as const,
       })),
     );
   }
@@ -470,7 +531,7 @@ export class SchedulerService implements OnApplicationBootstrap {
   private async triggerProjectCompletionSummary(
     organizationId: string,
     range: PeriodRange,
-    adminUserId: string,
+    admin: { userId: string; email: string; firstName: string },
   ): Promise<void> {
     const completed = await this.prisma.project.findMany({
       where: {
@@ -487,13 +548,24 @@ export class SchedulerService implements OnApplicationBootstrap {
 
     await this.notifications.notify({
       organizationId,
-      userId: adminUserId,
+      userId: admin.userId,
       event: NotificationEvent.PROJECT_COMPLETION_SUMMARY,
       title: 'Project completion summary',
       body: `${completed.length} project(s) completed this period: ${completed
         .map((project) => project.name)
         .join(', ')}`,
-      channel: 'EMAIL',
     });
+
+    const periodLabel = `${range.period} (${PeriodUtil.toDateOnly(range.start)}–${PeriodUtil.toDateOnly(range.end)})`;
+    await this.sendDigestMail(
+      admin.email,
+      projectCompletionSummaryMail({
+        recipientFirstName: admin.firstName,
+        projectNames: completed.map((project) => project.name),
+        periodLabel,
+        ctaUrl: `${this.appUrl()}/projects`,
+      }),
+      'project-completion-summary',
+    );
   }
 }

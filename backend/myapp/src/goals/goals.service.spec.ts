@@ -1,5 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import type { AuditService } from '../audit/audit.service';
+import type { MailService } from '../common/services/mail.service';
 import type { PrismaService } from '../database/prisma.service';
 import type { NotificationsService } from '../notifications/notifications.service';
 import { GoalsService } from './goals.service';
@@ -20,6 +21,7 @@ describe('GoalsService#sweepAtRisk (WOR-11)', () => {
       {} as unknown as AuditService,
       {} as unknown as NotificationsService,
       { get: jest.fn().mockReturnValue(14) } as unknown as ConfigService,
+      { sendTemplate: jest.fn() } as unknown as MailService,
     );
   });
 

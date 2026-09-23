@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, RankingPeriod, RankingSubjectType } from '@prisma/client';
+import { rankChangeMail } from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { PeriodUtil } from '../common/utils/period.util';
 import { PrismaService } from '../database/prisma.service';
@@ -28,6 +31,8 @@ export class RankingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async closePeriod(
@@ -155,14 +160,27 @@ export class RankingsService {
     return rows.length;
   }
 
-  /** Rank-change milestone: only moves of 2+ places are worth telling someone about. */
+  /**
+   * Rank-change milestone: only moves of 2+ places are worth telling someone
+   * about. This is only ever called for DEVELOPER subjects (see
+   * `closeSubject`) — `subjectId` is a `User.id` here, so it's a meaningful
+   * "you" recipient; there is no equivalent single-recipient concept for a
+   * team's rank change, so this never fires for TEAM rows.
+   */
   private async notifyRankChanges(
     organizationId: string,
-    rows: { subjectId: string; rank: number; rankDelta: number }[],
+    rows: {
+      subjectId: string;
+      rank: number;
+      previousRank: number | null;
+      rankDelta: number;
+    }[],
   ) {
     const significant = rows.filter(
       (row) => Math.abs(row.rankDelta) >= RANK_CHANGE_THRESHOLD,
     );
+    if (significant.length === 0) return;
+
     await this.notifications.notifyMany(
       significant.map((row) => ({
         organizationId,
@@ -179,6 +197,42 @@ export class RankingsService {
         actionUrl: '/leaderboards/developers',
       })),
     );
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: significant.map((row) => row.subjectId) } },
+      select: { id: true, email: true, firstName: true },
+    });
+    const userById = new Map(users.map((user) => [user.id, user]));
+
+    for (const row of significant) {
+      const user = userById.get(row.subjectId);
+      if (!user) continue;
+      try {
+        const result = await this.mail.sendTemplate(
+          user.email,
+          rankChangeMail({
+            recipientFirstName: user.firstName,
+            newRank: row.rank,
+            previousRank: row.previousRank ?? row.rank - row.rankDelta,
+            rankDelta: row.rankDelta,
+            ctaUrl: `${this.appUrl()}/leaderboards/developers`,
+          }),
+        );
+        if (!result.success) {
+          this.logger.warn(
+            `Rank-change email failed for user ${row.subjectId}: ${result.error}`,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Unexpected error sending rank-change email to user ${row.subjectId}: ${(error as Error).message}`,
+        );
+      }
+    }
+  }
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
   }
 
   async developerLeaderboard(organizationId: string, query: RankingsQueryDto) {

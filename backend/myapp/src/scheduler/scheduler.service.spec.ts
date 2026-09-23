@@ -1,5 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import type { Queue } from 'bullmq';
+import type { MailService } from '../common/services/mail.service';
 import type { PrismaService } from '../database/prisma.service';
 import type { GoalsService } from '../goals/goals.service';
 import type { NotificationsService } from '../notifications/notifications.service';
@@ -22,6 +23,7 @@ describe('SchedulerService', () => {
   let goals: { sweepAtRisk: jest.Mock };
   let reports: { requestExport: jest.Mock };
   let notifications: { notify: jest.Mock; notifyMany: jest.Mock };
+  let mail: { sendTemplate: jest.Mock };
   let config: { get: jest.Mock };
   let rankingQueue: { add: jest.Mock };
   let service: SchedulerService;
@@ -40,6 +42,7 @@ describe('SchedulerService', () => {
     goals = { sweepAtRisk: jest.fn() };
     reports = { requestExport: jest.fn() };
     notifications = { notify: jest.fn(), notifyMany: jest.fn() };
+    mail = { sendTemplate: jest.fn().mockResolvedValue({ success: true }) };
     config = { get: jest.fn().mockReturnValue(5) };
     rankingQueue = { add: jest.fn().mockResolvedValue({}) };
 
@@ -50,6 +53,7 @@ describe('SchedulerService', () => {
       goals as unknown as GoalsService,
       reports as unknown as ReportsService,
       notifications as unknown as NotificationsService,
+      mail as unknown as MailService,
       config as unknown as ConfigService,
       rankingQueue as unknown as Queue,
     );
@@ -222,6 +226,7 @@ describe('SchedulerService', () => {
 
     it('closes DAILY and WEEKLY but not MONTHLY/QUARTERLY/YEARLY on a Sunday', async () => {
       prisma.organizationUser.findFirst.mockResolvedValue(null);
+      prisma.organizationUser.findMany.mockResolvedValue([]);
 
       await service.triggerPeriodClose();
 
@@ -241,11 +246,26 @@ describe('SchedulerService', () => {
     it('fans out team/individual AI-analysis exports and digests exactly once, from the digest-eligible period', async () => {
       prisma.organizationUser.findFirst.mockResolvedValue({
         userId: 'admin-1',
+        user: { email: 'admin-1@example.com', firstName: 'Ada' },
       });
       prisma.team.findMany.mockResolvedValue([
-        { id: 'team-1', name: 'Frontend', members: [{ userId: 'lead-1' }] },
+        {
+          id: 'team-1',
+          name: 'Frontend',
+          members: [
+            {
+              userId: 'lead-1',
+              user: { email: 'lead-1@example.com', firstName: 'Lee' },
+            },
+          ],
+        },
       ]);
-      prisma.organizationUser.findMany.mockResolvedValue([{ userId: 'dev-1' }]);
+      prisma.organizationUser.findMany.mockResolvedValue([
+        {
+          userId: 'dev-1',
+          user: { email: 'dev-1@example.com', firstName: 'Dana' },
+        },
+      ]);
       prisma.project.findMany.mockResolvedValue([]);
 
       await service.triggerPeriodClose();
@@ -279,6 +299,14 @@ describe('SchedulerService', () => {
           event: 'weekly_developer_summary',
         }),
       ]);
+      expect(mail.sendTemplate).toHaveBeenCalledWith(
+        'lead-1@example.com',
+        expect.anything(),
+      );
+      expect(mail.sendTemplate).toHaveBeenCalledWith(
+        'dev-1@example.com',
+        expect.anything(),
+      );
     });
 
     it('skips reports/digests but still closes the ranking period when no active admin exists', async () => {
@@ -294,6 +322,7 @@ describe('SchedulerService', () => {
     it('sends a project-completion digest only when a project completed within the period', async () => {
       prisma.organizationUser.findFirst.mockResolvedValue({
         userId: 'admin-1',
+        user: { email: 'admin-1@example.com', firstName: 'Ada' },
       });
       prisma.team.findMany.mockResolvedValue([]);
       prisma.organizationUser.findMany.mockResolvedValue([]);
@@ -306,6 +335,14 @@ describe('SchedulerService', () => {
           userId: 'admin-1',
           event: 'project_completion_summary',
           body: expect.stringContaining('Portal Revamp'),
+        }),
+      );
+      expect(mail.sendTemplate).toHaveBeenCalledWith(
+        'admin-1@example.com',
+        expect.objectContaining({
+          list: expect.arrayContaining([
+            expect.objectContaining({ label: 'Portal Revamp' }),
+          ]),
         }),
       );
     });

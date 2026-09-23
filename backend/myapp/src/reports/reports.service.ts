@@ -1,11 +1,17 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, ReportExport, RoleKey } from '@prisma/client';
 import { Queue } from 'bullmq';
 import {
   PaginatedResult,
   PaginationQueryDto,
 } from '../common/dto/pagination.dto';
+import {
+  individualAiReportMail,
+  teamAiReportMail,
+} from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { PeriodUtil } from '../common/utils/period.util';
 import { QueryUtil } from '../common/utils/query.util';
@@ -57,7 +63,13 @@ export class ReportsService {
     private readonly metrics: MetricsAggregationService,
     @InjectQueue(QUEUE.REPORT_GENERATION)
     private readonly reportQueue: Queue,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
+  }
 
   async developers(
     organizationId: string,
@@ -781,11 +793,12 @@ export class ReportsService {
 
     try {
       const result = await this.buildForExport(organizationId, record);
+      const fileName = `${slug(result.title)}.${record.format.toLowerCase()}`;
       await this.prisma.reportExport.update({
         where: { id: exportId },
         data: {
           status: 'COMPLETED',
-          fileName: `${slug(result.title)}.${record.format.toLowerCase()}`,
+          fileName,
           mimeType:
             record.format === 'PDF'
               ? 'application/pdf'
@@ -795,6 +808,15 @@ export class ReportsService {
           finishedAt: new Date(),
         },
       });
+
+      if (
+        record.format === 'PDF' &&
+        result.buffer &&
+        (record.reportType === 'TEAM_AI_ANALYSIS' ||
+          record.reportType === 'INDIVIDUAL_AI_ANALYSIS')
+      ) {
+        await this.sendAiReportMail(organizationId, record, result, fileName);
+      }
     } catch (error) {
       await this.prisma.reportExport.update({
         where: { id: exportId },
@@ -805,6 +827,131 @@ export class ReportsService {
         },
       });
       throw error;
+    }
+  }
+
+  /**
+   * WOR-15: the two AI-analysis report emails, PDF attached. Never call this
+   * for anything but a completed PDF TEAM_AI_ANALYSIS/INDIVIDUAL_AI_ANALYSIS
+   * export — `generateExport` already gates on that.
+   *
+   * INDIVIDUAL_AI_ANALYSIS is the access-boundary-sensitive case
+   * (devlytics.md §7): it goes to the target developer and, if one exists,
+   * their team lead — and to no one else, mirroring
+   * `assertIndividualTargetAccess`'s notion of "who may see this report".
+   */
+  private async sendAiReportMail(
+    organizationId: string,
+    record: ReportExport,
+    result: ReportResult,
+    fileName: string,
+  ): Promise<void> {
+    const attachment = {
+      filename: fileName,
+      content: result.buffer as Buffer,
+      contentType: 'application/pdf',
+    };
+    const ctaUrl = `${this.appUrl()}/reports/exports/${record.id}`;
+
+    try {
+      if (record.reportType === 'TEAM_AI_ANALYSIS') {
+        const filters = (record.filters as Record<string, unknown>) ?? {};
+        const teamId = filters.teamId as string | undefined;
+        if (!teamId) return;
+
+        const team = await this.prisma.team.findFirst({
+          where: { id: teamId, organizationId },
+          select: {
+            name: true,
+            members: {
+              select: {
+                user: { select: { email: true, firstName: true } },
+              },
+            },
+          },
+        });
+        if (!team) return;
+
+        for (const member of team.members) {
+          const sendResult = await this.mail.sendTemplate(member.user.email, {
+            ...teamAiReportMail({
+              recipientFirstName: member.user.firstName,
+              teamName: team.name,
+              analysisRunNumber: result.analysisRunNumber,
+              ctaUrl,
+            }),
+            attachments: [attachment],
+          });
+          if (!sendResult.success) {
+            this.logger.warn(
+              `Team AI-report email failed for ${member.user.email} (export ${record.id}): ${sendResult.error}`,
+            );
+          }
+        }
+        return;
+      }
+
+      if (
+        record.reportType === 'INDIVIDUAL_AI_ANALYSIS' &&
+        record.targetUserId
+      ) {
+        const developer = await this.prisma.user.findUnique({
+          where: { id: record.targetUserId },
+          select: { email: true, firstName: true, lastName: true },
+        });
+        if (!developer) return;
+        const developerName = `${developer.firstName} ${developer.lastName}`;
+
+        const developerResult = await this.mail.sendTemplate(developer.email, {
+          ...individualAiReportMail({
+            recipientFirstName: developer.firstName,
+            developerName,
+            forTeamLead: false,
+            analysisRunNumber: result.analysisRunNumber,
+            ctaUrl,
+          }),
+          attachments: [attachment],
+        });
+        if (!developerResult.success) {
+          this.logger.warn(
+            `Individual AI-report email failed for developer ${record.targetUserId} (export ${record.id}): ${developerResult.error}`,
+          );
+        }
+
+        // Same "who counts as the target's team lead" query as
+        // `assertIndividualTargetAccess` — never any other team member.
+        const team = await this.prisma.team.findFirst({
+          where: {
+            organizationId,
+            members: { some: { userId: record.targetUserId } },
+            teamLeadId: { not: null },
+          },
+          select: {
+            teamLead: { select: { email: true, firstName: true } },
+          },
+        });
+        if (team?.teamLead) {
+          const leadResult = await this.mail.sendTemplate(team.teamLead.email, {
+            ...individualAiReportMail({
+              recipientFirstName: team.teamLead.firstName,
+              developerName,
+              forTeamLead: true,
+              analysisRunNumber: result.analysisRunNumber,
+              ctaUrl,
+            }),
+            attachments: [attachment],
+          });
+          if (!leadResult.success) {
+            this.logger.warn(
+              `Individual AI-report email to team lead failed for developer ${record.targetUserId} (export ${record.id}): ${leadResult.error}`,
+            );
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Unexpected error sending AI-report email for export ${record.id}: ${(error as Error).message}`,
+      );
     }
   }
 

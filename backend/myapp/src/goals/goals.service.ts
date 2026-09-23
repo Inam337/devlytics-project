@@ -4,6 +4,8 @@ import { CodeQualitySnapshot, GoalStatus, Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { goalCompletedMail } from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { QueryUtil } from '../common/utils/query.util';
 import { PrismaService } from '../database/prisma.service';
@@ -48,7 +50,12 @@ export class GoalsService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
+  }
 
   async create(
     organizationId: string,
@@ -433,6 +440,7 @@ export class GoalsService {
           body: `Re-analysis confirmed the target was reached (${measured}).`,
           actionUrl: `/goals/${goal.id}`,
         });
+        await this.sendGoalCompletedMail(notifyUserId, goal, measured, target);
       }
       this.logger.log(
         `Goal ${goal.id} completed at ${measured} (target ${target})`,
@@ -440,6 +448,40 @@ export class GoalsService {
     }
 
     return nextStatus;
+  }
+
+  private async sendGoalCompletedMail(
+    userId: string,
+    goal: { id: string; title: string },
+    measuredValue: number,
+    targetValue: number,
+  ): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, firstName: true },
+      });
+      if (!user) return;
+      const result = await this.mail.sendTemplate(
+        user.email,
+        goalCompletedMail({
+          recipientFirstName: user.firstName,
+          goalTitle: goal.title,
+          measuredValue,
+          targetValue,
+          ctaUrl: `${this.appUrl()}/goals/${goal.id}`,
+        }),
+      );
+      if (!result.success) {
+        this.logger.warn(
+          `Goal-completed email failed for user ${userId}: ${result.error}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Unexpected error sending goal-completed email to user ${userId}: ${(error as Error).message}`,
+      );
+    }
   }
 }
 

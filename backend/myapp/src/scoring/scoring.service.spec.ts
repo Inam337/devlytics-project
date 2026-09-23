@@ -1,6 +1,8 @@
+import type { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { AppException } from '../common/exceptions/app.exception';
 import type { AuditService } from '../audit/audit.service';
+import type { MailService } from '../common/services/mail.service';
 import type {
   MetricsAggregationService,
   MetricTotals,
@@ -60,6 +62,7 @@ describe('ScoringService', () => {
   let metrics: { developerTotals: jest.Mock };
   let audit: { record: jest.Mock };
   let notifications: { notifyMany: jest.Mock };
+  let mail: { sendTemplate: jest.Mock };
   let service: ScoringService;
 
   beforeEach(() => {
@@ -82,12 +85,17 @@ describe('ScoringService', () => {
     metrics = { developerTotals: jest.fn() };
     audit = { record: jest.fn().mockResolvedValue(undefined) };
     notifications = { notifyMany: jest.fn().mockResolvedValue(undefined) };
+    mail = { sendTemplate: jest.fn().mockResolvedValue({ success: true }) };
 
     service = new ScoringService(
       prisma as unknown as PrismaService,
       metrics as unknown as MetricsAggregationService,
       audit as unknown as AuditService,
       notifications as unknown as NotificationsService,
+      mail as unknown as MailService,
+      {
+        get: jest.fn().mockReturnValue('http://localhost:3000'),
+      } as unknown as ConfigService,
     );
   });
 
@@ -196,8 +204,14 @@ describe('ScoringService', () => {
         .mockResolvedValueOnce(decimalRows(DEFAULT_SCORING_WEIGHTS)) // previous
         .mockResolvedValueOnce(decimalRows(DEFAULT_SCORING_WEIGHTS)); // after commit
       prisma.organizationUser.findMany.mockResolvedValue([
-        { userId: 'admin-1' },
-        { userId: 'admin-2' },
+        {
+          userId: 'admin-1',
+          user: { email: 'admin-1@example.com', firstName: 'Ada' },
+        },
+        {
+          userId: 'admin-2',
+          user: { email: 'admin-2@example.com', firstName: 'Bo' },
+        },
       ]);
 
       const result = await service.setWeights(
@@ -239,18 +253,28 @@ describe('ScoringService', () => {
         }),
       );
 
-      expect(prisma.organizationUser.findMany).toHaveBeenCalledWith({
-        where: {
-          organizationId: 'org-1',
-          role: { key: 'ORGANIZATION_ADMIN' },
-          status: 'ACTIVE',
-        },
-        select: { userId: true },
-      });
+      expect(prisma.organizationUser.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            organizationId: 'org-1',
+            role: { key: 'ORGANIZATION_ADMIN' },
+            status: 'ACTIVE',
+          },
+        }),
+      );
       expect(notifications.notifyMany).toHaveBeenCalledWith([
         expect.objectContaining({ userId: 'admin-1' }),
         expect.objectContaining({ userId: 'admin-2' }),
       ]);
+
+      // Before/after weights and the reason are the AC this email exists for.
+      expect(mail.sendTemplate).toHaveBeenCalledTimes(2);
+      expect(mail.sendTemplate).toHaveBeenCalledWith(
+        'admin-1@example.com',
+        expect.objectContaining({
+          subject: expect.stringContaining('version 2'),
+        }),
+      );
 
       expect(result.weightVersion).toBe(2);
     });

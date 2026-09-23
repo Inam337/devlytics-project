@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AchievementStatus, Prisma } from '@prisma/client';
+import { achievementEarnedMail } from '../common/mail-templates/digest-milestone-alert.templates';
+import { MailService } from '../common/services/mail.service';
 import { NumberUtil } from '../common/utils/number.util';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationEvent } from '../notifications/notification-events';
@@ -99,6 +102,8 @@ export class AchievementsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async findForUser(organizationId: string, userId: string) {
@@ -202,10 +207,56 @@ export class AchievementsService {
           body: record.evidence ?? achievement.description,
           actionUrl: '/achievements',
         });
+        await this.sendAchievementEarnedMail(
+          organizationId,
+          userId,
+          achievement.name,
+          achievement.description,
+          record.evidence ?? undefined,
+        );
       }
     }
 
     return earned;
+  }
+
+  private async sendAchievementEarnedMail(
+    organizationId: string,
+    userId: string,
+    achievementName: string,
+    achievementDescription: string,
+    evidence?: string,
+  ): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, firstName: true },
+      });
+      if (!user) return;
+      const result = await this.mail.sendTemplate(
+        user.email,
+        achievementEarnedMail({
+          recipientFirstName: user.firstName,
+          achievementName,
+          achievementDescription,
+          evidence,
+          ctaUrl: `${this.appUrl()}/achievements`,
+        }),
+      );
+      if (!result.success) {
+        this.logger.warn(
+          `Achievement-earned email failed for user ${userId} (org ${organizationId}): ${result.error}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Unexpected error sending achievement-earned email to user ${userId}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  private appUrl(): string {
+    return this.config.get<string>('app.url', 'http://localhost:3000');
   }
 }
 

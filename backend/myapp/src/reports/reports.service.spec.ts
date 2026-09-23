@@ -1,4 +1,6 @@
+import type { ConfigService } from '@nestjs/config';
 import type { Queue } from 'bullmq';
+import type { MailService } from '../common/services/mail.service';
 import type { PrismaService } from '../database/prisma.service';
 import type { MetricsAggregationService } from '../metrics/metrics-aggregation.service';
 import { ExportActor, ReportsService } from './reports.service';
@@ -13,10 +15,12 @@ describe('ReportsService — async exports (WOR-7)', () => {
       update: jest.Mock;
     };
     team: { findFirst: jest.Mock };
+    user: { findUnique: jest.Mock };
     $transaction: jest.Mock;
   };
   let metrics: MetricsAggregationService;
   let queue: { add: jest.Mock };
+  let mail: { sendTemplate: jest.Mock };
   let service: ReportsService;
 
   const developer: ExportActor = { userId: 'user-1', roleKey: 'DEVELOPER' };
@@ -37,15 +41,21 @@ describe('ReportsService — async exports (WOR-7)', () => {
         update: jest.fn().mockResolvedValue({}),
       },
       team: { findFirst: jest.fn() },
+      user: { findUnique: jest.fn() },
       $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     metrics = {} as MetricsAggregationService;
     queue = { add: jest.fn().mockResolvedValue({}) };
+    mail = { sendTemplate: jest.fn().mockResolvedValue({ success: true }) };
 
     service = new ReportsService(
       prisma as unknown as PrismaService,
       metrics,
       queue as unknown as Queue,
+      mail as unknown as MailService,
+      {
+        get: jest.fn().mockReturnValue('http://localhost:3000'),
+      } as unknown as ConfigService,
     );
   });
 
@@ -359,6 +369,93 @@ describe('ReportsService — async exports (WOR-7)', () => {
 
       await expect(service.generateExport('org-1', 'export-3')).rejects.toThrow(
         /targetUserId is required/,
+      );
+    });
+
+    it('emails only the target developer and their team lead for a completed INDIVIDUAL_AI_ANALYSIS PDF export — never a peer team member', async () => {
+      prisma.reportExport.findFirst.mockResolvedValue({
+        id: 'export-7',
+        organizationId: 'org-1',
+        reportType: 'INDIVIDUAL_AI_ANALYSIS',
+        format: 'PDF',
+        targetUserId: 'dev-1',
+        filters: {},
+      });
+      jest.spyOn(service, 'individualAiAnalysis').mockResolvedValue({
+        format: 'pdf',
+        title: 'Individual AI Analysis — Dana Dev',
+        scope: 'all time',
+        columns: [],
+        rows: [],
+        analysisRunNumber: 7,
+        buffer: Buffer.from('pdf-bytes'),
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        email: 'dev-1@example.com',
+        firstName: 'Dana',
+        lastName: 'Dev',
+      });
+      // A team of 3+ members with a lead — proves the fan-out is scoped to
+      // the target + lead only, not every member of the team.
+      prisma.team.findFirst.mockResolvedValue({
+        teamLead: { email: 'lead-1@example.com', firstName: 'Lea' },
+      });
+
+      await service.generateExport('org-1', 'export-7');
+
+      expect(mail.sendTemplate).toHaveBeenCalledTimes(2);
+      const recipients = mail.sendTemplate.mock.calls.map((call) => call[0]);
+      expect(recipients).toContain('dev-1@example.com');
+      expect(recipients).toContain('lead-1@example.com');
+      expect(recipients).not.toContain('peer-1@example.com');
+      expect(recipients).not.toContain('peer-2@example.com');
+
+      const leadCall = mail.sendTemplate.mock.calls.find(
+        (call) => call[0] === 'lead-1@example.com',
+      );
+      expect(leadCall?.[1]).toEqual(
+        expect.objectContaining({
+          attachments: [
+            expect.objectContaining({
+              filename: expect.stringContaining('.pdf'),
+              content: Buffer.from('pdf-bytes'),
+              contentType: 'application/pdf',
+            }),
+          ],
+        }),
+      );
+    });
+
+    it('does not email anyone when an INDIVIDUAL_AI_ANALYSIS target has no team (and therefore no lead)', async () => {
+      prisma.reportExport.findFirst.mockResolvedValue({
+        id: 'export-8',
+        organizationId: 'org-1',
+        reportType: 'INDIVIDUAL_AI_ANALYSIS',
+        format: 'PDF',
+        targetUserId: 'dev-1',
+        filters: {},
+      });
+      jest.spyOn(service, 'individualAiAnalysis').mockResolvedValue({
+        format: 'pdf',
+        title: 'Individual AI Analysis — Dana Dev',
+        scope: 'all time',
+        columns: [],
+        rows: [],
+        buffer: Buffer.from('pdf-bytes'),
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        email: 'dev-1@example.com',
+        firstName: 'Dana',
+        lastName: 'Dev',
+      });
+      prisma.team.findFirst.mockResolvedValue(null);
+
+      await service.generateExport('org-1', 'export-8');
+
+      expect(mail.sendTemplate).toHaveBeenCalledTimes(1);
+      expect(mail.sendTemplate).toHaveBeenCalledWith(
+        'dev-1@example.com',
+        expect.anything(),
       );
     });
   });
