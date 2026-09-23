@@ -45,10 +45,11 @@ function messageFromBody(data: unknown): { message: string; details?: string[] }
 }
 
 export function parseApiError(error: unknown): ApiError {
-  if (isApiError(error)) {
-    return error;
-  }
-
+  // Check isAxiosError BEFORE isApiError: modern axios versions add their own
+  // `.status`/`.message` fields directly onto AxiosError, so the duck-typed
+  // isApiError() check below would otherwise match a raw, unparsed AxiosError
+  // and short-circuit with its generic "Request failed with status code N"
+  // message instead of the real backend error body's message.
   if (axios.isAxiosError(error)) {
     if (!error.response) {
       return {
@@ -69,6 +70,12 @@ export function parseApiError(error: unknown): ApiError {
       = message !== 'Request failed' ? message : `Request failed with status ${status}`;
 
     return { status, message: apiMessage, details };
+  }
+
+  // A plain object already shaped like ApiError (e.g. re-parsed after the axios
+  // response interceptor already converted the original AxiosError once).
+  if (isApiError(error)) {
+    return error;
   }
 
   if (error instanceof Error) {

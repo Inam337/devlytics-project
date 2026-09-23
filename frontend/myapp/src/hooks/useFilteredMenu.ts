@@ -1,3 +1,4 @@
+import { Roles } from '@/common/Roles';
 import type { MenuItem } from '@/common/MenuData';
 import { useAuthStore } from '@/stores/auth';
 
@@ -9,9 +10,9 @@ function isVisibleForRole(roles: string[] | undefined, userRole: string): boolea
   return roles.includes(userRole);
 }
 
-/** Filters sidebar items by `roles` on menu entries (admin-only sections use `roles: ['admin']`). */
+/** Filters sidebar items by `roles` on menu entries (admin-only sections use `roles: ['ORGANIZATION_ADMIN']`). */
 export function useFilteredMenu(menuItems: MenuItem[]): MenuItem[] {
-  const userRole = useAuthStore(state => state.user?.role ?? 'user');
+  const userRole = useAuthStore(state => state.role?.key ?? Roles.DEVELOPER);
 
   return menuItems
     .filter(item => isVisibleForRole(item.roles, userRole))

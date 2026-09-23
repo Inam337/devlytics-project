@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
@@ -18,7 +18,10 @@ import {
 
 export default function Profile() {
   const { t, i18nT, resolveAuthMessage } = useAuthTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
+  const role = useAuthStore(state => state.role);
+  const logout = useAuthStore(state => state.logout);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,14 +49,16 @@ export default function Profile() {
       });
 
       if (result.ok === true) {
-        setSuccess(
-          resolveAuthMessage(
-            result.data.message.startsWith('auth.')
-              ? result.data.message
-              : 'auth.profile.changePassword.success',
-          ),
-        );
+        setSuccess(resolveAuthMessage('auth.profile.changePassword.success'));
         reset(changePasswordFormDefaultValues);
+
+        // Changing your own password revokes every session, including this
+        // one's refresh token — sign out locally now rather than waiting for
+        // the access token to expire and hit a dead refresh. A short delay
+        // lets the success message above actually be seen before redirecting.
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        await logout();
+        navigate(AppConstants.Routes.Public.Login, { replace: true });
 
         return;
       }
@@ -84,11 +89,10 @@ export default function Profile() {
       {user
         ? (
             <p className="text-gray-600 mb-6">
-              {user.name}
+              {user.fullName}
               {' · '}
               {user.email}
-              {' · '}
-              {user.role}
+              {role ? ` · ${role.name}` : null}
             </p>
           )
         : null}

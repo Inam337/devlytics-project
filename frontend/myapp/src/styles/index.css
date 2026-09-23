@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./backgrounds.css";
@@ -7,8 +8,29 @@
 @import "./border.css";
 @import "./text.css";
 
+/* Auth showcase panel (right column of the login-style auth screens) */
+@keyframes auth-value-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes auth-value-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes auth-glow-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(16px, -20px) scale(1.1); }
+}
+@keyframes auth-glow-drift-alt {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-14px, 18px) scale(1.06); }
+}
+
 @theme {
   --font-sans: "Inter", sans-serif;
+  /* Devlytics design system (docs/Interactive design for Devlytics platform) — used for auth/app screens being rebuilt to spec; --font-sans above remains the kept-scaffold default until the rest of the app migrates. */
+  --font-plex-sans: "IBM Plex Sans", sans-serif;
+  --font-plex-mono: "IBM Plex Mono", monospace;
   --color-brand-dark: #1A312C;
   --color-brand-teal: #428475;
   --color-brand-mint: #89D7B7;

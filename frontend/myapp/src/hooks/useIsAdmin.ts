@@ -2,7 +2,7 @@ import { Roles } from '@/common/Roles';
 import { useAuthStore } from '@/stores/auth';
 
 export function useIsAdmin(): boolean {
-  const user = useAuthStore(state => state.user);
+  const role = useAuthStore(state => state.role);
 
-  return user?.role === Roles.ADMIN;
+  return role?.key === Roles.ORGANIZATION_ADMIN;
 }

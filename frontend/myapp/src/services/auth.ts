@@ -1,11 +1,15 @@
 import { AppConstants } from '@/common/AppConstants';
 import { apiClient } from '@/libs/axios';
 import type {
-  AuthLoginResponse,
-  AuthRefreshResponse,
+  AcceptInvitationRequest,
+  AuthIdentity,
   AuthResult,
+  AuthSession,
   ChangePasswordRequest,
+  ForgotPasswordRequest,
+  LoginRequest,
   RegisterRequest,
+  ResetPasswordRequest,
 } from '@/models';
 import { isApiError, parseApiError } from '@/types/api-error';
 
@@ -39,82 +43,120 @@ function toAuthError(error: unknown, fallback: string): string {
   return parsed.message || fallback;
 }
 
-export const login = async (
-  email: string,
-  password: string,
-): Promise<AuthResult<AuthLoginResponse>> => {
+async function callAuth<T>(
+  request: () => Promise<T>,
+  fallback: string,
+): Promise<AuthResult<T>> {
   try {
-    const response = await apiClient.post<AuthLoginResponse>(
-      AppConstants.ApiUrls.Login,
-      { email, password },
-      { skipAuth: true },
-    );
-
-    return { ok: true, data: response.data };
+    return { ok: true, data: await request() };
   } catch (error) {
     if (import.meta.env.DEV && !isApiError(error)) {
-      console.warn('[auth] login failed:', error);
+      console.warn('[auth] request failed:', error);
     }
 
-    return {
-      ok: false,
-      error: toAuthError(error, 'auth.login.errors.invalidCredentials'),
-    };
+    return { ok: false, error: toAuthError(error, fallback) };
   }
-};
+}
+
+export const login = async (
+  payload: LoginRequest,
+): Promise<AuthResult<AuthSession>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<AuthSession>(AppConstants.ApiUrls.Login, payload, {
+          skipAuth: true,
+        })
+      ).data,
+    'auth.login.errors.invalidCredentials',
+  );
 
 export const register = async (
   payload: RegisterRequest,
-): Promise<AuthResult<AuthLoginResponse>> => {
-  try {
-    const response = await apiClient.post<AuthLoginResponse>(
-      AppConstants.ApiUrls.Register,
-      payload,
-      { skipAuth: true },
-    );
+): Promise<AuthResult<AuthSession>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<AuthSession>(AppConstants.ApiUrls.Register, payload, {
+          skipAuth: true,
+        })
+      ).data,
+    'auth.register.errors.generic',
+  );
 
-    return { ok: true, data: response.data };
-  } catch (error) {
-    return {
-      ok: false,
-      error: toAuthError(error, 'auth.register.errors.generic'),
-    };
-  }
-};
+export const me = async (): Promise<AuthResult<AuthIdentity>> =>
+  callAuth(
+    async () => (await apiClient.get<AuthIdentity>(AppConstants.ApiUrls.Me)).data,
+    AppConstants.Strings.Errors.Global,
+  );
 
-export const refreshAccessToken = async (
-  refreshToken: string,
-): Promise<AuthResult<AuthRefreshResponse>> => {
-  try {
-    const response = await apiClient.post<AuthRefreshResponse>(
-      AppConstants.ApiUrls.RefreshToken,
-      { refreshToken },
-      { skipAuth: true, skipRefreshRetry: true },
-    );
+export const logout = async (refreshToken?: string | null): Promise<AuthResult<{ loggedOut: boolean }>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<{ loggedOut: boolean }>(
+          AppConstants.ApiUrls.Logout,
+          refreshToken ? { refreshToken } : {},
+        )
+      ).data,
+    AppConstants.Strings.Errors.Global,
+  );
 
-    return { ok: true, data: response.data };
-  } catch (error) {
-    return {
-      ok: false,
-      error: toAuthError(error, AppConstants.Strings.Errors.Global),
-    };
-  }
-};
+export const forgotPassword = async (
+  payload: ForgotPasswordRequest,
+): Promise<AuthResult<{ requested: boolean }>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<{ requested: boolean }>(
+          AppConstants.ApiUrls.ForgotPassword,
+          payload,
+          { skipAuth: true },
+        )
+      ).data,
+    AppConstants.Strings.Errors.Global,
+  );
+
+export const resetPassword = async (
+  payload: ResetPasswordRequest,
+): Promise<AuthResult<{ reset: boolean }>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<{ reset: boolean }>(
+          AppConstants.ApiUrls.ResetPassword,
+          payload,
+          { skipAuth: true },
+        )
+      ).data,
+    'auth.resetPassword.errors.generic',
+  );
+
+export const acceptInvitation = async (
+  payload: AcceptInvitationRequest,
+): Promise<AuthResult<AuthSession>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<AuthSession>(
+          AppConstants.ApiUrls.AcceptInvitation,
+          payload,
+          { skipAuth: true },
+        )
+      ).data,
+    'auth.acceptInvitation.errors.generic',
+  );
 
 export const changePassword = async (
   payload: ChangePasswordRequest,
-): Promise<AuthResult<{ message: string }>> => {
-  try {
-    const response = await apiClient.post<{ message: string }>(
-      AppConstants.ApiUrls.ChangePassword,
-      payload,
-    );
-
-    return { ok: true, data: response.data };
-  } catch (error) {
-    return {
-      ok: false,
-      error: toAuthError(error, AppConstants.Strings.Errors.Global),
-    };
-  }
-};
+): Promise<AuthResult<{ changed: boolean }>> =>
+  callAuth(
+    async () =>
+      (
+        await apiClient.post<{ changed: boolean }>(
+          AppConstants.ApiUrls.ChangePassword,
+          payload,
+        )
+      ).data,
+    AppConstants.Strings.Errors.Global,
+  );

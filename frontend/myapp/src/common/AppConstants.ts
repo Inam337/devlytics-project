@@ -8,6 +8,8 @@ const Routes = {
     Login: '/login',
     Register: '/register',
     ForgotPassword: '/forgot-password',
+    ResetPassword: '/reset-password',
+    AcceptInvitation: '/accept-invitation',
   },
 };
 /** Relative API paths — base URL comes from VITE_API_BASE_URL */
@@ -16,7 +18,12 @@ const ApiUrls = {
   // Auth
   Login: '/auth/login',
   Register: '/auth/register',
-  RefreshToken: '/auth/refresh-token',
+  RefreshToken: '/auth/refresh',
+  Logout: '/auth/logout',
+  Me: '/auth/me',
+  ForgotPassword: '/auth/forgot-password',
+  ResetPassword: '/auth/reset-password',
+  AcceptInvitation: '/auth/accept-invitation',
   ChangePassword: '/auth/change-password',
   // Users
   Users: '/users',
@@ -28,7 +35,9 @@ const ApiUrlBuilders = {
 };
 const Validations = {
   Email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PasswordLength: 6,
+  /** Mirrors backend PASSWORD_RULE (auth/dto/auth.dto.ts): 12+ chars, upper, lower, digit, symbol */
+  Password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/,
+  PasswordMinLength: 12,
 };
 const Strings = {
   Errors: {

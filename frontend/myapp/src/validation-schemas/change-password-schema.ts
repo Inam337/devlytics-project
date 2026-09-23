@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
-import { AppConstants } from '@/common/AppConstants';
-
+import { createPasswordField } from './password-field';
 import type { TranslationFunction } from './types';
 
 export const createChangePasswordSchema = (t: TranslationFunction) =>
@@ -16,19 +15,11 @@ export const createChangePasswordSchema = (t: TranslationFunction) =>
             'Current password is required',
           ),
         ),
-      newPassword: z
-        .string()
-        .min(
-          1,
-          t('auth.profile.errors.newPasswordRequired', 'New password is required'),
-        )
-        .min(
-          AppConstants.Validations.PasswordLength,
-          t(
-            'auth.profile.errors.newPasswordMinLength',
-            'New password must be at least 6 characters',
-          ),
-        ),
+      newPassword: createPasswordField(
+        t,
+        'auth.profile.errors.newPasswordRequired',
+        'New password is required',
+      ),
       confirmNewPassword: z
         .string()
         .min(

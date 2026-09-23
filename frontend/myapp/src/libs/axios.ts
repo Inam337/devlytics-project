@@ -13,6 +13,7 @@ import {
   setTokens,
 } from '@/libs/auth-tokens';
 import { requestTokenRefresh } from '@/libs/refresh-token-request';
+import type { AuthSession } from '@/models';
 import { parseApiError } from '@/types/api-error';
 
 export { clearTokens, getAccessToken, setTokens } from '@/libs/auth-tokens';
@@ -47,20 +48,13 @@ const redirectToLogin = () => {
   }
 };
 
-const applySessionTokens = async (
-  accessToken: string,
-  refreshToken: string,
-): Promise<void> => {
-  setTokens(accessToken, refreshToken);
+/** Refresh returns a full session (tokens + identity), not just a token pair — apply all of it. */
+const applyRefreshedSession = async (session: AuthSession): Promise<void> => {
+  setTokens(session.accessToken, session.refreshToken);
 
   const { useAuthStore } = await import('@/stores/auth');
-  const current = useAuthStore.getState();
 
-  useAuthStore.getState().setSession({
-    token: accessToken,
-    refreshToken,
-    user: current.user,
-  });
+  useAuthStore.getState().setSession(session);
 };
 
 const onRequest = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
@@ -76,7 +70,21 @@ const onRequest = (config: InternalAxiosRequestConfig): InternalAxiosRequestConf
 };
 
 const onRequestError = (error: unknown): Promise<never> => Promise.reject(error);
-const onResponse = (response: AxiosResponse): AxiosResponse => response;
+/**
+ * Every backend success response is wrapped `{ success, data, message, pagination? }`
+ * (see ResponseInterceptor in the backend) — unwrap `data` here so every service
+ * function can type `response.data` as the real payload instead of the envelope.
+ */
+const onResponse = (response: AxiosResponse): AxiosResponse => {
+  const body = response.data as { data?: unknown } | undefined;
+
+  if (body && typeof body === 'object' && 'data' in body) {
+    response.data = body.data;
+  }
+
+  return response;
+};
+
 const createResponseErrorHandler = (instance: AxiosInstance) => {
   return async (error: unknown): Promise<never> => {
     if (!axios.isAxiosError(error) || error.response?.status !== 401) {
@@ -121,11 +129,11 @@ const createResponseErrorHandler = (instance: AxiosInstance) => {
     isRefreshing = true;
 
     try {
-      const { token, refreshToken } = await requestTokenRefresh(storedRefresh);
+      const session = await requestTokenRefresh(storedRefresh);
 
-      await applySessionTokens(token, refreshToken);
-      flushRefreshQueue(null, token);
-      originalRequest.headers.set('Authorization', `Bearer ${token}`);
+      await applyRefreshedSession(session);
+      flushRefreshQueue(null, session.accessToken);
+      originalRequest.headers.set('Authorization', `Bearer ${session.accessToken}`);
 
       return instance(originalRequest);
     } catch (refreshError) {

@@ -25,6 +25,7 @@ export default function HeaderProfileDropdown() {
   const { t } = useT();
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
+  const role = useAuthStore(state => state.role);
   const logout = useAuthStore(state => state.logout);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,9 +48,9 @@ export default function HeaderProfileDropdown() {
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [open]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setOpen(false);
-    logout();
+    await logout();
     navigate(AppConstants.Routes.Public.Login, { replace: true });
   };
 
@@ -62,7 +63,7 @@ export default function HeaderProfileDropdown() {
     return null;
   }
 
-  const initials = getInitials(user.name);
+  const initials = getInitials(user.fullName);
 
   return (
     <div
@@ -106,13 +107,17 @@ export default function HeaderProfileDropdown() {
               )}
             >
               <div className="border-b border-gray-100 px-4 py-3">
-                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                <p className="text-sm font-semibold text-gray-900">{user.fullName}</p>
                 <p className="mt-0.5 truncate text-sm text-gray-600">{user.email}</p>
-                <p className="mt-1 text-xs capitalize text-gray-500">
-                  {t('header.profile.role', 'Role')}
-                  {': '}
-                  {user.role}
-                </p>
+                {role
+                  ? (
+                      <p className="mt-1 text-xs capitalize text-gray-500">
+                        {t('header.profile.role', 'Role')}
+                        {': '}
+                        {role.name}
+                      </p>
+                    )
+                  : null}
               </div>
 
               <button
@@ -131,7 +136,7 @@ export default function HeaderProfileDropdown() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={handleLogout}
+                onClick={() => void handleLogout()}
                 className={cn(
                   'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-800',
                   'hover:bg-gray-50 transition-colors',

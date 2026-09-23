@@ -31,10 +31,10 @@ export function NavUser() {
   const isMobileDevice = useIsMobile();
   const isCollapsed = state === 'collapsed';
   const ICON_SIZE = 16;
-  const userName = user?.name ?? 'User';
+  const userName = user?.fullName ?? 'User';
   const userEmail = user?.email ?? '';
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate(AppConstants.Routes.Public.Login);
   };
 
@@ -101,7 +101,7 @@ export function NavUser() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={handleLogout}
+              onClick={() => void handleLogout()}
               variant="destructive"
             >
               <RbIcon

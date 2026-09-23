@@ -25,7 +25,7 @@ export default function Dashboard() {
         {user
           ? (
               <p className="mt-4 text-sm text-gray-500">
-                {t('pages.dashboard.signedInAs', 'Signed in as {name}', { name: user.name })}
+                {t('pages.dashboard.signedInAs', 'Signed in as {name}', { name: user.fullName })}
               </p>
             )
           : null}

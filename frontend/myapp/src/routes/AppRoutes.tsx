@@ -2,9 +2,11 @@ import { Routes, Route } from 'react-router-dom';
 
 import { AppConstants } from '@/common/AppConstants';
 import {
+  AcceptInvitationPage,
   ForgotPasswordPage,
   LoginPage,
   RegisterPage,
+  ResetPasswordPage,
 } from '@/pages/accounts';
 import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
@@ -34,6 +36,21 @@ export default function AppRoutes() {
           element={<ForgotPasswordPage />}
         />
       </Route>
+
+      {/*
+        Token-based, one-off flows — reachable regardless of the current
+        session's auth state (an already-signed-in user may open a reset or
+        invitation link too), so these sit outside the PublicRoutes guard
+        that redirects authenticated users to the dashboard.
+      */}
+      <Route
+        path={AppConstants.Routes.Public.ResetPassword}
+        element={<ResetPasswordPage />}
+      />
+      <Route
+        path={AppConstants.Routes.Public.AcceptInvitation}
+        element={<AcceptInvitationPage />}
+      />
 
       <Route element={<PrivateRoutes />}>
         <Route

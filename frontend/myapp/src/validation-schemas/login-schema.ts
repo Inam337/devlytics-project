@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { AppConstants } from '@/common/AppConstants';
-
 import { createEmailField } from './email-field';
 import type { TranslationFunction } from './types';
 
@@ -15,11 +13,7 @@ export const createLoginSchema = (t: TranslationFunction) =>
     }),
     password: z
       .string()
-      .min(1, t('auth.login.errors.passwordRequired', 'Password is required'))
-      .min(
-        AppConstants.Validations.PasswordLength,
-        t('common.text.passwordMinLength', 'Password must be at least 6 characters'),
-      ),
+      .min(1, t('auth.login.errors.passwordRequired', 'Password is required')),
   });
 
 export type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>;

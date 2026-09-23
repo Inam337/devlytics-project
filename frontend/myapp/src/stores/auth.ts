@@ -2,34 +2,38 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import {
+  acceptInvitation as acceptInvitationRequest,
   login as loginRequest,
+  logout as logoutRequest,
+  me as meRequest,
   register as registerRequest,
-  refreshAccessToken as refreshRequest,
 } from '@/services/auth';
 import { clearTokens, getRefreshToken, setTokens } from '@/libs/auth-tokens';
 import type {
-  AuthLoginResponse,
-  AuthResult,
+  AcceptInvitationRequest,
+  AuthOrganization,
+  AuthRole,
+  AuthSession,
   AuthUser,
+  LoginRequest,
   RegisterRequest,
 } from '@/models';
-
-export interface AuthSession {
-  token: string;
-  refreshToken: string | null;
-  user: AuthUser | null;
-}
 
 interface AuthState {
   token: string | null;
   refreshToken: string | null;
   user: AuthUser | null;
+  organization: AuthOrganization | null;
+  role: AuthRole | null;
+  permissions: string[];
   hasHydrated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (payload: LoginRequest) => Promise<{ success: boolean; error?: string }>;
   register: (payload: RegisterRequest) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  acceptInvitation: (payload: AcceptInvitationRequest) => Promise<{ success: boolean; error?: string }>;
+  /** Validates/refreshes the persisted session against GET /auth/me on app boot. */
+  bootstrap: () => Promise<void>;
+  logout: () => Promise<void>;
   setSession: (session: AuthSession) => void;
-  refreshSession: () => Promise<boolean>;
   setHasHydrated: (value: boolean) => void;
 }
 
@@ -37,20 +41,11 @@ const initialState = {
   token: null,
   refreshToken: null,
   user: null,
+  organization: null,
+  role: null,
+  permissions: [] as string[],
   hasHydrated: false,
 };
-const isAuthFailure = <T>(
-  result: AuthResult<T>,
-): result is Extract<AuthResult<T>, { ok: false }> => !result.ok;
-const authFailure = <T>(result: Extract<AuthResult<T>, { ok: false }>) => ({
-  success: false as const,
-  error: result.error,
-});
-const applyAuthResponse = (response: AuthLoginResponse): AuthSession => ({
-  token: response.token,
-  refreshToken: response.refreshToken ?? null,
-  user: response.user,
-});
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -58,61 +53,82 @@ export const useAuthStore = create<AuthState>()(
       ...initialState,
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
       setSession: (session: AuthSession) => {
-        setTokens(session.token, session.refreshToken);
+        setTokens(session.accessToken, session.refreshToken);
         set({
-          token: session.token,
+          token: session.accessToken,
           refreshToken: session.refreshToken,
           user: session.user,
+          organization: session.organization,
+          role: session.role,
+          permissions: session.permissions,
         });
       },
-      login: async (email: string, password: string) => {
-        const result = await loginRequest(email, password);
+      login: async (payload: LoginRequest) => {
+        const result = await loginRequest(payload);
 
-        if (isAuthFailure(result)) {
-          return authFailure(result);
+        // NOTE: this project's tsconfig has strictNullChecks off, which breaks
+        // discriminated-union narrowing on `!result.ok` — check `=== true` first
+        // instead (same workaround as Profile.tsx's change-password flow).
+        if (result.ok === true) {
+          get().setSession(result.data);
+
+          return { success: true };
         }
 
-        const session = applyAuthResponse(result.data);
-
-        get().setSession(session);
-
-        return { success: true };
+        return { success: false, error: result.error };
       },
       register: async (payload: RegisterRequest) => {
         const result = await registerRequest(payload);
 
-        if (isAuthFailure(result)) {
-          return authFailure(result);
+        if (result.ok === true) {
+          get().setSession(result.data);
+
+          return { success: true };
         }
 
-        const session = applyAuthResponse(result.data);
-
-        get().setSession(session);
-
-        return { success: true };
+        return { success: false, error: result.error };
       },
-      refreshSession: async () => {
-        const refresh = get().refreshToken ?? getRefreshToken();
+      acceptInvitation: async (payload: AcceptInvitationRequest) => {
+        const result = await acceptInvitationRequest(payload);
 
-        if (!refresh) {
-          return false;
+        if (result.ok === true) {
+          get().setSession(result.data);
+
+          return { success: true };
         }
 
-        const result = await refreshRequest(refresh);
-
-        if (!result.ok) {
-          return false;
-        }
-
-        get().setSession({
-          token: result.data.token,
-          refreshToken: result.data.refreshToken,
-          user: get().user,
-        });
-
-        return true;
+        return { success: false, error: result.error };
       },
-      logout: () => {
+      bootstrap: async () => {
+        if (!get().token) {
+          return;
+        }
+
+        const result = await meRequest();
+
+        if (result.ok === true) {
+          set({
+            user: result.data.user,
+            organization: result.data.organization,
+            role: result.data.role,
+            permissions: result.data.permissions,
+          });
+
+          return;
+        }
+
+        clearTokens();
+        set({ ...initialState, hasHydrated: true });
+      },
+      logout: async () => {
+        const refreshToken = get().refreshToken ?? getRefreshToken();
+
+        try {
+          await logoutRequest(refreshToken);
+        } catch {
+          // Best-effort: local logout must succeed even if the server call fails.
+        }
+
         clearTokens();
         set({ ...initialState, hasHydrated: true });
       },
@@ -123,6 +139,9 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         refreshToken: state.refreshToken,
         user: state.user,
+        organization: state.organization,
+        role: state.role,
+        permissions: state.permissions,
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
